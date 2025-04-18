@@ -313,7 +313,6 @@ export default function DartTotalPage() {
             </div>
           </div>
 
-          {/* 적정가 계산 결과 테이블 및 종합 요약 (기존 UI 그대로 유지) */}
           {/* 적정가 계산 결과 테이블 수정 */}
           <div className="bg-white shadow-md rounded-xl overflow-hidden mt-6">
             <div className="bg-gray-100 px-6 py-4 border-b">
