@@ -313,7 +313,7 @@ export default function DartTotalPage() {
             </div>
           </div>
 
-          {/* 적정가 계산 결과 테이블 수정 */}
+          {/* 적정가 계산 결과 테이블 수정 11*/}
           <div className="bg-white shadow-md rounded-xl overflow-hidden mt-6">
             <div className="bg-gray-100 px-6 py-4 border-b">
               <h2 className="text-xl font-bold">적정 주가 계산 결과</h2>
