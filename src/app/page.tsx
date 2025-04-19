@@ -7,7 +7,7 @@ export default function Home() {
       <main className="flex-1 max-w-5xl mx-auto w-full">
         {/* Header */}
         <div className="mb-12 text-center md:text-left">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">ValueStocker</h1>
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">ValueTargeter</h1>
           <p className="text-gray-600 text-lg">주식 가치 평가를 위한 포괄적인 도구 모음</p>
         </div>
 
@@ -97,7 +97,7 @@ export default function Home() {
       </main>
 
       <footer className="mt-12 text-center text-gray-500 text-sm">
-        <p>© 2024 ValueStocker. All rights reserved.</p>
+        <p>© 2024 ValueTargeter. All rights reserved.</p>
       </footer>
     </div>
   );

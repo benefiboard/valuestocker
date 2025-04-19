@@ -11,7 +11,7 @@ import {
   FinancialDataCheckList,
   StockPrice,
 } from '@/lib/finance/types';
-import { fetchStockPrice, fetchFinancialData } from '@/lib/finance/apiService';
+import { fetchStockPrice, fetchFinancialData, fetchStockPrices } from '@/lib/finance/apiService';
 import { extractFinancialData, convertToChecklistData } from '@/lib/finance/dataProcessor';
 import {
   ArrowLeft,
@@ -84,21 +84,28 @@ export default function ChecklistPage() {
     setLoading(true);
 
     try {
-      // 1. 주가 데이터 가져오기 - 공통 모듈 사용
-      const priceData = await fetchStockPrice(selectedCompany.stockCode, true);
-      setStockPrice(priceData);
+      // 1. 주가 데이터 가져오기 - 3년치 데이터로 변경
+      const { priceDataMap, baseYearData } = await fetchStockPrices(selectedCompany.stockCode);
+      const latestPriceData = await fetchStockPrice(selectedCompany.stockCode, true);
+
+      // baseYearData가 null인 경우 에러 처리
+      if (!baseYearData) {
+        throw new Error(`${companyName}의 주가 데이터를 찾을 수 없습니다`);
+      }
+
+      setStockPrice(latestPriceData || 0); // 현재 주가 설정
 
       // 2. 재무 데이터 가져오기 - 공통 모듈 사용
       const rawData = await fetchFinancialData(selectedCompany.dartCode);
       setRawFinancialData(rawData);
 
-      // 3. 재무 데이터 추출 - 공통 모듈 사용
+      // 3. 재무 데이터 추출
       const extractedData = extractFinancialData(rawData);
       const checklistData = convertToChecklistData(extractedData);
       setFinancialData(checklistData);
 
-      // 4. 체크리스트 계산
-      const checklist = calculateChecklist(checklistData, priceData);
+      // 4. 체크리스트 계산 - 여기서 baseYearData는 이미 null 체크를 했으므로 안전
+      const checklist = calculateChecklist(checklistData, baseYearData, priceDataMap);
       setChecklistResults(checklist);
 
       // 5. 투자 등급 계산

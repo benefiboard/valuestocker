@@ -1,7 +1,14 @@
+// src/lib/finance/dataProcessor.ts
+
 import { ApiResponse, FinancialData, FinancialDataCheckList, FinancialItem } from './types';
 
 // 연도 데이터 확인
 export function checkYearHasData(data: ApiResponse, year: string): boolean {
+  // JSON 파일에서 가져온 데이터면 기본적으로 data가 있다고 가정
+  if (data.financialData) {
+    return true;
+  }
+
   const currentYear = new Date().getFullYear();
   const baseYear = currentYear - 1;
   const yearDiff = baseYear - parseInt(year);
@@ -36,9 +43,18 @@ export function checkYearHasData(data: ApiResponse, year: string): boolean {
   return (!!epsItem && !!epsItem[fieldName]) || (!!netIncomeItem && !!netIncomeItem[fieldName]);
 }
 
-// 공통 데이터 추출 함수 (두 타입 모두 포함하는 상세 데이터)
+// 재무 데이터 추출 함수
 export function extractFinancialData(data: ApiResponse): any {
   console.log('데이터 추출 시작');
+
+  // JSON에서 직접 변환된 재무 데이터가 있는 경우
+  if (data.financialData) {
+    console.log('JSON 파일에서 가져온 재무 데이터 사용');
+    return data.financialData;
+  }
+
+  // 이하는 API 응답에서 파싱하는 기존 코드 (fallback)
+  console.log('API 응답에서 재무 데이터 추출 (fallback)');
 
   // 통화 단위 확인 및 변환 환율
   const currency = data.list && data.list.length > 0 ? data.list[0].currency : 'KRW';
@@ -164,8 +180,6 @@ export function extractFinancialData(data: ApiResponse): any {
 
     return result;
   };
-
-  // 모든 필요한 데이터 추출
 
   // EPS 데이터
   let epsByYear = findYearlyMetric('ifrs-full_BasicEarningsLossPerShare', ['IS', 'CIS']);
@@ -334,7 +348,7 @@ export function extractFinancialData(data: ApiResponse): any {
   // 당좌자산 계산
   const quickAssets = currentAssets - inventories;
 
-  // 모든 추출 데이터 리턴 (타입 변환은 호출 측에서 필요에 따라 처리)
+  // 모든 추출 데이터 리턴
   return {
     assets,
     equity,
@@ -369,10 +383,18 @@ export function extractFinancialData(data: ApiResponse): any {
 
 // 체크리스트용 데이터 변환
 export function convertToChecklistData(data: any): FinancialDataCheckList {
+  // years 속성이 없으면 기본값 추가
+  if (!data.years) {
+    data.years = ['2024', '2023', '2022'];
+  }
   return data as FinancialDataCheckList;
 }
 
 // 가격계산용 데이터 변환
 export function convertToPriceData(data: any): FinancialData {
+  // years 속성이 없으면 기본값 추가
+  if (!data.years) {
+    data.years = ['2024', '2023', '2022'];
+  }
   return data as FinancialData;
 }

@@ -290,7 +290,8 @@ const calculateNetIncomeGrowthScore = (growthRate: number): number => {
 // 체크리스트 계산 함수
 export const calculateChecklist = (
   financialData: FinancialDataCheckList,
-  stockPrice: StockPrice
+  stockPrice: StockPrice,
+  priceDataMap?: Record<string, StockPrice>
 ): ScoredChecklistItem[] => {
   const results = [...initialChecklist] as ScoredChecklistItem[];
   const n = stockPrice.sharesOutstanding; // 발행주식수
@@ -344,9 +345,31 @@ export const calculateChecklist = (
   const twoYearsAgoBps = n > 0 ? twoYearsAgoEquity / n : 0;
 
   // PER 계산
+  // 변경 후 (실제 데이터 사용)
   const currentPer = currentEps > 0 ? currentPrice / currentEps : 0;
-  const previousPer = previousEps > 0 ? (stockPrice.price * 0.9) / previousEps : 0; // 가정: 작년 주가는 현재의 90%
-  const twoYearsAgoPer = twoYearsAgoEps > 0 ? (stockPrice.price * 0.8) / twoYearsAgoEps : 0; // 가정: 재작년 주가는 현재의 80%
+
+  // 실제 주가 데이터 사용
+  const previousYearPrice = priceDataMap?.[previousYear]?.price || stockPrice.price * 0.9; // 실제 데이터 없으면 가정 사용
+  const twoYearsAgoPrice = priceDataMap?.[twoYearsAgo]?.price || stockPrice.price * 0.8; // 실제 데이터 없으면 가정 사용
+
+  const previousPer = previousEps > 0 ? previousYearPrice / previousEps : 0;
+  const twoYearsAgoPer = twoYearsAgoEps > 0 ? twoYearsAgoPrice / twoYearsAgoEps : 0;
+
+  //확인해보기
+  const hasPreviousYearPrice =
+    priceDataMap && priceDataMap[previousYear] && priceDataMap[previousYear].price > 0;
+  const hasTwoYearsAgoPrice =
+    priceDataMap && priceDataMap[twoYearsAgo] && priceDataMap[twoYearsAgo].price > 0;
+  console.log(
+    `${previousYear}년(이전) 주가: ${previousYearPrice}원 ${
+      hasPreviousYearPrice ? '[실제 데이터]' : '[가정: 현재가의 90%]'
+    }`
+  );
+  console.log(
+    `${twoYearsAgo}년(재작년) 주가: ${twoYearsAgoPrice}원 ${
+      hasTwoYearsAgoPrice ? '[실제 데이터]' : '[가정: 현재가의 80%]'
+    }`
+  );
 
   // 성장률 계산함수(모든 성장 지표에 적용)
   const calculateGrowthRate = (values: number[]): number => {

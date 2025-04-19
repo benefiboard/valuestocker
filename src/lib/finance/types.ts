@@ -156,9 +156,11 @@ export interface FinancialItem {
 }
 
 export interface ApiResponse {
-  list?: Array<FinancialItem>;
   status?: string;
   message?: string;
+  list?: FinancialItem[];
+  years?: string[];
+  financialData?: any; // JSON에서 직접 변환된 재무 데이터
 }
 
 export interface ModelItem {
