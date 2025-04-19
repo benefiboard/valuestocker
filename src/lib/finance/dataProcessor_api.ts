@@ -1,3 +1,5 @@
+// src/lib/finance/dataProcessor_api.ts
+
 import { ApiResponse, FinancialData, FinancialDataCheckList, FinancialItem } from './types';
 
 // 연도 데이터 확인

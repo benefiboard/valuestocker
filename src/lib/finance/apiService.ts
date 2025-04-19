@@ -7,6 +7,11 @@ import stockData from './stock_data_2025.json';
 export const delay = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
+// 타입 안전한 속성 접근을 위한 헬퍼 함수
+function getPropertySafely<T>(obj: any, key: string, defaultValue: T): T {
+  return key in obj ? (obj[key] as T) : defaultValue;
+}
+
 // 단일 연도 주가 데이터 가져오기
 export async function fetchStockPrice(
   stockCode: string,
@@ -47,11 +52,14 @@ export async function fetchStockPrice(
       throw new Error(`${stockCode} 종목의 주가 데이터를 찾을 수 없습니다.`);
     }
 
+    // current_price를 안전하게 접근
+    const currentPrice = getPropertySafely<string | number>(stockInfo, 'current_price', 0);
+
     return {
       code: stockCode,
       name: stockInfo.company_name,
-      price: stockInfo.current_price,
-      sharesOutstanding: parseInt(stockInfo.shares_outstanding),
+      price: typeof currentPrice === 'string' ? parseFloat(currentPrice) : currentPrice,
+      sharesOutstanding: parseInt(String(stockInfo.shares_outstanding)),
       formattedDate: stockInfo.last_updated,
     };
   }
@@ -68,11 +76,21 @@ export async function fetchStockPrice(
     const currentYear = new Date().getFullYear();
     const baseYear = currentYear - 1;
 
+    // 안전하게 동적 속성 접근
+    const yearPriceKey = `${baseYear}_price`;
+    const fallbackPriceKey = '2024_price';
+
+    const yearPrice = getPropertySafely<string | number>(stockInfo, yearPriceKey, 0);
+    const fallbackPrice = getPropertySafely<string | number>(stockInfo, fallbackPriceKey, 0);
+
+    // 값이 있으면 해당 연도 가격, 없으면 2024년 가격 사용
+    const price = yearPrice || fallbackPrice;
+
     return {
       code: stockCode,
       name: stockInfo.company_name,
-      price: stockInfo[`${baseYear}_price`] || stockInfo['2024_price'],
-      sharesOutstanding: parseInt(stockInfo.shares_outstanding),
+      price: typeof price === 'string' ? parseFloat(price) : Number(price),
+      sharesOutstanding: parseInt(String(stockInfo.shares_outstanding)),
       formattedDate: `${baseYear}`,
     };
   }
@@ -94,27 +112,34 @@ export async function fetchStockPrices(
     throw new Error(`${stockCode} 종목의 주가 데이터를 찾을 수 없습니다.`);
   }
 
+  // 연도별 주가 데이터를 안전하게 가져오기 위한 헬퍼 함수
+  const getPriceForYear = (year: string): number => {
+    const priceKey = `${year}_price`;
+    const price = getPropertySafely<string | number>(stockInfo, priceKey, 0);
+    return typeof price === 'string' ? parseFloat(price) : Number(price);
+  };
+
   // 연도별 주가 데이터
   const priceDataMap: Record<string, StockPrice> = {
     '2022': {
       code: stockCode,
       name: stockInfo.company_name,
-      price: stockInfo['2022_price'],
-      sharesOutstanding: parseInt(stockInfo.shares_outstanding),
+      price: getPriceForYear('2022'),
+      sharesOutstanding: parseInt(String(stockInfo.shares_outstanding)),
       formattedDate: '2022',
     },
     '2023': {
       code: stockCode,
       name: stockInfo.company_name,
-      price: stockInfo['2023_price'],
-      sharesOutstanding: parseInt(stockInfo.shares_outstanding),
+      price: getPriceForYear('2023'),
+      sharesOutstanding: parseInt(String(stockInfo.shares_outstanding)),
       formattedDate: '2023',
     },
     '2024': {
       code: stockCode,
       name: stockInfo.company_name,
-      price: stockInfo['2024_price'],
-      sharesOutstanding: parseInt(stockInfo.shares_outstanding),
+      price: getPriceForYear('2024'),
+      sharesOutstanding: parseInt(String(stockInfo.shares_outstanding)),
       formattedDate: '2024',
     },
   };
@@ -130,11 +155,13 @@ export async function fetchStockPrices(
     } catch (error) {
       console.error('최신 주가 데이터 가져오기 실패:', error);
       // API 실패 시 JSON의 current_price로 대체
+      const currentPrice = getPropertySafely<string | number>(stockInfo, 'current_price', 0);
+
       latestPriceData = {
         code: stockCode,
         name: stockInfo.company_name,
-        price: stockInfo.current_price,
-        sharesOutstanding: parseInt(stockInfo.shares_outstanding),
+        price: typeof currentPrice === 'string' ? parseFloat(currentPrice) : Number(currentPrice),
+        sharesOutstanding: parseInt(String(stockInfo.shares_outstanding)),
         formattedDate: new Date().toISOString().split('T')[0],
       };
     }
@@ -158,18 +185,26 @@ export async function fetchFinancialData(dartCorpCode: string): Promise<ApiRespo
   const convertCurrency = (year: string, value: any): string => {
     if (value === null || value === undefined) return '';
 
-    // 통화 확인
-    const currency = stockInfo[`${year}_currency`];
-    const numValue = parseFloat(value);
+    // 통화 확인 - 안전하게 접근
+    const currencyKey = `${year}_currency`;
+    const currency = getPropertySafely<string>(stockInfo, currencyKey, 'KRW');
 
-    if (isNaN(numValue)) return value?.toString();
+    const numValue = typeof value === 'string' ? parseFloat(value) : Number(value);
+
+    if (isNaN(numValue)) return String(value || '');
 
     // USD인 경우 KRW로 변환 (1400 곱하기)
     if (currency === 'USD') {
       return (numValue * 1400).toString();
     }
 
-    return value.toString();
+    return numValue.toString();
+  };
+
+  // 안전한 연도별 데이터 가져오기 헬퍼 함수
+  const getYearlyData = (prefix: string, year: string) => {
+    const key = `${year}_${prefix}`;
+    return getPropertySafely<any>(stockInfo, key, '');
   };
 
   // API 형식으로 가상의 데이터 목록 생성
@@ -180,9 +215,9 @@ export async function fetchFinancialData(dartCorpCode: string): Promise<ApiRespo
     account_id: 'ifrs-full_BasicEarningsLossPerShare',
     sj_div: 'IS',
     account_nm: '기본주당이익',
-    thstrm_amount: convertCurrency('2024', stockInfo['2024_eps']),
-    frmtrm_amount: convertCurrency('2023', stockInfo['2023_eps']),
-    bfefrmtrm_amount: convertCurrency('2022', stockInfo['2022_eps']),
+    thstrm_amount: convertCurrency('2024', getYearlyData('eps', '2024')),
+    frmtrm_amount: convertCurrency('2023', getYearlyData('eps', '2023')),
+    bfefrmtrm_amount: convertCurrency('2022', getYearlyData('eps', '2022')),
     currency: 'KRW',
   });
 
@@ -191,9 +226,9 @@ export async function fetchFinancialData(dartCorpCode: string): Promise<ApiRespo
     account_id: 'ifrs-full_ProfitLoss',
     sj_div: 'IS',
     account_nm: '당기순이익',
-    thstrm_amount: convertCurrency('2024', stockInfo['2024_net_income']),
-    frmtrm_amount: convertCurrency('2023', stockInfo['2023_net_income']),
-    bfefrmtrm_amount: convertCurrency('2022', stockInfo['2022_net_income']),
+    thstrm_amount: convertCurrency('2024', getYearlyData('net_income', '2024')),
+    frmtrm_amount: convertCurrency('2023', getYearlyData('net_income', '2023')),
+    bfefrmtrm_amount: convertCurrency('2022', getYearlyData('net_income', '2022')),
     currency: 'KRW',
   });
 
@@ -202,9 +237,9 @@ export async function fetchFinancialData(dartCorpCode: string): Promise<ApiRespo
     account_id: 'ifrs-full_Assets',
     sj_div: 'BS',
     account_nm: '자산총계',
-    thstrm_amount: convertCurrency('2024', stockInfo['2024_assets']),
-    frmtrm_amount: convertCurrency('2023', stockInfo['2023_assets']),
-    bfefrmtrm_amount: convertCurrency('2022', stockInfo['2022_assets']),
+    thstrm_amount: convertCurrency('2024', getYearlyData('assets', '2024')),
+    frmtrm_amount: convertCurrency('2023', getYearlyData('assets', '2023')),
+    bfefrmtrm_amount: convertCurrency('2022', getYearlyData('assets', '2022')),
     currency: 'KRW',
   });
 
@@ -213,9 +248,9 @@ export async function fetchFinancialData(dartCorpCode: string): Promise<ApiRespo
     account_id: 'ifrs-full_Equity',
     sj_div: 'BS',
     account_nm: '자본총계',
-    thstrm_amount: convertCurrency('2024', stockInfo['2024_equity']),
-    frmtrm_amount: convertCurrency('2023', stockInfo['2023_equity']),
-    bfefrmtrm_amount: convertCurrency('2022', stockInfo['2022_equity']),
+    thstrm_amount: convertCurrency('2024', getYearlyData('equity', '2024')),
+    frmtrm_amount: convertCurrency('2023', getYearlyData('equity', '2023')),
+    bfefrmtrm_amount: convertCurrency('2022', getYearlyData('equity', '2022')),
     currency: 'KRW',
   });
 
@@ -224,9 +259,12 @@ export async function fetchFinancialData(dartCorpCode: string): Promise<ApiRespo
     account_id: 'ifrs-full_EquityAttributableToOwnersOfParent',
     sj_div: 'BS',
     account_nm: '지배기업 소유주지분',
-    thstrm_amount: convertCurrency('2024', stockInfo['2024_equity_attributable_to_owners']),
-    frmtrm_amount: convertCurrency('2023', stockInfo['2023_equity_attributable_to_owners']),
-    bfefrmtrm_amount: convertCurrency('2022', stockInfo['2022_equity_attributable_to_owners']),
+    thstrm_amount: convertCurrency('2024', getYearlyData('equity_attributable_to_owners', '2024')),
+    frmtrm_amount: convertCurrency('2023', getYearlyData('equity_attributable_to_owners', '2023')),
+    bfefrmtrm_amount: convertCurrency(
+      '2022',
+      getYearlyData('equity_attributable_to_owners', '2022')
+    ),
     currency: 'KRW',
   });
 
@@ -235,9 +273,9 @@ export async function fetchFinancialData(dartCorpCode: string): Promise<ApiRespo
     account_id: 'ifrs-full_CurrentAssets',
     sj_div: 'BS',
     account_nm: '유동자산',
-    thstrm_amount: convertCurrency('2024', stockInfo['2024_current_assets']),
-    frmtrm_amount: convertCurrency('2023', stockInfo['2023_current_assets']),
-    bfefrmtrm_amount: convertCurrency('2022', stockInfo['2022_current_assets']),
+    thstrm_amount: convertCurrency('2024', getYearlyData('current_assets', '2024')),
+    frmtrm_amount: convertCurrency('2023', getYearlyData('current_assets', '2023')),
+    bfefrmtrm_amount: convertCurrency('2022', getYearlyData('current_assets', '2022')),
     currency: 'KRW',
   });
 
@@ -246,9 +284,9 @@ export async function fetchFinancialData(dartCorpCode: string): Promise<ApiRespo
     account_id: 'ifrs-full_CurrentLiabilities',
     sj_div: 'BS',
     account_nm: '유동부채',
-    thstrm_amount: convertCurrency('2024', stockInfo['2024_current_liabilities']),
-    frmtrm_amount: convertCurrency('2023', stockInfo['2023_current_liabilities']),
-    bfefrmtrm_amount: convertCurrency('2022', stockInfo['2022_current_liabilities']),
+    thstrm_amount: convertCurrency('2024', getYearlyData('current_liabilities', '2024')),
+    frmtrm_amount: convertCurrency('2023', getYearlyData('current_liabilities', '2023')),
+    bfefrmtrm_amount: convertCurrency('2022', getYearlyData('current_liabilities', '2022')),
     currency: 'KRW',
   });
 
@@ -257,9 +295,9 @@ export async function fetchFinancialData(dartCorpCode: string): Promise<ApiRespo
     account_id: 'ifrs-full_NoncurrentLiabilities',
     sj_div: 'BS',
     account_nm: '비유동부채',
-    thstrm_amount: convertCurrency('2024', stockInfo['2024_non_current_liabilities']),
-    frmtrm_amount: convertCurrency('2023', stockInfo['2023_non_current_liabilities']),
-    bfefrmtrm_amount: convertCurrency('2022', stockInfo['2022_non_current_liabilities']),
+    thstrm_amount: convertCurrency('2024', getYearlyData('non_current_liabilities', '2024')),
+    frmtrm_amount: convertCurrency('2023', getYearlyData('non_current_liabilities', '2023')),
+    bfefrmtrm_amount: convertCurrency('2022', getYearlyData('non_current_liabilities', '2022')),
     currency: 'KRW',
   });
 
@@ -268,9 +306,9 @@ export async function fetchFinancialData(dartCorpCode: string): Promise<ApiRespo
     account_id: 'ifrs-full_Inventories',
     sj_div: 'BS',
     account_nm: '재고자산',
-    thstrm_amount: convertCurrency('2024', stockInfo['2024_inventories']),
-    frmtrm_amount: convertCurrency('2023', stockInfo['2023_inventories']),
-    bfefrmtrm_amount: convertCurrency('2022', stockInfo['2022_inventories']),
+    thstrm_amount: convertCurrency('2024', getYearlyData('inventories', '2024')),
+    frmtrm_amount: convertCurrency('2023', getYearlyData('inventories', '2023')),
+    bfefrmtrm_amount: convertCurrency('2022', getYearlyData('inventories', '2022')),
     currency: 'KRW',
   });
 
@@ -279,9 +317,9 @@ export async function fetchFinancialData(dartCorpCode: string): Promise<ApiRespo
     account_id: 'ifrs-full_Revenue',
     sj_div: 'IS',
     account_nm: '매출액',
-    thstrm_amount: convertCurrency('2024', stockInfo['2024_revenue']),
-    frmtrm_amount: convertCurrency('2023', stockInfo['2023_revenue']),
-    bfefrmtrm_amount: convertCurrency('2022', stockInfo['2022_revenue']),
+    thstrm_amount: convertCurrency('2024', getYearlyData('revenue', '2024')),
+    frmtrm_amount: convertCurrency('2023', getYearlyData('revenue', '2023')),
+    bfefrmtrm_amount: convertCurrency('2022', getYearlyData('revenue', '2022')),
     currency: 'KRW',
   });
 
@@ -290,9 +328,9 @@ export async function fetchFinancialData(dartCorpCode: string): Promise<ApiRespo
     account_id: 'ifrs-full_CostOfSales',
     sj_div: 'IS',
     account_nm: '매출원가',
-    thstrm_amount: convertCurrency('2024', stockInfo['2024_cost_of_sales']),
-    frmtrm_amount: convertCurrency('2023', stockInfo['2023_cost_of_sales']),
-    bfefrmtrm_amount: convertCurrency('2022', stockInfo['2022_cost_of_sales']),
+    thstrm_amount: convertCurrency('2024', getYearlyData('cost_of_sales', '2024')),
+    frmtrm_amount: convertCurrency('2023', getYearlyData('cost_of_sales', '2023')),
+    bfefrmtrm_amount: convertCurrency('2022', getYearlyData('cost_of_sales', '2022')),
     currency: 'KRW',
   });
 
@@ -301,9 +339,9 @@ export async function fetchFinancialData(dartCorpCode: string): Promise<ApiRespo
     account_id: 'dart_OperatingIncomeLoss',
     sj_div: 'IS',
     account_nm: '영업이익',
-    thstrm_amount: convertCurrency('2024', stockInfo['2024_operating_income']),
-    frmtrm_amount: convertCurrency('2023', stockInfo['2023_operating_income']),
-    bfefrmtrm_amount: convertCurrency('2022', stockInfo['2022_operating_income']),
+    thstrm_amount: convertCurrency('2024', getYearlyData('operating_income', '2024')),
+    frmtrm_amount: convertCurrency('2023', getYearlyData('operating_income', '2023')),
+    bfefrmtrm_amount: convertCurrency('2022', getYearlyData('operating_income', '2022')),
     currency: 'KRW',
   });
 
@@ -312,9 +350,9 @@ export async function fetchFinancialData(dartCorpCode: string): Promise<ApiRespo
     account_id: 'dart_InterestExpenseFinanceExpense',
     sj_div: 'IS',
     account_nm: '이자비용',
-    thstrm_amount: convertCurrency('2024', stockInfo['2024_interest_expense']),
-    frmtrm_amount: convertCurrency('2023', stockInfo['2023_interest_expense']),
-    bfefrmtrm_amount: convertCurrency('2022', stockInfo['2022_interest_expense']),
+    thstrm_amount: convertCurrency('2024', getYearlyData('interest_expense', '2024')),
+    frmtrm_amount: convertCurrency('2023', getYearlyData('interest_expense', '2023')),
+    bfefrmtrm_amount: convertCurrency('2022', getYearlyData('interest_expense', '2022')),
     currency: 'KRW',
   });
 
@@ -323,9 +361,9 @@ export async function fetchFinancialData(dartCorpCode: string): Promise<ApiRespo
     account_id: 'ifrs-full_TradeAndOtherCurrentReceivables',
     sj_div: 'BS',
     account_nm: '매출채권',
-    thstrm_amount: convertCurrency('2024', stockInfo['2024_trade_receivables']),
-    frmtrm_amount: convertCurrency('2023', stockInfo['2023_trade_receivables']),
-    bfefrmtrm_amount: convertCurrency('2022', stockInfo['2022_trade_receivables']),
+    thstrm_amount: convertCurrency('2024', getYearlyData('trade_receivables', '2024')),
+    frmtrm_amount: convertCurrency('2023', getYearlyData('trade_receivables', '2023')),
+    bfefrmtrm_amount: convertCurrency('2022', getYearlyData('trade_receivables', '2022')),
     currency: 'KRW',
   });
 
@@ -334,9 +372,9 @@ export async function fetchFinancialData(dartCorpCode: string): Promise<ApiRespo
     account_id: 'ifrs-full_TradeAndOtherCurrentPayables',
     sj_div: 'BS',
     account_nm: '매입채무',
-    thstrm_amount: convertCurrency('2024', stockInfo['2024_trade_payables']),
-    frmtrm_amount: convertCurrency('2023', stockInfo['2023_trade_payables']),
-    bfefrmtrm_amount: convertCurrency('2022', stockInfo['2022_trade_payables']),
+    thstrm_amount: convertCurrency('2024', getYearlyData('trade_payables', '2024')),
+    frmtrm_amount: convertCurrency('2023', getYearlyData('trade_payables', '2023')),
+    bfefrmtrm_amount: convertCurrency('2022', getYearlyData('trade_payables', '2022')),
     currency: 'KRW',
   });
 
@@ -345,9 +383,9 @@ export async function fetchFinancialData(dartCorpCode: string): Promise<ApiRespo
     account_id: 'ifrs-full_RetainedEarnings',
     sj_div: 'BS',
     account_nm: '이익잉여금',
-    thstrm_amount: convertCurrency('2024', stockInfo['2024_retained_earnings']),
-    frmtrm_amount: convertCurrency('2023', stockInfo['2023_retained_earnings']),
-    bfefrmtrm_amount: convertCurrency('2022', stockInfo['2022_retained_earnings']),
+    thstrm_amount: convertCurrency('2024', getYearlyData('retained_earnings', '2024')),
+    frmtrm_amount: convertCurrency('2023', getYearlyData('retained_earnings', '2023')),
+    bfefrmtrm_amount: convertCurrency('2022', getYearlyData('retained_earnings', '2022')),
     currency: 'KRW',
   });
 
@@ -356,9 +394,9 @@ export async function fetchFinancialData(dartCorpCode: string): Promise<ApiRespo
     account_id: 'ifrs-full_CashFlowsFromUsedInOperatingActivities',
     sj_div: 'CF',
     account_nm: '영업활동현금흐름',
-    thstrm_amount: convertCurrency('2024', stockInfo['2024_operating_cash_flow']),
-    frmtrm_amount: convertCurrency('2023', stockInfo['2023_operating_cash_flow']),
-    bfefrmtrm_amount: convertCurrency('2022', stockInfo['2022_operating_cash_flow']),
+    thstrm_amount: convertCurrency('2024', getYearlyData('operating_cash_flow', '2024')),
+    frmtrm_amount: convertCurrency('2023', getYearlyData('operating_cash_flow', '2023')),
+    bfefrmtrm_amount: convertCurrency('2022', getYearlyData('operating_cash_flow', '2022')),
     currency: 'KRW',
   });
 
@@ -367,9 +405,9 @@ export async function fetchFinancialData(dartCorpCode: string): Promise<ApiRespo
     account_id: 'ifrs-full_PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities',
     sj_div: 'CF',
     account_nm: '유형자산취득',
-    thstrm_amount: convertCurrency('2024', stockInfo['2024_capex']),
-    frmtrm_amount: convertCurrency('2023', stockInfo['2023_capex']),
-    bfefrmtrm_amount: convertCurrency('2022', stockInfo['2022_capex']),
+    thstrm_amount: convertCurrency('2024', getYearlyData('capex', '2024')),
+    frmtrm_amount: convertCurrency('2023', getYearlyData('capex', '2023')),
+    bfefrmtrm_amount: convertCurrency('2022', getYearlyData('capex', '2022')),
     currency: 'KRW',
   });
 
@@ -378,9 +416,9 @@ export async function fetchFinancialData(dartCorpCode: string): Promise<ApiRespo
     account_id: 'ifrs-full_InvestmentAccountedForUsingEquityMethod',
     sj_div: 'BS',
     account_nm: '투자자산',
-    thstrm_amount: convertCurrency('2024', stockInfo['2024_investment_assets']),
-    frmtrm_amount: convertCurrency('2023', stockInfo['2023_investment_assets']),
-    bfefrmtrm_amount: convertCurrency('2022', stockInfo['2022_investment_assets']),
+    thstrm_amount: convertCurrency('2024', getYearlyData('investment_assets', '2024')),
+    frmtrm_amount: convertCurrency('2023', getYearlyData('investment_assets', '2023')),
+    bfefrmtrm_amount: convertCurrency('2022', getYearlyData('investment_assets', '2022')),
     currency: 'KRW',
   });
 
