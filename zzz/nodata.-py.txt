@@ -1,0 +1,40 @@
+import json
+
+# Load the stock data from the file
+def extract_companies_without_currency():
+    try:
+        with open('stock_data_2025.json', 'r', encoding='utf-8') as file:
+            stock_data = json.load(file)
+        
+        # Filter companies without 2024_currency and exclude KONEX
+        companies_without_currency = {}
+        for stock_code, company_info in stock_data.items():
+            # Check if 2024_currency is empty or null and market_category is not KONEX
+            if (not company_info.get("2024_currency") and 
+                company_info.get("market_category") != "KONEX"):
+                companies_without_currency[stock_code] = {
+                    "stock_code": company_info.get("stock_code"),
+                    "dart_code": company_info.get("dart_code"),
+                    "company_name": company_info.get("company_name"),
+                    "market_category": company_info.get("market_category")
+                }
+        
+        # Save the filtered results to a new JSON file
+        with open('companies_without_currency.json', 'w', encoding='utf-8') as output_file:
+            json.dump(companies_without_currency, output_file, ensure_ascii=False, indent=2)
+            
+        print(f"Extracted {len(companies_without_currency)} companies without 2024_currency (excluding KONEX).")
+        return companies_without_currency
+        
+    except FileNotFoundError:
+        print("Error: stock_data_2025.json file not found.")
+        return {}
+    except json.JSONDecodeError:
+        print("Error: Invalid JSON format in stock_data_2025.json.")
+        return {}
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+        return {}
+
+if __name__ == "__main__":
+    extract_companies_without_currency()
