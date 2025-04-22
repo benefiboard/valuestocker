@@ -1,0 +1,243 @@
+[
+  {
+    "industry": "etc",
+    "minPER": 8,
+    "maxPER": 8,
+    "avgPER": 8,
+    "minPEG": 0.8,
+    "maxPEG": 0.8,
+    "avgPEG": 0.8,
+    "liabilityMultiplier": 1.2,
+    "subIndustries": ["etc"]
+  },
+  {
+    "industry": "IT/소프트웨어",
+    "minPER": 12,
+    "maxPER": 20,
+    "avgPER": 16,
+    "minPEG": 0.8,
+    "maxPEG": 1.2,
+    "avgPEG": 1.0,
+    "liabilityMultiplier": 1.2,
+    "subIndustries": [
+      "컴퓨터와주변기기",
+      "사무용전자제품",
+      "IT서비스",
+      "소프트웨어",
+      "건강관리기술",
+      "양방향미디어와서비스"
+    ]
+  },
+  {
+    "industry": "바이오/제약",
+    "minPER": 12,
+    "maxPER": 25,
+    "avgPER": 18.5,
+    "minPEG": 1.0,
+    "maxPEG": 1.5,
+    "avgPEG": 1.25,
+    "liabilityMultiplier": 1.2,
+    "subIndustries": [
+      "생물공학",
+      "생명과학도구및서비스",
+      "제약",
+      "건강관리업체및서비스",
+      "건강관리장비와용품"
+    ]
+  },
+  {
+    "industry": "반도체",
+    "minPER": 7,
+    "maxPER": 13,
+    "avgPER": 10,
+    "minPEG": 0.7,
+    "maxPEG": 1.0,
+    "avgPEG": 0.85,
+    "liabilityMultiplier": 1.3,
+    "subIndustries": [
+      "반도체와반도체장비",
+      "디스플레이패널",
+      "디스플레이장비및부품",
+      "전자장비와기기",
+      "전자제품"
+    ]
+  },
+  {
+    "industry": "인터넷/플랫폼",
+    "minPER": 10,
+    "maxPER": 20,
+    "avgPER": 15,
+    "minPEG": 0.8,
+    "maxPEG": 1.2,
+    "avgPEG": 1.0,
+    "liabilityMultiplier": 1.2,
+    "subIndustries": [
+      "인터넷과카탈로그소매",
+      "게임엔터테인먼트",
+      "방송과엔터테인먼트",
+      "출판",
+      "광고"
+    ]
+  },
+  {
+    "industry": "유통/소매",
+    "minPER": 7,
+    "maxPER": 12,
+    "avgPER": 9.5,
+    "minPEG": 0.6,
+    "maxPEG": 0.9,
+    "avgPEG": 0.75,
+    "liabilityMultiplier": 1.4,
+    "subIndustries": [
+      "전문소매",
+      "백화점과일반상점",
+      "식품과기본식료품소매",
+      "무역회사와판매업체",
+      "판매업체",
+      "섬유,의류,신발,호화품",
+      "화장품"
+    ]
+  },
+  {
+    "industry": "금융",
+    "minPER": 3,
+    "maxPER": 7,
+    "avgPER": 5,
+    "minPEG": 0.5,
+    "maxPEG": 0.7,
+    "avgPEG": 0.6,
+    "liabilityMultiplier": 1.6,
+    "subIndustries": [
+      "은행",
+      "증권",
+      "카드",
+      "생명보험",
+      "손해보험",
+      "창업투자",
+      "기타금융",
+      "부동산"
+    ]
+  },
+  {
+    "industry": "통신",
+    "minPER": 4,
+    "maxPER": 8,
+    "avgPER": 6,
+    "minPEG": 0.4,
+    "maxPEG": 0.7,
+    "avgPEG": 0.55,
+    "liabilityMultiplier": 1.4,
+    "subIndustries": ["무선통신서비스", "다각화된통신서비스", "핸드셋", "통신장비"]
+  },
+  {
+    "industry": "유틸리티",
+    "minPER": 3,
+    "maxPER": 7,
+    "avgPER": 5,
+    "minPEG": 0.3,
+    "maxPEG": 0.6,
+    "avgPEG": 0.45,
+    "liabilityMultiplier": 1.4,
+    "subIndustries": [
+      "전기유틸리티",
+      "가스유틸리티",
+      "복합유틸리티",
+      "에너지장비및서비스",
+      "석유와가스"
+    ]
+  },
+  {
+    "industry": "철강/조선",
+    "minPER": 3,
+    "maxPER": 7,
+    "avgPER": 5,
+    "minPEG": 0.4,
+    "maxPEG": 0.7,
+    "avgPEG": 0.55,
+    "liabilityMultiplier": 1.5,
+    "subIndustries": ["철강", "조선", "비철금속", "우주항공과국방"]
+  },
+  {
+    "industry": "자동차",
+    "minPER": 3,
+    "maxPER": 5,
+    "avgPER": 4,
+    "minPEG": 0.5,
+    "maxPEG": 0.8,
+    "avgPEG": 0.65,
+    "liabilityMultiplier": 1.4,
+    "subIndustries": ["자동차", "자동차부품", "전기제품"]
+  },
+  {
+    "industry": "화학/소재",
+    "minPER": 5,
+    "maxPER": 9,
+    "avgPER": 7,
+    "minPEG": 0.5,
+    "maxPEG": 0.8,
+    "avgPEG": 0.65,
+    "liabilityMultiplier": 1.4,
+    "subIndustries": ["화학", "포장재", "종이와목재", "전기장비"]
+  },
+  {
+    "industry": "건설",
+    "minPER": 3,
+    "maxPER": 7,
+    "avgPER": 5,
+    "minPEG": 0.4,
+    "maxPEG": 0.7,
+    "avgPEG": 0.55,
+    "liabilityMultiplier": 1.5,
+    "subIndustries": ["건설", "건축제품", "건축자재", "기계", "운송인프라"]
+  },
+  {
+    "industry": "식음료",
+    "minPER": 8,
+    "maxPER": 12,
+    "avgPER": 10,
+    "minPEG": 0.6,
+    "maxPEG": 0.9,
+    "avgPEG": 0.75,
+    "liabilityMultiplier": 1.3,
+    "subIndustries": ["식품", "음료", "담배"]
+  },
+  {
+    "industry": "생활소비재",
+    "minPER": 6,
+    "maxPER": 10,
+    "avgPER": 8,
+    "minPEG": 0.5,
+    "maxPEG": 0.8,
+    "avgPEG": 0.65,
+    "liabilityMultiplier": 1.4,
+    "subIndustries": ["가정용기기와용품", "가정용품", "가구", "레저용장비와제품"]
+  },
+  {
+    "industry": "운송/물류",
+    "minPER": 5,
+    "maxPER": 9,
+    "avgPER": 7,
+    "minPEG": 0.4,
+    "maxPEG": 0.7,
+    "avgPEG": 0.55,
+    "liabilityMultiplier": 1.5,
+    "subIndustries": ["도로와철도운송", "항공사", "해운사", "항공화물운송과물류"]
+  },
+  {
+    "industry": "기타서비스",
+    "minPER": 6,
+    "maxPER": 10,
+    "avgPER": 8,
+    "minPEG": 0.5,
+    "maxPEG": 0.8,
+    "avgPEG": 0.65,
+    "liabilityMultiplier": 1.4,
+    "subIndustries": [
+      "호텔,레스토랑,레저",
+      "상업서비스와공급품",
+      "다각화된소비자서비스",
+      "교육서비스",
+      "복합기업"
+    ]
+  }
+]

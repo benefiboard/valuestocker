@@ -37,6 +37,7 @@ import {
   initialChecklist,
   ScoredChecklistItem,
   InvestmentRating,
+  FINANCIAL_COMPANIES,
 } from './ChecklistCalculate';
 import Link from 'next/link';
 
@@ -105,11 +106,20 @@ export default function ChecklistPage() {
       setFinancialData(checklistData);
 
       // 4. 체크리스트 계산 - 여기서 baseYearData는 이미 null 체크를 했으므로 안전
-      const checklist = calculateChecklist(checklistData, baseYearData, priceDataMap);
+      const checklist = calculateChecklist(
+        checklistData,
+        baseYearData,
+        priceDataMap,
+        selectedCompany.industry // 산업군 정보 전달
+      );
       setChecklistResults(checklist);
 
       // 5. 투자 등급 계산
-      const rating = calculateInvestmentRating(checklist);
+      const rating = calculateInvestmentRating(
+        checklist,
+        selectedCompany.stockCode,
+        selectedCompany.industry // 산업군 정보 전달
+      );
       setInvestmentRating(rating);
 
       setSuccess(true);
@@ -348,6 +358,23 @@ export default function ChecklistPage() {
                   </div>
                 </div>
 
+                {/* 금융사인 경우 안내 메시지 추가 */}
+                {FINANCIAL_COMPANIES.includes(stockPrice.code) && (
+                  <div className="bg-blue-50 p-4 rounded-xl mb-4">
+                    <div className="flex items-start">
+                      <Info className="h-5 w-5 text-blue-500 mr-2 mt-0.5" />
+                      <div>
+                        <p className="font-medium text-blue-800">금융회사 특화 평가</p>
+                        <p className="text-blue-700 text-sm mt-1">
+                          금융회사는 일반 기업과 다른 회계구조를 가지고 있어, 금융업 특성에 맞게
+                          평가되었습니다. 일부 지표(매출액, 영업이익률 등)는 평가에서
+                          제외되었습니다.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* 투자 등급 영역 */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
                   <div className="flex flex-col items-center justify-center">
@@ -427,20 +454,23 @@ export default function ChecklistPage() {
                       배
                     </p>
                   </div>
-                  <div className="bg-gray-50 p-4 rounded-xl">
-                    <p className="text-sm text-gray-500 mb-1">매출 성장률</p>
-                    <p className="text-xl font-bold">
-                      {financialData.revenueByYear && financialData.years.length >= 2
-                        ? formatNumber(
-                            ((financialData.revenueByYear[financialData.years[0]] || 0) /
-                              (financialData.revenueByYear[financialData.years[1]] || 1) -
-                              1) *
-                              100
-                          )
-                        : '-'}
-                      %
-                    </p>
-                  </div>
+                  {financialData.revenueByYear[financialData.years[0]] &&
+                    financialData.revenueByYear[financialData.years[1]] && (
+                      <div className="bg-gray-50 p-4 rounded-xl">
+                        <p className="text-sm text-gray-500 mb-1">매출 성장률</p>
+                        <p className="text-xl font-bold">
+                          {financialData.revenueByYear && financialData.years.length >= 2
+                            ? formatNumber(
+                                ((financialData.revenueByYear[financialData.years[0]] || 0) /
+                                  (financialData.revenueByYear[financialData.years[1]] || 1) -
+                                  1) *
+                                  100
+                              )
+                            : '-'}
+                          %
+                        </p>
+                      </div>
+                    )}
                   <div className="bg-gray-50 p-4 rounded-xl">
                     <p className="text-sm text-gray-500 mb-1">부채비율</p>
                     <p className="text-xl font-bold">

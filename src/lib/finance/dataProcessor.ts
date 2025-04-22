@@ -387,6 +387,8 @@ export function convertToChecklistData(data: any): FinancialDataCheckList {
   if (!data.years) {
     data.years = ['2024', '2023', '2022'];
   }
+
+  console.log('convertToChecklistData', data);
   return data as FinancialDataCheckList;
 }
 

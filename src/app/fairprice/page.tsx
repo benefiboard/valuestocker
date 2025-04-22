@@ -16,6 +16,7 @@ import {
 import { fetchStockPrices, fetchFinancialData, fetchStockPrice } from '@/lib/finance/apiService';
 import { extractFinancialData, convertToPriceData } from '@/lib/finance/dataProcessor';
 import { calculateAllPrices } from './PriceCalculate';
+import { getIndustryParameters } from '@/lib/industryData';
 
 export default function DartTotalPage() {
   // 상태 관리
@@ -36,11 +37,27 @@ export default function DartTotalPage() {
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<boolean>(false);
   const [isSrimExpanded, setIsSrimExpanded] = useState<boolean>(false);
+  const [industryParams, setIndustryParams] = useState({
+    avgPER: 10,
+    avgPEG: 1.0,
+    liabilityMultiplier: 1.2,
+  });
 
   // 회사 선택 핸들러
   const handleCompanySelect = (company: CompanyInfo) => {
     setCompanyName(company.companyName);
     setSelectedCompany(company);
+
+    // 산업군별 파라미터 가져오기
+    const params = getIndustryParameters(company.industry);
+    setIndustryParams(params);
+
+    // 산업 평균 PER로 초기화
+    setUserData((prev) => ({
+      ...prev,
+      targetPER: params.avgPER.toString(),
+      pegRatio: params.avgPEG.toString(),
+    }));
   };
 
   // 사용자 입력 핸들러
@@ -122,7 +139,8 @@ export default function DartTotalPage() {
         baseYearData,
         priceDataMap,
         userData,
-        latestPriceData
+        latestPriceData,
+        selectedCompany.industry
       );
       setCalculatedResults(results);
 
@@ -159,7 +177,8 @@ export default function DartTotalPage() {
         baseYearData,
         stockPrices,
         userData,
-        latestPrice
+        latestPrice,
+        selectedCompany?.industry || 'etc'
       );
       setCalculatedResults(results);
     } catch (error) {
@@ -236,13 +255,14 @@ export default function DartTotalPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  적정 PER 배수
+                  적정 PER 배수 (산업 평균: {industryParams.avgPER})
                 </label>
                 <input
                   type="number"
                   name="targetPER"
                   value={userData.targetPER}
                   onChange={handleInputChange}
+                  placeholder={`산업 평균: ${industryParams.avgPER}`}
                   className="w-full p-2 border rounded"
                 />
               </div>
@@ -309,7 +329,12 @@ export default function DartTotalPage() {
               </div>
               <div>
                 <p className="text-gray-600 text-sm">적정 PER 배수</p>
-                <p className="font-medium">{formatNumber(Number(userData.targetPER))}</p>
+                <p className="font-medium">
+                  {formatNumber(Number(userData.targetPER))}
+                  {Number(userData.targetPER) === industryParams.avgPER && (
+                    <span className="text-xs text-gray-500 ml-1">(산업 평균)</span>
+                  )}
+                </p>
               </div>
             </div>
           </div>

@@ -2,6 +2,86 @@
 
 import { ChecklistItem, FinancialDataCheckList, StockPrice } from '@/lib/finance/types';
 
+// 금융회사 종목코드 목록
+export const FINANCIAL_COMPANIES = [
+  // 증권사
+  '001270',
+  '001290',
+  '001500',
+  '001510',
+  '001720',
+  '001750',
+  '003460',
+  '003470',
+  '003530',
+  '003540',
+  '005940',
+  '006800',
+  '008560',
+  '016360',
+  '016610',
+  '030210',
+  '039490',
+  '078020',
+  '190650',
+  // 보험사
+  '000370',
+  '000400',
+  '000540',
+  '001450',
+  '003690',
+  '005830',
+  '031210',
+  '032830',
+  '088350',
+  '082640',
+  '085620',
+  '000810',
+  // 금융지주사
+  '071050',
+  '086790',
+  '105560',
+  '138040',
+  '138930',
+  '139130',
+  '175330',
+  '316140',
+  '055550',
+  // 은행 관련
+  '006220',
+  '024110',
+  '323410',
+];
+
+// 금융회사 평가에서 제외할 지표 목록
+export const EXCLUDED_ITEMS_FOR_FINANCIALS = [
+  '매출액 성장률',
+  '영업이익률',
+  '영업이익 성장률',
+  '부채비율',
+  '유동비율',
+  '이자보상배율',
+  '장기부채 대비 순이익',
+  '현금회전일수',
+  '이익잉여금 vs 당좌자산 증가율',
+  'FCF 비율',
+  '매출총이익률',
+];
+
+export const INDUSTRY_GROUPS = {
+  HIGH_GROWTH: ['IT/소프트웨어', '바이오/제약', '인터넷/플랫폼', '반도체'],
+  STABLE: ['유틸리티', '통신', '금융', '식음료', '생활소비재'],
+  CYCLICAL: ['자동차', '철강/조선', '화학/소재', '건설', '운송/물류'],
+  CONSUMER: ['유통/소매', '기타서비스'],
+};
+
+// 산업군별 제외 항목 정의
+export const EXCLUDED_ITEMS_BY_INDUSTRY: { [key: string]: string[] } = {
+  금융: EXCLUDED_ITEMS_FOR_FINANCIALS,
+  유틸리티: ['매출총이익률', '현금회전일수'],
+  통신: ['매출총이익률'],
+};
+
 // 수정된 체크리스트 타입 정의 (점수 시스템 추가)
 export interface ScoredChecklistItem extends ChecklistItem {
   score: number; // 0-10 점수
@@ -222,14 +302,26 @@ export const initialChecklist: ChecklistItem[] = [
 ];
 
 // 새로운 점수 계산 함수 추가
-const calculatePERScore = (per: number): number => {
+const calculatePERScore = (per: number, isFinancial: boolean = false): number => {
   if (per <= 0) return 0; // 적자기업 (과락)
-  if (per <= 8) return 10; // 매우 저평가
-  if (per <= 15) return 9; // 저평가
-  if (per <= 20) return 8; // 적정가
-  if (per <= 30) return 6; // 약간 고평가
-  if (per <= 50) return 3; // 고평가
-  return 1; // 매우 고평가
+
+  // 금융사의 경우 다른 기준 적용
+  if (isFinancial) {
+    if (per <= 6) return 10; // 금융사는 더 낮은 PER이 정상
+    if (per <= 10) return 9;
+    if (per <= 12) return 8;
+    if (per <= 15) return 7;
+    if (per <= 20) return 5;
+    return 3;
+  } else {
+    // 기존 일반 기업 기준
+    if (per <= 8) return 10;
+    if (per <= 15) return 9;
+    if (per <= 20) return 8;
+    if (per <= 30) return 6;
+    if (per <= 50) return 3;
+    return 1;
+  }
 };
 
 const calculateRevenueGrowthScore = (growthRate: number): number => {
@@ -287,13 +379,177 @@ const calculateNetIncomeGrowthScore = (growthRate: number): number => {
   return 4; // 미흡
 };
 
+// 산업군별 임계값 가져오는 함수
+const getIndustryThresholds = (industry: string) => {
+  // 기본값 설정
+  const thresholds = {
+    per: 15, // PER 기준
+    revenueGrowth: 10, // 매출 성장률 기준 (%)
+    operatingMargin: 10, // 영업이익률 기준 (%)
+    epsGrowth: 10, // EPS 성장률 기준 (%)
+    netIncomeGrowth: 20, // 순이익 증가율 기준 하한 (%)
+    netIncomeGrowthMax: 50, // 순이익 증가율 기준 상한 (%)
+    debtRatio: 100, // 부채비율 기준 (%)
+    currentRatio: 150, // 유동비율 기준 (%)
+    interestCoverageRatio: 2, // 이자보상배율 기준
+    roe: 15, // ROE 기준 (%)
+    pbr: 1.2, // PBR 기준
+    grossProfitMargin: 40, // 매출총이익률 기준 (%)
+    bpsGrowth: 7.2, // BPS 성장률 기준 (%)
+    fcfRatio: 7, // FCF 비율 기준 (%)
+    cashCycleDays: 120, // 현금회전일수 기준 (일)
+  };
+
+  // 산업군별 기준 조정
+  switch (industry) {
+    case 'IT/소프트웨어':
+      thresholds.per = 16;
+      thresholds.revenueGrowth = 15;
+      thresholds.operatingMargin = 15;
+      thresholds.epsGrowth = 15;
+      thresholds.interestCoverageRatio = 1.5;
+      break;
+
+    case '바이오/제약':
+      thresholds.per = 18.5;
+      thresholds.revenueGrowth = 15;
+      thresholds.operatingMargin = 15;
+      thresholds.epsGrowth = 15;
+      thresholds.debtRatio = 120;
+      break;
+
+    case '유틸리티':
+      thresholds.per = 5;
+      thresholds.revenueGrowth = 5;
+      thresholds.operatingMargin = 8;
+      thresholds.debtRatio = 140;
+      thresholds.roe = 10;
+      break;
+
+    case '통신':
+      thresholds.per = 6;
+      thresholds.revenueGrowth = 5;
+      thresholds.operatingMargin = 8;
+      thresholds.debtRatio = 140;
+      thresholds.roe = 10;
+      break;
+
+    case '자동차':
+      thresholds.per = 4;
+      thresholds.revenueGrowth = 7;
+      thresholds.operatingMargin = 7;
+      thresholds.interestCoverageRatio = 3;
+      thresholds.debtRatio = 120;
+      break;
+
+    case '철강/조선':
+      thresholds.per = 5;
+      thresholds.revenueGrowth = 7;
+      thresholds.operatingMargin = 7;
+      thresholds.interestCoverageRatio = 3;
+      thresholds.debtRatio = 120;
+      break;
+
+    case '화학/소재':
+      thresholds.per = 7;
+      thresholds.revenueGrowth = 7;
+      thresholds.operatingMargin = 7;
+      thresholds.interestCoverageRatio = 3;
+      thresholds.debtRatio = 120;
+      break;
+
+    case '유통/소매':
+      thresholds.per = 9.5;
+      thresholds.grossProfitMargin = 30;
+      thresholds.cashCycleDays = 90;
+      break;
+
+    case '금융':
+      thresholds.per = 5;
+      thresholds.roe = 8;
+      thresholds.pbr = 1.0;
+      thresholds.debtRatio = 160;
+      break;
+
+    default:
+    // 기본 산업군은 기본값 사용
+  }
+
+  return thresholds;
+};
+
 // 체크리스트 계산 함수
 export const calculateChecklist = (
   financialData: FinancialDataCheckList,
   stockPrice: StockPrice,
-  priceDataMap?: Record<string, StockPrice>
+  priceDataMap?: Record<string, StockPrice>,
+  industry: string = 'etc'
 ): ScoredChecklistItem[] => {
-  const results = [...initialChecklist] as ScoredChecklistItem[];
+  // calculateChecklist 함수 내부에 추가
+  // 산업군별 가중치 조정 함수
+  const getItemWeight = (item: ScoredChecklistItem, industry: string): number => {
+    // 기본 가중치 = 1.0
+    let weight = 1.0;
+
+    // 산업군 그룹에 따라 가중치 조정
+    if (INDUSTRY_GROUPS.HIGH_GROWTH.includes(industry)) {
+      // 고성장/기술 산업군 가중치
+      if (['매출액 성장률', 'EPS 성장률'].includes(item.title)) {
+        weight = 1.3;
+      } else if (['영업이익률'].includes(item.title)) {
+        weight = 1.2;
+      } else if (['부채비율'].includes(item.title)) {
+        weight = 0.8;
+      }
+    } else if (INDUSTRY_GROUPS.STABLE.includes(industry)) {
+      // 안정/유틸리티 산업군 가중치
+      if (['ROE (자기자본이익률)', 'FCF 비율'].includes(item.title)) {
+        weight = 1.3;
+      } else if (['매출액 성장률', 'EPS 성장률', '영업이익 성장률'].includes(item.title)) {
+        weight = 0.7;
+      }
+    } else if (INDUSTRY_GROUPS.CYCLICAL.includes(industry)) {
+      // 경기순환 산업군 가중치
+      if (['PBR (주가순자산비율)'].includes(item.title)) {
+        weight = 1.3;
+      } else if (['현금회전일수'].includes(item.title)) {
+        weight = 1.2;
+      } else if (['영업이익률'].includes(item.title)) {
+        weight = 1.1;
+      }
+    } else if (INDUSTRY_GROUPS.CONSUMER.includes(industry)) {
+      // 소비자 서비스 산업군 가중치
+      if (['매출총이익률'].includes(item.title)) {
+        weight = 1.3;
+      } else if (['현금회전일수'].includes(item.title)) {
+        weight = 1.2;
+      }
+    }
+
+    return weight;
+  };
+
+  // 금융회사 여부 확인
+  const isFinancialCompany = FINANCIAL_COMPANIES.includes(stockPrice.code);
+
+  // 임계값 가져오기
+  const thresholds = getIndustryThresholds(industry);
+
+  // 체크리스트 초기화
+  let results = [...initialChecklist] as ScoredChecklistItem[];
+
+  const excludedItems = EXCLUDED_ITEMS_BY_INDUSTRY[industry] || [];
+  if (excludedItems.length > 0) {
+    console.log(`${industry} 산업군 특화 평가: 일부 지표 제외 적용`);
+    results = results.filter((item) => !excludedItems.includes(item.title));
+  }
+
+  // 금융회사인 경우 특정 지표 제외
+  if (isFinancialCompany) {
+    console.log(`금융회사 감지: ${stockPrice.name} (${stockPrice.code})`);
+    results = results.filter((item) => !EXCLUDED_ITEMS_FOR_FINANCIALS.includes(item.title));
+  }
+
   const n = stockPrice.sharesOutstanding; // 발행주식수
   const currentPrice = stockPrice.price; // 현재 주가
 
@@ -524,6 +780,7 @@ export const calculateChecklist = (
 
   // 이제 각 체크리스트 항목을 계산하여 결과 업데이트
   results.forEach((item, index) => {
+    const isFinancial = isFinancialCompany;
     // 기본값 설정
     item.score = 0;
     item.maxScore = 10;
@@ -531,12 +788,51 @@ export const calculateChecklist = (
 
     switch (item.title) {
       // 핵심 지표
+      // case 'PER': 블록을 찾아 전체 교체
       case 'PER':
         item.actualValue = currentPer;
-        const perScore = calculatePERScore(currentPer);
-        item.score = perScore;
-        item.isPassed = currentPer > 0.5 && currentPer < 15;
-        item.isFailCriteria = perScore === 0;
+
+        // 산업군별 차별화된 PER 평가
+        if (currentPer <= 0) {
+          item.score = 0; // 적자기업 (과락)
+          item.isPassed = false;
+        } else if (industry === '금융') {
+          // 금융업 특화 PER 평가
+          if (currentPer < thresholds.per * 0.8) item.score = 10;
+          else if (currentPer < thresholds.per) item.score = 9;
+          else if (currentPer < thresholds.per * 1.2) item.score = 8;
+          else if (currentPer < thresholds.per * 1.5) item.score = 6;
+          else if (currentPer < thresholds.per * 2) item.score = 4;
+          else item.score = 2;
+
+          item.isPassed = currentPer > 0.5 && currentPer < thresholds.per * 1.2;
+        } else if (INDUSTRY_GROUPS.HIGH_GROWTH.includes(industry)) {
+          // 고성장 산업 PER 평가
+          if (currentPer < thresholds.per * 0.7) item.score = 10;
+          else if (currentPer < thresholds.per) item.score = 9;
+          else if (currentPer < thresholds.per * 1.3) item.score = 7;
+          else if (currentPer < thresholds.per * 1.6) item.score = 5;
+          else if (currentPer < thresholds.per * 2) item.score = 3;
+          else item.score = 1;
+
+          item.isPassed = currentPer > 0.5 && currentPer < thresholds.per;
+        } else {
+          // 일반 산업 PER 평가
+          if (currentPer < thresholds.per * 0.6) item.score = 10;
+          else if (currentPer < thresholds.per * 0.8) item.score = 9;
+          else if (currentPer < thresholds.per) item.score = 8;
+          else if (currentPer < thresholds.per * 1.3) item.score = 6;
+          else if (currentPer < thresholds.per * 1.7) item.score = 3;
+          else item.score = 1;
+
+          item.isPassed = currentPer > 0.5 && currentPer < thresholds.per;
+        }
+
+        // 과락 여부 설정
+        item.isFailCriteria = item.score === 0;
+
+        // targetValue 업데이트
+        item.targetValue = `0.5 < PER < ${thresholds.per}`;
         break;
 
       case '매출액 성장률':
@@ -547,14 +843,56 @@ export const calculateChecklist = (
         item.isFailCriteria = revenueGrowthScore === 0;
         break;
 
+      // case '영업이익률': 블록을 찾아 전체 교체
       case '영업이익률':
         item.actualValue = avgOpMargin;
-        const opMarginScore = calculateOperatingMarginScore(avgOpMargin);
-        item.score = opMarginScore;
-        item.isPassed = avgOpMargin > 10 || (avgOpMargin > 0 && previousOperatingIncome < 0); // 10% 이상 또는 흑자전환
+
+        // 산업군별 영업이익률 평가
+        if (avgOpMargin < 0 && !(avgOpMargin > 0 && previousOperatingIncome < 0)) {
+          item.score = 0; // 적자 (과락)
+          item.isPassed = false;
+        } else if (INDUSTRY_GROUPS.HIGH_GROWTH.includes(industry)) {
+          // 고성장 산업 영업이익률 기준
+          if (avgOpMargin >= thresholds.operatingMargin * 1.5) item.score = 10;
+          else if (avgOpMargin >= thresholds.operatingMargin * 1.2) item.score = 9;
+          else if (avgOpMargin >= thresholds.operatingMargin) item.score = 8;
+          else if (avgOpMargin >= thresholds.operatingMargin * 0.8) item.score = 6;
+          else if (avgOpMargin >= thresholds.operatingMargin * 0.5) item.score = 4;
+          else item.score = 2;
+
+          item.isPassed =
+            avgOpMargin > thresholds.operatingMargin ||
+            (avgOpMargin > 0 && previousOperatingIncome < 0);
+        } else if (INDUSTRY_GROUPS.STABLE.includes(industry)) {
+          // 안정 산업 영업이익률 기준
+          if (avgOpMargin >= thresholds.operatingMargin * 1.3) item.score = 10;
+          else if (avgOpMargin >= thresholds.operatingMargin) item.score = 9;
+          else if (avgOpMargin >= thresholds.operatingMargin * 0.8) item.score = 7;
+          else if (avgOpMargin >= thresholds.operatingMargin * 0.6) item.score = 5;
+          else item.score = 3;
+
+          item.isPassed =
+            avgOpMargin > thresholds.operatingMargin * 0.8 ||
+            (avgOpMargin > 0 && previousOperatingIncome < 0);
+        } else {
+          // 일반 산업 영업이익률 기준
+          if (avgOpMargin >= thresholds.operatingMargin * 1.5) item.score = 10;
+          else if (avgOpMargin >= thresholds.operatingMargin * 1.2) item.score = 9;
+          else if (avgOpMargin >= thresholds.operatingMargin) item.score = 8;
+          else if (avgOpMargin >= thresholds.operatingMargin * 0.7) item.score = 6;
+          else if (avgOpMargin >= thresholds.operatingMargin * 0.5) item.score = 5;
+          else item.score = 3;
+
+          item.isPassed =
+            avgOpMargin > thresholds.operatingMargin ||
+            (avgOpMargin > 0 && previousOperatingIncome < 0);
+        }
+
         // 흑자전환이면 과락에서 제외
-        item.isFailCriteria =
-          opMarginScore === 0 && !(avgOpMargin > 0 && previousOperatingIncome < 0); // 흑자전환이면 과락에서 제외
+        item.isFailCriteria = item.score === 0 && !(avgOpMargin > 0 && previousOperatingIncome < 0);
+
+        // targetValue 업데이트
+        item.targetValue = `> ${thresholds.operatingMargin}%`;
         break;
 
       case '영업이익 성장률':
@@ -591,8 +929,17 @@ export const calculateChecklist = (
         const maxPer = Math.max(currentPer, previousPer, twoYearsAgoPer);
         item.actualValue = currentPer;
         const maxPerRatio = maxPer > 0 ? currentPer / maxPer : 0;
-        item.score = maxPerRatio < 0.4 ? 10 : maxPerRatio < 0.6 ? 7 : maxPerRatio < 0.8 ? 4 : 2;
-        item.isPassed = currentPer < maxPer * 0.4;
+
+        if (isFinancial) {
+          // 금융주는 PER 변동성이 작아 기준 완화
+          item.score = maxPerRatio < 0.6 ? 10 : maxPerRatio < 0.75 ? 8 : maxPerRatio < 0.9 ? 6 : 4;
+          item.isPassed = currentPer < maxPer * 0.7;
+          item.targetValue = '< 3년 최고 PER * 0.7'; // 금융주용 기준 수정
+        } else {
+          // 기존 일반 기업 기준
+          item.score = maxPerRatio < 0.4 ? 10 : maxPerRatio < 0.6 ? 7 : maxPerRatio < 0.8 ? 4 : 2;
+          item.isPassed = currentPer < maxPer * 0.4;
+        }
         break;
 
       case 'PER < 3년 평균 PER':
@@ -601,30 +948,87 @@ export const calculateChecklist = (
           validPers.length > 0 ? validPers.reduce((a, b) => a + b, 0) / validPers.length : 0;
         item.actualValue = currentPer;
         const avgPerRatio = avgPer > 0 ? currentPer / avgPer : 0;
-        item.score = avgPerRatio < 0.8 ? 10 : avgPerRatio < 1 ? 8 : avgPerRatio < 1.2 ? 5 : 2;
-        item.isPassed = currentPer < avgPer;
+
+        if (isFinancial) {
+          // 금융주는 PER 등락이 작아 기준 조정
+          item.score = avgPerRatio < 0.95 ? 10 : avgPerRatio < 1.1 ? 8 : avgPerRatio < 1.2 ? 6 : 4;
+          item.isPassed = currentPer < avgPer * 1.1; // 10% 이내면 양호로 간주
+          item.targetValue = '< 3년 평균 PER * 1.1'; // 금융주용 기준 수정
+        } else {
+          // 기존 일반 기업 기준
+          item.score = avgPerRatio < 0.8 ? 10 : avgPerRatio < 1 ? 8 : avgPerRatio < 1.2 ? 5 : 2;
+          item.isPassed = currentPer < avgPer;
+        }
         break;
 
       // 세부 지표 - 자산 가치 관련
       case 'PBR (주가순자산비율)':
         item.actualValue = pbr;
-        item.score = pbr < 1 ? 10 : pbr < 1.2 ? 8 : pbr < 1.5 ? 6 : pbr < 2 ? 4 : 2;
-        item.isPassed = pbr < 1.2;
+
+        // 금융사는 기준 다르게 적용
+        if (isFinancial) {
+          item.score =
+            pbr < 0.7
+              ? 10 // 금융사는 더 낮은 PBR이 정상
+              : pbr < 1.0
+              ? 8
+              : pbr < 1.2
+              ? 6
+              : pbr < 1.5
+              ? 4
+              : 2;
+
+          // 금융사는 1.0 미만이면 양호
+          item.isPassed = pbr < 1.0;
+
+          // 금융사의 경우 targetValue 수정
+          item.targetValue = '< 1.0';
+        } else {
+          // 기존 일반 기업 기준
+          item.score = pbr < 1 ? 10 : pbr < 1.2 ? 8 : pbr < 1.5 ? 6 : pbr < 2 ? 4 : 2;
+
+          // 일반 기업은 1.2 미만
+          item.isPassed = pbr < 1.2;
+        }
         break;
 
       case 'BPS 성장률':
         item.actualValue = bpsGrowthRate * 100;
-        item.score =
-          bpsGrowthRate > 0.15
-            ? 10
-            : bpsGrowthRate > 0.1
-            ? 8
-            : bpsGrowthRate > 0.072
-            ? 6
-            : bpsGrowthRate > 0.05
-            ? 4
-            : 2;
-        item.isPassed = bpsGrowthRate > 0.072; // 7.2% 이상
+
+        if (isFinancial) {
+          // 금융주는 낮은 BPS 성장률도 정상적임
+          item.score =
+            bpsGrowthRate > 0.1
+              ? 10 // 10% 이상 (탁월)
+              : bpsGrowthRate > 0.07
+              ? 9 // 7% 이상 (우수)
+              : bpsGrowthRate > 0.05
+              ? 8 // 5% 이상 (양호)
+              : bpsGrowthRate > 0.03
+              ? 7 // 3% 이상 (보통)
+              : bpsGrowthRate > 0
+              ? 5
+              : 2; // 0% 이상 (미흡)
+
+          // 금융주는 3% 이상이면 통과
+          item.isPassed = bpsGrowthRate > 0.03;
+          // 금융주용 기준값 수정
+          item.targetValue = '> 3%';
+        } else {
+          // 기존 일반 기업 기준
+          item.score =
+            bpsGrowthRate > 0.15
+              ? 10
+              : bpsGrowthRate > 0.1
+              ? 8
+              : bpsGrowthRate > 0.072
+              ? 6
+              : bpsGrowthRate > 0.05
+              ? 4
+              : 2;
+
+          item.isPassed = bpsGrowthRate > 0.072; // 7.2% 이상
+        }
         break;
 
       // 세부 지표 - 재무 건전성
@@ -679,19 +1083,43 @@ export const calculateChecklist = (
       // 세부 지표 - 수익성 및 효율성
       case 'ROE (자기자본이익률)':
         item.actualValue = avgRoe;
-        item.score =
-          avgRoe > 20
-            ? 10
-            : avgRoe > 15
-            ? 8
-            : avgRoe > 10
-            ? 6
-            : avgRoe > 5
-            ? 4
-            : avgRoe > 0
-            ? 2
-            : 0;
-        item.isPassed = avgRoe > 15;
+
+        // 금융사는 기준 다르게 적용
+        if (isFinancial) {
+          item.score =
+            avgRoe > 15
+              ? 10 // 금융사 탁월
+              : avgRoe > 10
+              ? 9 // 금융사 우수
+              : avgRoe > 8
+              ? 8 // 금융사 양호
+              : avgRoe > 6
+              ? 7 // 금융사 보통
+              : avgRoe > 0
+              ? 4
+              : 0; // 금융사 미흡
+
+          // 금융사는 8% 이상이면 양호
+          item.isPassed = avgRoe > 8;
+        } else {
+          // 기존 일반 기업 기준
+          item.score =
+            avgRoe > 20
+              ? 10
+              : avgRoe > 15
+              ? 8
+              : avgRoe > 10
+              ? 6
+              : avgRoe > 5
+              ? 4
+              : avgRoe > 0
+              ? 2
+              : 0;
+
+          // 일반 기업은 15% 이상
+          item.isPassed = avgRoe > 15;
+        }
+
         item.isFailCriteria = avgRoe < 0;
         break;
 
@@ -770,6 +1198,20 @@ export const calculateChecklist = (
     }
   });
 
+  // 산업군별 가중치 적용
+  results.forEach((item) => {
+    const weight = getItemWeight(item, industry);
+    if (weight !== 1.0) {
+      console.log(`항목 "${item.title}" 가중치 조정: ×${weight}`);
+
+      // 가중치 적용 (최대 점수 넘지 않도록)
+      const weightedScore = Math.min(item.score * weight, item.maxScore);
+
+      // 소수점 첫째자리까지 반올림
+      item.score = Math.round(weightedScore * 10) / 10;
+    }
+  });
+
   return results;
 };
 
@@ -788,8 +1230,39 @@ export interface InvestmentRating {
 }
 
 export const calculateInvestmentRating = (
-  checklistResults: ScoredChecklistItem[]
+  checklistResults: ScoredChecklistItem[],
+  stockCode?: string,
+  industry: string = 'etc'
 ): InvestmentRating => {
+  // 금융회사 여부 확인
+  const isFinancialCompany = stockCode ? FINANCIAL_COMPANIES.includes(stockCode) : false;
+
+  // 산업군별 핵심 지표 정의
+  const getCoreItemTitles = (industry: string): string[] => {
+    if (INDUSTRY_GROUPS.HIGH_GROWTH.includes(industry)) {
+      return ['PER', '매출액 성장률', '영업이익률', 'EPS 성장률', '순이익 증가율'];
+    } else if (INDUSTRY_GROUPS.STABLE.includes(industry)) {
+      return ['PER', 'ROE (자기자본이익률)', '부채비율', 'FCF 비율', '순이익 증가율'];
+    } else if (INDUSTRY_GROUPS.CYCLICAL.includes(industry)) {
+      return ['PER', 'PBR (주가순자산비율)', '영업이익 성장률', '현금회전일수', '순이익 증가율'];
+    } else if (INDUSTRY_GROUPS.CONSUMER.includes(industry)) {
+      return ['PER', '매출총이익률', '매출액 성장률', '현금회전일수', '순이익 증가율'];
+    } else {
+      // 기본 핵심 지표
+      return [
+        'PER',
+        '매출액 성장률',
+        '영업이익률',
+        '영업이익 성장률',
+        'EPS 성장률',
+        '순이익 증가율',
+      ];
+    }
+  };
+
+  // 핵심 지표 제목 목록
+  const coreItemTitles = getCoreItemTitles(industry);
+
   if (checklistResults.length === 0) {
     return {
       score: 0,
@@ -806,8 +1279,8 @@ export const calculateInvestmentRating = (
   }
 
   // 핵심 지표와 세부 지표 분리
-  const coreItems = checklistResults.filter((item) => item.category === '핵심 지표');
-  const detailedItems = checklistResults.filter((item) => item.category !== '핵심 지표');
+  const coreItems = checklistResults.filter((item) => coreItemTitles.includes(item.title));
+  const detailedItems = checklistResults.filter((item) => !coreItemTitles.includes(item.title));
 
   // 핵심 지표 점수 계산 (핵심 지표의 평균)
   const coreItemsTotalScore = coreItems.reduce((sum, item) => sum + item.score, 0);
@@ -878,8 +1351,13 @@ export const calculateInvestmentRating = (
     }
   }
 
+  // 금융회사인 경우 등급 설명 조정
+  if (isFinancialCompany && grade) {
+    description += ' (금융회사에 최적화된 평가 기준 적용)';
+  }
+
   return {
-    score: Math.round(totalScore * 10) / 10, // 소수점 첫째자리까지 표시
+    score: Math.round(totalScore * 10) / 10,
     maxScore: maxPossibleScore,
     percentage: Math.round(percentage),
     grade,

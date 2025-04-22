@@ -9,6 +9,7 @@ import {
   StockPrice,
   UserData,
 } from '@/lib/finance/types';
+import { getIndustryParameters } from '@/lib/industryData';
 
 // 데이터 신뢰성 점수 계산 함수
 export const calculateDataReliability = (
@@ -142,7 +143,8 @@ export const calculateAllPrices = (
   stockData: StockPrice,
   priceDataMap?: Record<string, StockPrice>,
   userData?: UserData,
-  latestPriceData?: StockPrice | null
+  latestPriceData?: StockPrice | null,
+  industry: string = 'etc'
 ): CalculatedResults => {
   console.log('===== 적정가 계산 입력 데이터 =====');
   console.log('주식 데이터:', {
@@ -151,6 +153,9 @@ export const calculateAllPrices = (
     price: stockData.price,
     sharesOutstanding: stockData.sharesOutstanding,
   });
+
+  const { avgPER, avgPEG, liabilityMultiplier } = getIndustryParameters(industry);
+  console.log(`산업군(${industry}) 파라미터:`, { avgPER, avgPEG, liabilityMultiplier });
 
   // 계산에 사용할 주가 데이터
   const stockPricesForCalc = priceDataMap || {};
@@ -330,8 +335,27 @@ export const calculateAllPrices = (
   //peg계산법
   let growthRate = 0;
 
-  // 최근 2년간의 EPS 데이터가 있을 경우 성장률 계산
+  // 3년 데이터가 모두 있다면 CAGR 우선 계산
   if (
+    financialData.years.length >= 3 &&
+    financialData.epsByYear[financialData.years[0]] &&
+    financialData.epsByYear[financialData.years[2]]
+  ) {
+    const latestEps = financialData.epsByYear[financialData.years[0]];
+    const oldestEps = financialData.epsByYear[financialData.years[2]];
+
+    // 실제 연도 간격 계산 (기본값 2년)
+    const yearDiff = 2;
+
+    // N년간의 CAGR 계산
+    if (oldestEps > 0) {
+      growthRate = (Math.pow(latestEps / oldestEps, 1 / yearDiff) - 1) * 100;
+    }
+
+    console.log(`${yearDiff}년 CAGR 성장률:`, growthRate.toFixed(2) + '%');
+  }
+  // 3년 데이터가 없거나 계산 실패 시 1년 성장률 사용
+  else if (
     financialData.years.length >= 2 &&
     financialData.epsByYear[financialData.years[0]] &&
     financialData.epsByYear[financialData.years[1]]
@@ -347,41 +371,6 @@ export const calculateAllPrices = (
     console.log('1년 EPS 성장률:', growthRate.toFixed(2) + '%');
   }
 
-  // 또는 3년 CAGR 계산 (데이터가 충분하다면)
-  else if (
-    financialData.years.length >= 3 &&
-    financialData.epsByYear[financialData.years[0]] &&
-    financialData.epsByYear[financialData.years[2]]
-  ) {
-    const latestEps = financialData.epsByYear[financialData.years[0]];
-    const oldestEps = financialData.epsByYear[financialData.years[2]];
-
-    // 2년간의 CAGR 계산
-    if (oldestEps > 0) {
-      growthRate = (Math.pow(latestEps / oldestEps, 1 / 2) - 1) * 100;
-    }
-
-    console.log('2년 CAGR 성장률:', growthRate.toFixed(2) + '%');
-  }
-
-  // 성장률이 음수인 경우 또는 계산이 불가능한 경우
-  if (growthRate <= 0) {
-    // 대안: 당기순이익 성장률 사용
-    if (
-      financialData.years.length >= 2 &&
-      financialData.netIncomeByYear[financialData.years[0]] &&
-      financialData.netIncomeByYear[financialData.years[1]]
-    ) {
-      const latestNetIncome = financialData.netIncomeByYear[financialData.years[0]];
-      const prevYearNetIncome = financialData.netIncomeByYear[financialData.years[1]];
-
-      if (prevYearNetIncome > 0) {
-        growthRate = (latestNetIncome / prevYearNetIncome - 1) * 100;
-        console.log('당기순이익 기반 성장률:', growthRate.toFixed(2) + '%');
-      }
-    }
-  }
-
   // 여전히 성장률이 음수 또는 0인 경우, 산업 평균 또는 안전한 기본값 사용
   if (growthRate <= 0) {
     growthRate = 5; // 기본 성장률 5% 가정
@@ -389,11 +378,19 @@ export const calculateAllPrices = (
   }
 
   // PEG 기반 적정 PER 계산
-  const pegRatio = Number(userInputs.pegRatio) || 1.0; // 사용자 입력값 또는 기본값 1.0
+  const pegRatio =
+    userInputs.pegRatio && Number(userInputs.pegRatio) > 0
+      ? Number(userInputs.pegRatio) // 사용자 입력값 있으면 사용
+      : avgPEG; // 없으면 산업 평균 PEG 사용
+
+  // 로그 추가
+  console.log(`최종 PEG 비율 (${userInputs.pegRatio ? '사용자 입력값' : '산업군 평균'})`, pegRatio);
+
   let pegBasedPER = growthRate * pegRatio;
 
   // PER 값의 범위 제한 (너무 낮거나 높은 값 방지)
-  pegBasedPER = Math.max(5, Math.min(50, pegBasedPER)); // 5~50 범위로 제한
+  const originalPegBasedPER = pegBasedPER;
+  pegBasedPER = Math.max(5, Math.min(30, pegBasedPER)); // 5~30 범위로 제한
 
   console.log('PEG 비율:', pegRatio);
   console.log('성장률:', growthRate.toFixed(2) + '%');
@@ -431,15 +428,24 @@ export const calculateAllPrices = (
   console.log('1. EPS × 평균 PER:', calculatedResults.epsPer);
 
   // 2. 당기순이익 기반 PER 모델
-  calculatedResults.controllingShareHolder = (financialData.netIncome * targetPer) / n;
-  console.log('2. 당기순이익 기반 PER 모델:', calculatedResults.controllingShareHolder);
+  const finalTargetPER =
+    userData?.targetPER && Number(userData.targetPER) > 0 ? Number(userData.targetPER) : avgPER;
+
+  calculatedResults.controllingShareHolder = (financialData.netIncome * finalTargetPER) / n;
+  console.log(
+    '2. 당기순이익 기반 PER 모델 (산업군 평균 PER 적용):',
+    calculatedResults.controllingShareHolder
+  );
 
   // 3-5. 3가지 지표 비교 방식
   calculatedResults.threeIndicatorsBps = bps; // BPS에는 곱하기 1
   console.log('3. BPS 기준(P₁):', calculatedResults.threeIndicatorsBps);
 
-  calculatedResults.threeIndicatorsEps = averageEps * 10;
-  console.log('4. EPS 기준(P₂):', calculatedResults.threeIndicatorsEps);
+  calculatedResults.threeIndicatorsEps = averageEps * avgPER; // 10 대신 산업 평균 PER 사용
+  console.log(
+    `4. EPS 기준(P₂) (산업군 평균 PER ${avgPER} 적용):`,
+    calculatedResults.threeIndicatorsEps
+  );
 
   calculatedResults.threeIndicatorsRoeEps = (averageRoe / 100) * 100 * averageEps;
   console.log('5. ROE×EPS 기준(P₃):', calculatedResults.threeIndicatorsRoeEps);
@@ -450,9 +456,9 @@ export const calculateAllPrices = (
 
   const va =
     financialData.currentAssets -
-    financialData.currentLiabilities * 1.2 +
+    financialData.currentLiabilities * liabilityMultiplier +
     financialData.investmentAssets;
-  console.log('비사업가치(Va):', va);
+  console.log(`비사업가치(Va) (유동부채 승수 ${liabilityMultiplier} 적용):`, va);
 
   calculatedResults.yamaguchi = (vb + va - financialData.nonCurrentLiabilities) / n;
   console.log('6. 야마구치 요해이 공식:', calculatedResults.yamaguchi);
