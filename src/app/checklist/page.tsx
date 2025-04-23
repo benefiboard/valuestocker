@@ -28,6 +28,7 @@ import {
   CheckSquare,
   Award,
   AlertTriangle,
+  Search as SearchIcon,
 } from 'lucide-react';
 import {
   calculateChecklist,
@@ -57,6 +58,7 @@ export default function ChecklistPage() {
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<boolean>(false);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const [showSearchForm, setShowSearchForm] = useState<boolean>(true);
 
   // 체크리스트 결과 상태
   const [checklistResults, setChecklistResults] = useState<ScoredChecklistItem[]>([]);
@@ -128,6 +130,7 @@ export default function ChecklistPage() {
       setInvestmentRating(rating);
 
       setSuccess(true);
+      setShowSearchForm(false); // 검색 결과가 표시되면 검색 폼 숨기기
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
@@ -182,22 +185,29 @@ export default function ChecklistPage() {
   // 등급에 따른 배경색 결정
   const getGradeColor = (grade: string) => {
     switch (grade) {
+      // 상위 등급: 녹색 계열 (A+, A, B+)
       case 'A+':
-        return 'bg-blue-500 text-white';
+        return 'bg-green-600 text-white'; // 짙은 녹색
       case 'A':
-        return 'bg-green-500 text-white';
+        return 'bg-green-500 text-white'; // 녹색
       case 'B+':
-        return 'bg-green-400 text-white';
+        return 'bg-green-400 text-white'; // 밝은 녹색
+
+      // 중간 등급: 회색 계열 (B, C+, C)
       case 'B':
-        return 'bg-yellow-400 text-gray-900';
+        return 'bg-gray-600 text-white'; // 짙은 회색
       case 'C+':
-        return 'bg-orange-400 text-white';
+        return 'bg-gray-500 text-white'; // 회색
       case 'C':
-        return 'bg-orange-500 text-white';
+        return 'bg-gray-400 text-white'; // 밝은 회색
+
+      // 하위 등급: 빨간색 계열 (D, F)
       case 'D':
-        return 'bg-red-400 text-white';
+        return 'bg-red-500 text-white'; // 빨간색
       case 'F':
-        return 'bg-red-500 text-white';
+        return 'bg-red-600 text-white'; // 짙은 빨간색
+
+      // 기본값
       default:
         return 'bg-gray-400 text-white';
     }
@@ -279,13 +289,21 @@ export default function ChecklistPage() {
     return Math.round(score * 10) / 10;
   };
 
+  // 점수 +20점 하기
+  const getDisplayScore = (score: number): number => {
+    return Math.min(Math.round(score + 20), 100);
+  };
+
   // 원형 프로그레스 바 컴포넌트
   const CircularProgress = ({ value, size = 120 }: { value: number; size?: number }) => {
     // 모바일에서는 크기를 줄임
     const mobileAdjustedSize = typeof window !== 'undefined' && window.innerWidth < 640 ? 90 : size;
     const radius = mobileAdjustedSize / 2;
     const circumference = radius * 2 * Math.PI;
+    // 실제 값으로 원 채우기 계산 (시각적 표현은 원래 값 그대로 유지)
     const strokeDashoffset = circumference - (value / 100) * circumference;
+    // 화면에 표시될 점수는 20점 추가
+    const displayValue = getDisplayScore(value);
 
     return (
       <div className="relative" style={{ width: mobileAdjustedSize, height: mobileAdjustedSize }}>
@@ -316,16 +334,16 @@ export default function ChecklistPage() {
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-2xl sm:text-4xl font-bold">{value}</span>
+          <span className="text-2xl sm:text-4xl font-bold">{displayValue}</span>
         </div>
       </div>
     );
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 p-2 py-4 sm:p-6">
+    <div className="flex flex-col min-h-screen bg-gray-50 p-4 py-6 sm:p-6">
       {/* 헤더 */}
-      <header className="mb-6 sm:mb-12 max-w-5xl mx-auto w-full">
+      <header className="mb-4 sm:mb-8 max-w-5xl mx-auto w-full">
         <div className="flex items-center mb-2 sm:mb-4">
           <Link
             href="/"
@@ -338,43 +356,61 @@ export default function ChecklistPage() {
             가치투자 체크리스트
           </h1>
         </div>
-        <p className="text-xs sm:text-sm text-gray-600">
+        {/* <p className="text-xs sm:text-sm text-gray-600">
           워렌 버핏, 피터 린치 스타일의 가치투자자를 위한 체크리스트입니다.
-        </p>
+        </p> */}
       </header>
 
       <main className="flex-1 max-w-5xl mx-auto w-full">
-        {/* 검색 영역 */}
-        <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-8 shadow-sm mb-6 sm:mb-10">
-          <form onSubmit={handleSearch}>
-            <div className="flex flex-col gap-4 sm:gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-                  회사명
-                </label>
-                <CompanySearchInput
-                  onCompanySelect={handleCompanySelect}
-                  initialValue={companyName}
-                  placeholder="회사명 또는 종목코드 입력"
-                />
+        {/* 검색 영역 - 확장/축소 가능 */}
+        {showSearchForm ? (
+          <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-8 shadow-sm mb-6 sm:mb-10">
+            <form onSubmit={handleSearch}>
+              <div className="flex flex-col gap-4 sm:gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                    회사명
+                  </label>
+                  <CompanySearchInput
+                    onCompanySelect={handleCompanySelect}
+                    initialValue={companyName}
+                    placeholder="회사명 또는 종목코드 입력"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full bg-black hover:bg-gray-800 text-white py-2 sm:py-3 px-4 rounded-lg sm:rounded-xl transition-colors duration-200 flex items-center justify-center mt-1 sm:mt-2"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 size={16} className="mr-2 animate-spin" />
+                      분석 중...
+                    </>
+                  ) : (
+                    '기업 분석하기'
+                  )}
+                </button>
               </div>
-              <button
-                type="submit"
-                className="w-full bg-black hover:bg-gray-800 text-white py-2 sm:py-3 px-4 rounded-lg sm:rounded-xl transition-colors duration-200 flex items-center justify-center mt-1 sm:mt-2"
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 size={16} className="mr-2 animate-spin" />
-                    분석 중...
-                  </>
-                ) : (
-                  '기업 분석하기'
-                )}
-              </button>
+            </form>
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-sm mb-6 sm:mb-10 flex justify-between items-center">
+            <div className="flex items-center">
+              <CheckSquare className="h-4 w-4 sm:h-5 sm:w-5 text-gray-900 mr-2" />
+              <span className="text-sm sm:text-base font-medium">
+                {selectedCompany?.companyName} ({stockPrice?.code})
+              </span>
             </div>
-          </form>
-        </div>
+            <button
+              onClick={() => setShowSearchForm(true)}
+              className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-1.5 text-xs sm:text-sm rounded-lg flex items-center transition-colors"
+            >
+              <SearchIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+              다른 종목 보기
+            </button>
+          </div>
+        )}
 
         {/* 오류 메시지 */}
         {error && (
@@ -456,7 +492,7 @@ export default function ChecklistPage() {
                       투자 등급
                     </h3>
                     <p className="text-xs sm:text-sm text-gray-600 text-center">
-                      종합 점수: {investmentRating.percentage}점
+                      종합 점수: {getDisplayScore(investmentRating.percentage)}점
                     </p>
                   </div>
 
@@ -719,7 +755,7 @@ export default function ChecklistPage() {
                       investmentRating.grade
                     )} text-base sm:text-lg font-bold rounded-lg px-2 sm:px-3 py-0.5 sm:py-1 mb-2 sm:mb-3`}
                   >
-                    {investmentRating.grade}등급 ({investmentRating.percentage}점)
+                    {investmentRating.grade}등급 ({getDisplayScore(investmentRating.percentage)}점)
                   </div>
                   <p className="text-sm sm:text-base text-gray-800">
                     {investmentRating.description}

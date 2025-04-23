@@ -20,7 +20,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
-      <body className={`${notoSansKr.variable} font-noto-sans antialiased`}>{children}</body>
+      <body className={`${notoSansKr.variable} font-noto-sans antialiased tracking-tighter`}>
+        {children}
+      </body>
     </html>
   );
 }

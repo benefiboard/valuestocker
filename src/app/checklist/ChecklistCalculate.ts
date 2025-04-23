@@ -271,7 +271,7 @@ export const initialChecklist: ChecklistItem[] = [
     category: '세부 지표 - 수익성 및 효율성',
     title: '이익잉여금 vs 당좌자산 증가율',
     description: '이익 성장이 실질 자산 증가로 이어지는지 확인하는 지표입니다.',
-    targetValue: '당좌자산 증가율이 이익잉여금 성장률 × 0.5 이상',
+    targetValue: '당좌자산 증가율 이익잉여금 성장률×0.5 이상',
     actualValue: null,
     isPassed: null,
     formula: '이익잉여금 성장률 × 0.5 vs 당좌자산 증가율',
