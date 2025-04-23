@@ -58,7 +58,7 @@ export default function FairPricePage() {
   // 검색폼 표시 상태 추가
   const [showSearchForm, setShowSearchForm] = useState<boolean>(true);
   // 카테고리 확장 상태 추가
-  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   // 계산 설정 토글 상태
   const [showSettingsForm, setShowSettingsForm] = useState<boolean>(false);
 
@@ -90,13 +90,21 @@ export default function FairPricePage() {
     setIsSrimExpanded(!isSrimExpanded);
   };
 
-  // 카테고리 확장/축소 핸들러
+  // 카테고리 확장/축소 핸들러 (독립적으로 작동하도록 수정)
   const toggleCategory = (category: string) => {
-    if (expandedCategory === category) {
-      setExpandedCategory(null);
-    } else {
-      setExpandedCategory(category);
-    }
+    setExpandedCategories((prevState) => {
+      // 새로운 Set 객체 생성
+      const newState = new Set(prevState);
+
+      // 이미 확장된 카테고리면 제거, 아니면 추가
+      if (newState.has(category)) {
+        newState.delete(category);
+      } else {
+        newState.add(category);
+      }
+
+      return newState;
+    });
   };
 
   //설정 토글 함수
@@ -382,8 +390,8 @@ export default function FairPricePage() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 p-4 py-6 sm:p-6">
       {/* 헤더 */}
-      <header className="mb-4 sm:mb-8 max-w-5xl mx-auto w-full">
-        <div className="flex items-center mb-2 sm:mb-4">
+      <header className="mb-2 sm:mb-4 max-w-5xl mx-auto w-full">
+        <div className="flex items-center ">
           <Link
             href="/"
             className="mr-2 sm:mr-4 text-gray-600 hover:text-gray-900 transition-colors"
@@ -401,6 +409,82 @@ export default function FairPricePage() {
       </header>
 
       <main className="flex-1 max-w-5xl mx-auto w-full">
+        {/* 사용자 설정 영역 */}
+        {!showSettingsForm ? (
+          <div className="flex justify-end pr-4">
+            <button
+              onClick={toggleSettingsForm}
+              className="text-xs sm:text-sm hover:bg-gray-200 text-gray-600 rounded-lg flex items-center transition-colors mb-4 sm:mb-4 underline"
+            >
+              <Info className="mr-1 sm:mr-2 w-3 h-3 sm:w-4 sm:h-4 text-gray-700" />
+              계산 설정 변경
+            </button>
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-8 shadow-sm mb-4 sm:mb-8">
+            <div className="flex justify-between items-center mb-3 sm:mb-4">
+              <h2 className="text-base sm:text-lg font-bold text-gray-600 flex items-center underline">
+                <Info className="mr-1 sm:mr-2 w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
+                적정가 계산 설정
+              </h2>
+              <button
+                onClick={toggleSettingsForm}
+                className="text-xs sm:text-sm bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-1.5 rounded-lg flex items-center transition-colors"
+              >
+                계산 설정 닫기
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                  자기주식수(자사주)
+                </label>
+                <input
+                  type="number"
+                  name="treasuryShares"
+                  value={userData.treasuryShares}
+                  onChange={handleInputChange}
+                  placeholder="예: 399000000"
+                  className="w-full p-2 border rounded-lg text-xs sm:text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                  적정 PER 배수 (산업 평균: {industryParams.avgPER})
+                </label>
+                <input
+                  type="number"
+                  name="targetPER"
+                  value={userData.targetPER}
+                  onChange={handleInputChange}
+                  placeholder={`산업 평균: ${industryParams.avgPER}`}
+                  className="w-full p-2 border rounded-lg text-xs sm:text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                  기대수익률/할인율(%)
+                </label>
+                <input
+                  type="number"
+                  name="expectedReturn"
+                  value={userData.expectedReturn}
+                  onChange={handleInputChange}
+                  className="w-full p-2 border rounded-lg text-xs sm:text-sm"
+                />
+              </div>
+            </div>
+            <div className="mt-3 sm:mt-4">
+              <button
+                onClick={handleRecalculate}
+                className="w-full bg-green-600 hover:bg-green-700 text-white py-2 sm:py-3 px-3 sm:px-4 rounded-lg sm:rounded-xl transition-colors text-xs sm:text-sm font-medium"
+              >
+                수정 계산하기
+              </button>
+            </div>
+          </div>
+        )}
         {/* 검색 영역 - 확장/축소 가능 */}
         {showSearchForm ? (
           <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-8 shadow-sm mb-2 sm:mb-4">
@@ -467,83 +551,6 @@ export default function FairPricePage() {
         {/* 결과 영역 */}
         {success && financialData && calculatedResults && (
           <>
-            {/* 사용자 설정 영역 */}
-            {!showSettingsForm ? (
-              <div className="flex justify-end pr-4">
-                <button
-                  onClick={toggleSettingsForm}
-                  className="text-xs sm:text-sm hover:bg-gray-200 text-gray-600 rounded-lg flex items-center transition-colors mb-4 sm:mb-8 underline"
-                >
-                  <Info className="mr-1 sm:mr-2 w-3 h-3 sm:w-4 sm:h-4 text-gray-700" />
-                  계산 설정 변경
-                </button>
-              </div>
-            ) : (
-              <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-8 shadow-sm mb-4 sm:mb-8">
-                <div className="flex justify-between items-center mb-3 sm:mb-4">
-                  <h2 className="text-base sm:text-lg font-bold text-gray-600 flex items-center underline">
-                    <Info className="mr-1 sm:mr-2 w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
-                    적정가 계산 설정
-                  </h2>
-                  <button
-                    onClick={toggleSettingsForm}
-                    className="text-xs sm:text-sm bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-1.5 rounded-lg flex items-center transition-colors"
-                  >
-                    계산 설정 닫기
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                      자기주식수(자사주)
-                    </label>
-                    <input
-                      type="number"
-                      name="treasuryShares"
-                      value={userData.treasuryShares}
-                      onChange={handleInputChange}
-                      placeholder="예: 399000000"
-                      className="w-full p-2 border rounded-lg text-xs sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                      적정 PER 배수 (산업 평균: {industryParams.avgPER})
-                    </label>
-                    <input
-                      type="number"
-                      name="targetPER"
-                      value={userData.targetPER}
-                      onChange={handleInputChange}
-                      placeholder={`산업 평균: ${industryParams.avgPER}`}
-                      className="w-full p-2 border rounded-lg text-xs sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                      기대수익률/할인율(%)
-                    </label>
-                    <input
-                      type="number"
-                      name="expectedReturn"
-                      value={userData.expectedReturn}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border rounded-lg text-xs sm:text-sm"
-                    />
-                  </div>
-                </div>
-                <div className="mt-3 sm:mt-4">
-                  <button
-                    onClick={handleRecalculate}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white py-2 sm:py-3 px-3 sm:px-4 rounded-lg sm:rounded-xl transition-colors text-xs sm:text-sm font-medium"
-                  >
-                    수정 계산하기
-                  </button>
-                </div>
-              </div>
-            )}
-
             {/* 투자 한눈에 보기 섹션 (새로 추가) */}
             <InvestmentAtGlance
               currentPrice={
@@ -680,21 +687,21 @@ export default function FairPricePage() {
               <div className="overflow-x-auto">
                 {/* 자산 가치 기반 모델 */}
                 <button
-                  className="w-full flex items-center justify-between px-3 sm:px-6 py-3 bg-blue-50 text-left focus:outline-none"
+                  className="w-full flex items-center justify-between px-3 sm:px-6 py-3 bg-gray-100 text-left focus:outline-none"
                   onClick={() => toggleCategory('assetBased')}
                 >
                   <div className="flex items-center">
-                    <Info className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 mr-1 sm:mr-2" />
+                    <Info className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 mr-1 sm:mr-2" />
                     <h3 className="text-sm sm:text-base font-medium">자산 가치 기반 모델</h3>
                   </div>
-                  {expandedCategory === 'assetBased' ? (
+                  {expandedCategories.has('assetBased') ? (
                     <ChevronUp className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
                   ) : (
                     <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
                   )}
                 </button>
 
-                {expandedCategory === 'assetBased' && (
+                {expandedCategories.has('assetBased') && (
                   <div className="divide-y divide-gray-100">
                     {calculatedResults.categorizedModels?.assetBased.map((model) => (
                       <div
@@ -758,21 +765,21 @@ export default function FairPricePage() {
 
                 {/* 수익 가치 기반 모델 */}
                 <button
-                  className="w-full flex items-center justify-between px-3 sm:px-6 py-3 bg-green-50 text-left focus:outline-none"
+                  className="w-full flex items-center justify-between px-3 sm:px-6 py-3 bg-gray-100 text-left focus:outline-none"
                   onClick={() => toggleCategory('earningsBased')}
                 >
                   <div className="flex items-center">
-                    <Info className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 mr-1 sm:mr-2" />
+                    <Info className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 mr-1 sm:mr-2" />
                     <h3 className="text-sm sm:text-base font-medium">수익 가치 기반 모델</h3>
                   </div>
-                  {expandedCategory === 'earningsBased' ? (
+                  {expandedCategories.has('earningsBased') ? (
                     <ChevronUp className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
                   ) : (
                     <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
                   )}
                 </button>
 
-                {expandedCategory === 'earningsBased' && (
+                {expandedCategories.has('earningsBased') && (
                   <div className="divide-y divide-gray-100">
                     {calculatedResults.categorizedModels?.earningsBased.map((model) => (
                       <div
@@ -803,21 +810,21 @@ export default function FairPricePage() {
 
                 {/* 혼합 모델 */}
                 <button
-                  className="w-full flex items-center justify-between px-3 sm:px-6 py-3 bg-purple-50 text-left focus:outline-none"
+                  className="w-full flex items-center justify-between px-3 sm:px-6 py-3 bg-gray-100 text-left focus:outline-none"
                   onClick={() => toggleCategory('mixedModels')}
                 >
                   <div className="flex items-center">
-                    <Info className="h-4 w-4 sm:h-5 sm:w-5 text-purple-500 mr-1 sm:mr-2" />
+                    <Info className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 mr-1 sm:mr-2" />
                     <h3 className="text-sm sm:text-base font-medium">혼합 모델</h3>
                   </div>
-                  {expandedCategory === 'mixedModels' ? (
+                  {expandedCategories.has('mixedModels') ? (
                     <ChevronUp className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
                   ) : (
                     <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
                   )}
                 </button>
 
-                {expandedCategory === 'mixedModels' && (
+                {expandedCategories.has('mixedModels') && (
                   <div className="divide-y divide-gray-100">
                     {calculatedResults.categorizedModels?.mixedModels.map((model) => (
                       <div
