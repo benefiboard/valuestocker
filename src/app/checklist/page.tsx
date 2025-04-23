@@ -92,9 +92,19 @@ export default function ChecklistPage() {
     setLoading(true);
 
     try {
+      console.log('===== 검색 시작 =====');
+      console.log(`회사명: ${selectedCompany.companyName} (${selectedCompany.stockCode})`);
+      console.log(`DART 코드: ${selectedCompany.dartCode}`);
+      console.log(`산업군: ${selectedCompany.industry}`);
+
       // 1. 주가 데이터 가져오기 - 3년치 데이터로 변경
+      console.log('1. 주가 데이터 가져오기 시작...');
       const { priceDataMap, baseYearData } = await fetchStockPrices(selectedCompany.stockCode);
+      console.log('주가 데이터 맵:', priceDataMap);
+      console.log('기준년도 데이터:', baseYearData);
+
       const latestPriceData = await fetchStockPrice(selectedCompany.stockCode, true);
+      console.log('최신 주가 데이터:', latestPriceData);
 
       // baseYearData가 null인 경우 에러 처리
       if (!baseYearData) {
@@ -104,34 +114,179 @@ export default function ChecklistPage() {
       setStockPrice(latestPriceData || 0); // 현재 주가 설정
 
       // 2. 재무 데이터 가져오기 - 공통 모듈 사용
+      console.log('2. 재무 데이터 가져오기 시작...');
       const rawData = await fetchFinancialData(selectedCompany.dartCode);
+      console.log('원본 재무 데이터(rawData):', rawData);
+
+      // rawData 구조 확인
+      if (rawData) {
+        console.log('rawData 속성들:');
+        Object.keys(rawData as any).forEach((key) => {
+          console.log(`  - ${key}: ${typeof (rawData as any)[key]}`);
+        });
+
+        // 연도별 데이터 확인
+        const years = ['2022', '2023', '2024'];
+        years.forEach((year) => {
+          console.log(`${year}년도 데이터 존재 여부:`);
+          const yearKeys = Object.keys(rawData).filter((key) => key.startsWith(`${year}_`));
+          console.log(yearKeys);
+        });
+      }
+
       setRawFinancialData(rawData);
 
       // 3. 재무 데이터 추출
+      console.log('3. 재무 데이터 추출 시작...');
       const extractedData = extractFinancialData(rawData);
+      console.log('추출된 데이터(extractedData):', extractedData);
+
+      // extractedData 구조 확인
+      if (extractedData) {
+        console.log('extractedData 속성들:');
+        Object.keys(extractedData).forEach((key) => {
+          console.log(`  - ${key}: ${typeof extractedData[key]}`);
+        });
+
+        // years 배열 확인
+        if (extractedData.years) {
+          console.log('years 배열:', extractedData.years);
+        } else {
+          console.warn('⚠️ extractedData에 years 배열이 없습니다.');
+        }
+      }
+
       const checklistData = convertToChecklistData(extractedData);
+      console.log('체크리스트 데이터(checklistData):', checklistData);
+
+      // checklistData 구조 확인
+      if (checklistData) {
+        console.log('checklistData 속성들:');
+        Object.keys(checklistData as any).forEach((key) => {
+          console.log(`  - ${key}: ${typeof (checklistData as any)[key]}`);
+          if (key === 'years') {
+            console.log(`    years 값: ${JSON.stringify((checklistData as any).years)}`);
+          }
+          if (key === 'revenueByYear' && (checklistData as any).years) {
+            console.log('    매출액 데이터:');
+            (checklistData as any).years.forEach((year: string) => {
+              console.log(`      ${year}: ${(checklistData as any).revenueByYear[year]}`);
+            });
+          }
+        });
+      }
+
       setFinancialData(checklistData);
 
       // 4. 체크리스트 계산 - 여기서 baseYearData는 이미 null 체크를 했으므로 안전
-      const checklist = calculateChecklist(
-        checklistData,
-        baseYearData,
-        priceDataMap,
-        selectedCompany.industry // 산업군 정보 전달
-      );
+      console.log('4. 체크리스트 계산 시작...');
+      let checklist;
+      try {
+        checklist = calculateChecklist(
+          checklistData,
+          baseYearData,
+          priceDataMap,
+          selectedCompany.industry // 산업군 정보 전달
+        );
+        console.log('체크리스트 계산 결과:', checklist);
+      } catch (calcError: any) {
+        console.error('체크리스트 계산 중 오류 발생:', calcError);
+        throw new Error(`체크리스트 계산 실패: ${calcError.message}`);
+      }
       setChecklistResults(checklist);
 
       // 5. 투자 등급 계산
-      const rating = calculateInvestmentRating(
-        checklist,
-        selectedCompany.stockCode,
-        selectedCompany.industry // 산업군 정보 전달
-      );
+      console.log('5. 투자 등급 계산 시작...');
+      let rating;
+      try {
+        rating = calculateInvestmentRating(
+          checklist,
+          selectedCompany.stockCode,
+          selectedCompany.industry // 산업군 정보 전달
+        );
+        console.log('투자 등급 계산 결과:', rating);
+      } catch (ratingError: any) {
+        console.error('투자 등급 계산 중 오류 발생:', ratingError);
+        throw new Error(`투자 등급 계산 실패: ${ratingError.message}`);
+      }
       setInvestmentRating(rating);
 
+      // 핵심 지표 계산 상세 결과
+      if (checklist && checklist.length > 0) {
+        const coreItems = checklist.filter((item) => item.category === '핵심 지표');
+
+        console.log('===== 핵심 지표 상세 계산 =====');
+        coreItems.forEach((item) => {
+          console.log(`${item.title}:`);
+          console.log(`  - 실제값: ${item.actualValue}`);
+          console.log(`  - 평가기준: ${item.targetValue}`);
+          console.log(`  - 계산식: ${item.formula}`);
+          console.log(`  - 통과여부: ${item.isPassed ? '통과' : '미달'}`);
+          console.log(`  - 점수: ${item.score}/10`);
+          console.log(`  - 중요도: ${item.importance}`);
+          console.log('');
+
+          // 각 지표별 상세 계산값
+          switch (item.title) {
+            case 'PER':
+              if (latestPriceData && checklistData) {
+                const eps =
+                  checklistData.epsByYear && checklistData.years.length > 0
+                    ? checklistData.epsByYear[checklistData.years[0]]
+                    : null;
+                console.log(`  > 주가: ${latestPriceData.price}원`);
+                console.log(`  > EPS: ${eps}원`);
+                console.log(`  > 계산된 PER: ${eps ? latestPriceData.price / eps : '계산 불가'}`);
+              }
+              break;
+
+            case '매출액 성장률':
+              if (checklistData && checklistData.years && checklistData.years.length >= 2) {
+                const years = checklistData.years;
+                const revenues = years
+                  .map((year) => checklistData.revenueByYear[year])
+                  .filter(Boolean);
+                console.log(
+                  `  > 연도별 매출액: `,
+                  years
+                    .map((year, idx) => `${year}: ${checklistData.revenueByYear[year] || '없음'}`)
+                    .join(', ')
+                );
+                if (revenues.length >= 2) {
+                  const growthRate =
+                    Math.pow(
+                      revenues[0] / revenues[revenues.length - 1],
+                      1 / (revenues.length - 1)
+                    ) - 1;
+                  console.log(`  > 계산된 성장률: ${(growthRate * 100).toFixed(2)}%`);
+                }
+              }
+              break;
+
+            case '영업이익률':
+              if (checklistData) {
+                const opIncome = checklistData.operatingIncome;
+                const revenue = checklistData.revenue;
+                console.log(`  > 영업이익: ${opIncome}억원`);
+                console.log(`  > 매출액: ${revenue}억원`);
+                console.log(
+                  `  > 계산된 영업이익률: ${
+                    revenue ? ((opIncome / revenue) * 100).toFixed(2) : '계산 불가'
+                  }%`
+                );
+              }
+              break;
+
+            // 다른 핵심 지표들도 필요에 따라 추가
+          }
+        });
+      }
+
+      console.log('분석 완료!');
       setSuccess(true);
       setShowSearchForm(false); // 검색 결과가 표시되면 검색 폼 숨기기
     } catch (error) {
+      console.error('오류 발생:', error);
       if (error instanceof Error) {
         setError(error.message);
       } else {
@@ -685,16 +840,20 @@ export default function ChecklistPage() {
                                         </div>
                                         <div className="mt-1 sm:mt-2 flex flex-wrap items-center">
                                           <span
-                                            className={`px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-2xl text-xs sm:text-sm font-semibold ${
-                                              item.isFailCriteria
-                                                ? 'border-2 border-red-500 text-red-700' // 미달인 경우 (심각)
-                                                : item.score >= 7
-                                                ? 'border-2 border-green-600 text-green-800' // 매우 좋은 경우 (7점 이상)
-                                                : 'border border-gray-400 text-gray-800' // 그 외 모든 경우
-                                            }`}
+                                            className={`px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-2xl text-xs sm:text-sm font-semibold
+    ${
+      item.isFailCriteria
+        ? 'border-2 border-red-500 text-red-700'
+        : item.score >= 7
+        ? 'border-2 border-green-600 text-green-800'
+        : 'border border-gray-400 text-gray-800'
+    }`}
                                           >
-                                            {typeof item.actualValue === 'number'
-                                              ? formatNumber(item.actualValue)
+                                            {typeof item.actualValue === 'number' &&
+                                            item.actualValue < 0
+                                              ? `${item.actualValue.toFixed(2)}% (적자)`
+                                              : typeof item.actualValue === 'number'
+                                              ? `${item.actualValue.toFixed(2)}%`
                                               : item.actualValue || '-'}
                                           </span>
                                           <span className="text-xs text-gray-400 ml-2 sm:ml-4 mt-1 sm:mt-0">

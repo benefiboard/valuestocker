@@ -100,6 +100,7 @@ export interface FinancialDataCheckList {
   retainedEarnings: number;
   revenueByYear: Record<string, number>;
   retainedEarningsByYear: Record<string, number>;
+  quickAssetsPrevYear?: number;
 }
 
 export interface CalculatedResults {

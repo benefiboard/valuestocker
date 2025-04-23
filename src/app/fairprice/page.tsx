@@ -521,9 +521,10 @@ export default function FairPricePage() {
           <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-sm mb-2 sm:mb-4 flex justify-between items-center">
             <div className="flex items-center">
               <BarChart4 className="h-4 w-4 sm:h-5 sm:w-5 text-gray-900 mr-2" />
-              <span className="text-sm sm:text-base font-medium">
-                {selectedCompany?.companyName} ({latestPrice?.code})
-              </span>
+              <p className=" sm:text-lg font-semibold">
+                {selectedCompany?.companyName}{' '}
+                <span className="font-normal text-xs sm:text-sm">({latestPrice?.code})</span>
+              </p>
             </div>
             <button
               onClick={() => setShowSearchForm(true)}
@@ -952,8 +953,8 @@ export default function FairPricePage() {
 
                 <div className="p-3 bg-gray-50 rounded-lg sm:rounded-xl">
                   <h4 className="text-xs sm:text-sm font-medium text-gray-700 mb-2">위험 프로필</h4>
-                  <div className="flex items-center gap-2">
-                    <span
+                  <div className="flex items-center gap-2 sm:gap-4">
+                    <p
                       className={`px-2 py-1 rounded text-white text-xs ${
                         calculatedResults.riskProfile.riskLevel === '낮음'
                           ? 'bg-green-500'
@@ -963,8 +964,8 @@ export default function FairPricePage() {
                       }`}
                     >
                       {calculatedResults.riskProfile.riskLevel}
-                    </span>
-                    <span className="text-xs">{calculatedResults.riskProfile.message}</span>
+                    </p>
+                    <p className="text-xs flex-1">{calculatedResults.riskProfile.message}</p>
                   </div>
                 </div>
               </div>
@@ -1019,9 +1020,9 @@ export default function FairPricePage() {
               )}
 
               {/* 투자 조언 메시지 */}
-              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg sm:rounded-xl text-xs sm:text-sm">
-                <p className="font-medium text-blue-800 mb-1">투자 참고 사항:</p>
-                <ul className="list-disc pl-5 space-y-1 text-blue-700">
+              <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl text-xs sm:text-sm">
+                <p className="font-medium text-gray-800 mb-1">※ 투자 참고 사항:</p>
+                <ul className="list-disc pl-5 space-y-1 text-gray-700">
                   <li>위 평가는 기초적인 가이드라인으로, 추가 분석이 권장됩니다.</li>
                   <li>적정가 범위는 다양한 모델의 결과 분포를 보여줍니다.</li>
                   <li>데이터 신뢰성이 낮을 경우 결과 해석에 주의가 필요합니다.</li>
