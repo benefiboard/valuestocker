@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Noto_Sans_KR } from 'next/font/google';
 import './globals.css';
+import { Analytics } from '@vercel/analytics/react';
 
 const notoSansKr = Noto_Sans_KR({
   variable: '--font-noto-sans-kr',
@@ -22,6 +23,7 @@ export default function RootLayout({
     <html lang="ko">
       <body className={`${notoSansKr.variable} font-noto-sans antialiased tracking-tighter`}>
         {children}
+        <Analytics />
       </body>
     </html>
   );
