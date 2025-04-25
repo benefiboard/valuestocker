@@ -93,7 +93,7 @@ const ValuationModelsComparison = () => {
       {
         id: 'Yamaguchi',
         name: '야마구치 공식',
-        shortDesc: '기업 가치를 부품별로 분해해 평가',
+        shortDesc: '기업 가치를 파트별로 분해하여 평가',
         icon: <Building className="w-5 h-5 sm:w-6 sm:h-6 text-gray-900" />,
         color: 'bg-gray-100',
         description: '본업 영업가치, 비영업자산, 부채를 분리해 평가합니다.',
