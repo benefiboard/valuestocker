@@ -851,9 +851,9 @@ export default function ChecklistPage() {
                                           >
                                             {typeof item.actualValue === 'number' &&
                                             item.actualValue < 0
-                                              ? `${item.actualValue.toFixed(2)}% (적자)`
+                                              ? `${item.actualValue.toFixed(2)} `
                                               : typeof item.actualValue === 'number'
-                                              ? `${item.actualValue.toFixed(2)}%`
+                                              ? `${item.actualValue.toFixed(2)}`
                                               : item.actualValue || '-'}
                                           </span>
                                           <span className="text-xs text-gray-400 ml-2 sm:ml-4 mt-1 sm:mt-0">
