@@ -1,3 +1,4 @@
+// src/lib/industryData.ts
 // 산업군별 데이터 가져오기 위한 유틸리티 함수
 import industryData from './industry-DATA.json';
 
