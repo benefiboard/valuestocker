@@ -1,4 +1,4 @@
-// src/app/jsonprice/jsonCalculate.ts
+// src/app/fairprice/fairpriceCalculate.ts
 
 import {
   CalculatedResults,

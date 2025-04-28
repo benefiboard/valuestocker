@@ -1,3 +1,5 @@
+//src/app/checklist/page.tsx
+
 'use client';
 
 import { useState, FormEvent } from 'react';
@@ -23,17 +25,13 @@ import {
   AlertTriangle,
   Search as SearchIcon,
 } from 'lucide-react';
-import {
-  calculateJsonChecklist,
-  calculateJsonInvestmentRating,
-  initialChecklist,
-  FINANCIAL_COMPANIES,
-} from './JsonChecklistCalculate';
+import { calculateJsonChecklist, calculateJsonInvestmentRating } from './ChecklistCalculate';
 import Link from 'next/link';
 import React from 'react';
 import jsonStockData from '@/lib/finance/stock_checklist_2025.json';
 import stockPriceData from '@/lib/finance/stock_price_2025.json';
 import CompanySearchInput from '../components/CompanySearchInput';
+import { FINANCIAL_COMPANIES } from './constants/industryThresholds';
 
 interface HierarchicalCategory {
   [mainCategory: string]: {
@@ -55,6 +53,40 @@ export default function JsonCheckPage() {
   // 체크리스트 결과 상태
   const [checklistResults, setChecklistResults] = useState<ScoredChecklistItem[]>([]);
   const [investmentRating, setInvestmentRating] = useState<InvestmentRating | null>(null);
+  // 등급에 따른 설명 상태 추가
+  const [ratingDescription, setRatingDescription] = useState<string>('');
+
+  // 등급에 따른 설명 생성 함수
+  const getGradeDescription = (
+    grade: string,
+    hasCriticalFailure: boolean,
+    isFinancialCompany: boolean
+  ): string => {
+    if (hasCriticalFailure) {
+      if (grade === 'F') return '핵심 지표에 심각한 문제가 있어 투자에 적합하지 않습니다.';
+      return '핵심 지표에 심각한 문제가 있어 투자에 주의가 필요합니다.';
+    }
+
+    // 등급별 설명 생성
+    const descriptions: Record<string, string> = {
+      'A+': '우수한 투자 대상입니다. 모든 핵심 지표가 매우 양호합니다.',
+      A: '양호한 투자 대상입니다. 핵심 지표가 대부분 양호합니다.',
+      'B+': '괜찮은 투자 대상입니다. 일부 보완이 필요한 지표가 있습니다.',
+      B: '평균적인 투자 대상입니다. 몇몇 지표에서 개선이 필요합니다.',
+      'C+': '투자 시 주의가 필요합니다. 여러 지표에서 문제점이 발견되었습니다.',
+      C: '투자 위험이 큽니다. 많은 지표에서 문제점이 발견되었습니다.',
+      D: '투자에 적합하지 않습니다. 대부분의 지표가 기준에 미달합니다.',
+    };
+
+    let description = descriptions[grade] || '평가할 데이터가 부족합니다.';
+
+    // 금융회사인 경우 설명 조정
+    if (isFinancialCompany) {
+      description += ' (금융회사에 최적화된 평가 기준 적용)';
+    }
+
+    return description;
+  };
 
   // 회사 선택 핸들러
   const handleCompanySelect = (company: CompanyInfo) => {
@@ -76,6 +108,7 @@ export default function JsonCheckPage() {
     setStockPrice(null);
     setChecklistResults([]);
     setInvestmentRating(null);
+    setRatingDescription('');
     setSuccess(false);
     setError('');
 
@@ -140,6 +173,14 @@ export default function JsonCheckPage() {
           selectedCompany.industry // 산업군 정보 전달
         );
         console.log('투자 등급 계산 결과:', rating);
+
+        // 등급 설명 생성 및 설정
+        const description = getGradeDescription(
+          rating.grade,
+          rating.hasCriticalFailure,
+          rating.isFinancialCompany
+        );
+        setRatingDescription(description);
       } catch (ratingError: any) {
         console.error('투자 등급 계산 중 오류 발생:', ratingError);
         throw new Error(`투자 등급 계산 실패: ${ratingError.message}`);
@@ -467,7 +508,7 @@ export default function JsonCheckPage() {
               </div>
 
               {/* 금융사인 경우 안내 메시지 추가 */}
-              {FINANCIAL_COMPANIES.includes(stockPrice.code) && (
+              {investmentRating.isFinancialCompany && (
                 <div className="bg-blue-50 p-3 sm:p-4 rounded-lg sm:rounded-xl mb-3 sm:mb-4">
                   <div className="flex items-start">
                     <Info className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 mr-1 sm:mr-2 mt-0.5" />
@@ -553,9 +594,7 @@ export default function JsonCheckPage() {
                     <p className="text-xs sm:text-sm font-medium text-amber-800 mb-1 sm:mb-2">
                       투자 분석
                     </p>
-                    <p className="text-xs sm:text-sm text-gray-700">
-                      {investmentRating.description}
-                    </p>
+                    <p className="text-xs sm:text-sm text-gray-700">{ratingDescription}</p>
                   </div>
                 </div>
               </div>
@@ -751,7 +790,7 @@ export default function JsonCheckPage() {
                 >
                   {investmentRating.grade}등급 ({getDisplayScore(investmentRating.percentage)}점)
                 </div>
-                <p className="text-sm sm:text-base text-gray-800">{investmentRating.description}</p>
+                <p className="text-sm sm:text-base text-gray-800">{ratingDescription}</p>
               </div>
 
               <div className="mt-4 sm:mt-6">

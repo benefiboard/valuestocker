@@ -1,4 +1,4 @@
-// src/app/jsonprice/types.ts
+// src/app/fairprice/types.ts
 
 export interface ApiResponse {
   // API 응답 타입 정의

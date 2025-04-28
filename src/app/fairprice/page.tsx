@@ -1,4 +1,4 @@
-//src/app/jsonprice/page.tsx
+//src/app/fairprice/page.tsx
 
 'use client';
 
@@ -6,7 +6,6 @@ import { useState, ChangeEvent, FormEvent } from 'react';
 import CompanySearchInput from '@/app/components/CompanySearchInput';
 import { CompanyInfo } from '../../lib/stockCodeData';
 import { CalculatedResults, StockPrice } from './types';
-import { extractCalculatedResultsFromJson, getStockDataFromJson } from './jsonCalculate';
 import { getIndustryParameters } from '../../lib/industryData';
 import Link from 'next/link';
 import {
@@ -20,6 +19,7 @@ import {
   Loader2,
   Search as SearchIcon,
 } from 'lucide-react';
+import { extractCalculatedResultsFromJson, getStockDataFromJson } from './FairpriceCalculate';
 
 export default function JsonPricePage() {
   // 상태 관리

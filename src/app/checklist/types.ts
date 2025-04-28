@@ -1,4 +1,4 @@
-// src/app/jsoncheck/types.ts
+// src/app/fiarprice/types.ts
 
 // 체크리스트 기본 항목 타입
 export interface ChecklistItem {
@@ -25,12 +25,13 @@ export interface InvestmentRating {
   maxScore: number;
   percentage: number;
   grade: string;
-  description: string;
+  //description: string;
   coreItemsScore: number;
   detailedItemsScore: number;
   hasCriticalFailure: boolean;
   coreItemsCount: number;
   coreItemsPassCount: number;
+  isFinancialCompany: boolean;
 }
 
 // 재무 데이터 체크리스트 타입
