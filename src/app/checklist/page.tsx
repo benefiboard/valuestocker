@@ -24,6 +24,7 @@ import {
   Award,
   AlertTriangle,
   Search as SearchIcon,
+  Target,
 } from 'lucide-react';
 import { calculateJsonChecklist, calculateJsonInvestmentRating } from './ChecklistCalculate';
 import Link from 'next/link';
@@ -229,7 +230,7 @@ export default function JsonCheckPage() {
     const percentage = (score / maxScore) * 100;
     let barColor = 'bg-gray-600';
 
-    if (percentage >= 70) barColor = 'bg-green-600';
+    if (percentage >= 70) barColor = 'bg-emerald-600';
     else if (percentage < 20) barColor = 'bg-red-400';
 
     return (
@@ -247,11 +248,11 @@ export default function JsonCheckPage() {
     switch (grade) {
       // 상위 등급: 녹색 계열 (A+, A, B+)
       case 'A+':
-        return 'bg-green-600 text-white'; // 짙은 녹색
+        return 'bg-emerald-600 text-white'; // 짙은 녹색
       case 'A':
-        return 'bg-green-500 text-white'; // 녹색
+        return 'bg-emerald-500 text-white'; // 녹색
       case 'B+':
-        return 'bg-green-400 text-white'; // 밝은 녹색
+        return 'bg-emerald-400 text-white'; // 밝은 녹색
 
       // 중간 등급: 회색 계열 (B, C+, C)
       case 'B':
@@ -325,15 +326,15 @@ export default function JsonCheckPage() {
   // 카테고리 아이콘 매핑
   const getCategoryIcon = (category: string) => {
     const iconMap: Record<string, React.ReactNode> = {
-      '핵심 지표': <LineChart className="h-4 w-4 sm:h-5 sm:w-5 text-gray-900" />,
-      '세부 지표': <Info className="h-4 w-4 sm:h-5 sm:w-5 text-gray-900" />,
-      수익성: <CircleDollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-gray-900" />,
-      재무안정성: <ShieldAlert className="h-4 w-4 sm:h-5 sm:w-5 text-gray-900" />,
-      성장성: <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-gray-900" />,
-      가치평가: <Percent className="h-4 w-4 sm:h-5 sm:w-5 text-gray-900" />,
+      '핵심 지표': <LineChart className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />,
+      '세부 지표': <Info className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />,
+      수익성: <CircleDollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />,
+      재무안정성: <ShieldAlert className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />,
+      성장성: <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />,
+      가치평가: <Percent className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />,
     };
 
-    return iconMap[category] || <Info className="h-4 w-4 sm:h-5 sm:w-5 text-gray-900" />;
+    return iconMap[category] || <Info className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />;
   };
 
   // 카테고리 평균 점수 계산
@@ -385,8 +386,8 @@ export default function JsonCheckPage() {
             cy={radius}
             r={radius - 5}
             fill="none"
-            stroke="#333"
-            strokeWidth="5"
+            stroke="#000000"
+            strokeWidth="8"
             strokeDasharray={circumference}
             strokeDashoffset={strokeDashoffset}
             transform={`rotate(-90 ${radius} ${radius})`}
@@ -394,38 +395,38 @@ export default function JsonCheckPage() {
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-2xl sm:text-4xl font-bold">{displayValue}</span>
+          <span className="text-2xl sm:text-3xl font-bold">{displayValue}</span>
         </div>
       </div>
     );
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 p-4 py-6 sm:p-6">
+    <div className="flex flex-col min-h-screen bg-gray-50 px-4 sm:px-6 py-8">
       {/* 헤더 */}
-      <header className="mb-4 sm:mb-8 max-w-5xl mx-auto w-full">
-        <div className="flex items-center mb-2 sm:mb-4">
+      <header className="mb-6 max-w-4xl mx-auto w-full">
+        <div className="flex items-center">
           <Link
             href="/"
-            className="mr-2 sm:mr-4 text-gray-600 hover:text-gray-900 transition-colors"
+            className="mr-3 sm:mr-4 text-gray-600 hover:text-gray-900 transition-colors"
           >
-            <ArrowLeft size={18} className="sm:w-5 sm:h-5" />
+            <ArrowLeft size={20} className="sm:w-6 sm:h-6" />
           </Link>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center">
-            <CheckSquare className="mr-1 sm:mr-2 text-gray-900 w-5 h-5 sm:w-7 sm:h-7" />
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 flex items-center">
+            <CheckSquare className="mr-3 text-emerald-600 w-6 h-6 sm:w-7 sm:h-7" />
             가치투자 체크리스트
           </h1>
         </div>
       </header>
 
-      <main className="flex-1 max-w-5xl mx-auto w-full">
+      <main className="flex-1 max-w-4xl mx-auto w-full">
         {/* 검색 영역 - 확장/축소 가능 */}
         {showSearchForm ? (
-          <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-8 shadow-sm mb-6 sm:mb-10">
+          <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-md mb-6">
             <form onSubmit={handleSearch}>
-              <div className="flex flex-col gap-4 sm:gap-6">
+              <div className="flex flex-col gap-5 sm:gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                  <label className="block text-base font-medium text-gray-700 mb-2 sm:mb-3">
                     회사명
                   </label>
                   <CompanySearchInput
@@ -436,12 +437,12 @@ export default function JsonCheckPage() {
                 </div>
                 <button
                   type="submit"
-                  className="w-full bg-black hover:bg-gray-800 text-white py-2 sm:py-3 px-4 rounded-lg sm:rounded-xl transition-colors duration-200 flex items-center justify-center mt-1 sm:mt-2"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 sm:py-4 px-4 rounded-xl transition-colors duration-200 flex items-center justify-center mt-3"
                   disabled={loading}
                 >
                   {loading ? (
                     <>
-                      <Loader2 size={16} className="mr-2 animate-spin" />
+                      <Loader2 size={20} className="mr-3 animate-spin" />
                       분석 중...
                     </>
                   ) : (
@@ -452,18 +453,19 @@ export default function JsonCheckPage() {
             </form>
           </div>
         ) : (
-          <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-sm mb-6 sm:mb-10 flex justify-between items-center">
+          <div className="bg-white rounded-2xl p-6 sm:px-8 shadow-md mb-6 flex justify-between items-center">
             <div className="flex items-center">
-              <CheckSquare className="h-4 w-4 sm:h-5 sm:w-5 text-gray-900 mr-2" />
-              <span className="text-sm sm:text-base font-medium">
-                {selectedCompany?.companyName} ({stockPrice?.code})
-              </span>
+              <Target className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-600 mr-3" />
+              <p className="text-lg sm:text-xl font-semibold text-gray-800">
+                {selectedCompany?.companyName}{' '}
+                <span className="font-normal text-sm text-gray-500">({stockPrice?.code})</span>
+              </p>
             </div>
             <button
               onClick={() => setShowSearchForm(true)}
-              className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-1.5 text-xs sm:text-sm rounded-lg flex items-center transition-colors"
+              className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 text-sm rounded-xl flex items-center transition-colors"
             >
-              <SearchIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+              <SearchIcon className="h-4 w-4 mr-2" />
               다른 종목 보기
             </button>
           </div>
@@ -471,12 +473,12 @@ export default function JsonCheckPage() {
 
         {/* 오류 메시지 */}
         {error && (
-          <div className="bg-white p-3 sm:p-6 rounded-xl sm:rounded-2xl shadow-sm mb-6 sm:mb-10 border-l-4 border-red-500">
+          <div className="bg-white p-5 sm:p-6 rounded-2xl shadow-md mb-6 border-l-4 border-red-500">
             <div className="flex items-start">
-              <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-500 mr-1 sm:mr-2 mt-0.5" />
+              <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-red-500 mr-3 mt-0.5" />
               <div>
-                <p className="font-medium text-sm sm:text-base text-gray-900">오류</p>
-                <p className="text-xs sm:text-sm text-gray-700 mt-1">{error}</p>
+                <p className="font-medium text-base sm:text-lg text-gray-800">오류</p>
+                <p className="text-sm sm:text-base text-gray-600 mt-2">{error}</p>
               </div>
             </div>
           </div>
@@ -486,22 +488,20 @@ export default function JsonCheckPage() {
         {success && stockPrice && checklistResults.length > 0 && investmentRating && (
           <>
             {/* 기업 요약 정보 */}
-            <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-8 shadow-sm mb-6 sm:mb-10">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 sm:mb-8">
+            <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-md mb-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 sm:mb-6">
                 <div className="w-full">
-                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center break-words">
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center break-words">
                     {selectedCompany?.companyName}{' '}
-                    <span className="text-xs sm:text-sm text-gray-600 ml-1 sm:ml-2">
+                    <span className="text-xs sm:text-sm text-gray-500 ml-2">
                       ({stockPrice.code})
                     </span>
                   </h2>
 
-                  <p className="text-xs sm:text-sm text-gray-600 mt-0.5 sm:mt-1">
+                  <p className="text-sm sm:text-base text-gray-600 mt-1">
                     현재 주가: {formatNumber(stockPrice.price)}원
                     {stockPrice.formattedDate && (
-                      <span className="text-gray-600 ml-1 sm:ml-2">
-                        ({stockPrice.formattedDate})
-                      </span>
+                      <span className="text-gray-500 ml-2">({stockPrice.formattedDate})</span>
                     )}
                   </p>
                 </div>
@@ -509,12 +509,14 @@ export default function JsonCheckPage() {
 
               {/* 금융사인 경우 안내 메시지 추가 */}
               {investmentRating.isFinancialCompany && (
-                <div className="bg-blue-50 p-3 sm:p-4 rounded-lg sm:rounded-xl mb-3 sm:mb-4">
+                <div className="bg-blue-50 p-4 sm:p-5 rounded-xl mb-5">
                   <div className="flex items-start">
-                    <Info className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 mr-1 sm:mr-2 mt-0.5" />
+                    <Info className="h-5 w-5 sm:h-6 sm:w-6 text-blue-500 mr-3 mt-0.5" />
                     <div>
-                      <p className="font-medium text-sm text-blue-800">금융회사 특화 평가</p>
-                      <p className="text-xs sm:text-sm text-blue-700 mt-0.5 sm:mt-1">
+                      <p className="font-medium text-sm sm:text-base text-blue-800">
+                        금융회사 특화 평가
+                      </p>
+                      <p className="text-sm text-blue-700 mt-2">
                         금융회사는 일반 기업과 다른 회계구조를 가지고 있어, 금융업 특성에 맞게
                         평가되었습니다. 일부 지표(매출액, 영업이익률 등)는 평가에서 제외되었습니다.
                       </p>
@@ -524,12 +526,12 @@ export default function JsonCheckPage() {
               )}
 
               {/* 구분선 */}
-              <hr className="mb-4 sm:mb-8 border-gray-200" />
+              <hr className="mb-6 border-gray-200" />
 
               {/* 투자 등급 영역 */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8 mb-4 sm:mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div className="flex flex-col items-center justify-center">
-                  <div className="relative mb-2">
+                  <div className="relative mb-3">
                     <CircularProgress value={investmentRating.percentage} />
                     <div className="absolute -top-1 -right-1">
                       <div
@@ -541,25 +543,25 @@ export default function JsonCheckPage() {
                       </div>
                     </div>
                   </div>
-                  <h3 className="text-base sm:text-lg font-bold text-gray-900 mt-1 sm:mt-2">
-                    투자 등급
-                  </h3>
+                  <h3 className="text-base sm:text-lg font-bold text-gray-800 mt-2">투자 등급</h3>
                   <p className="text-xs sm:text-sm text-gray-600 text-center">
                     종합 점수: {getDisplayScore(investmentRating.percentage)}점
                   </p>
                 </div>
 
-                <div className="col-span-2 flex flex-col justify-center space-y-3 sm:space-y-4">
-                  <div className="bg-gray-50 p-3 sm:p-4 rounded-lg sm:rounded-xl">
-                    <div className="flex justify-between mb-0.5 sm:mb-1">
-                      <p className="text-xs sm:text-sm font-medium text-gray-700">핵심 지표 점수</p>
+                <div className="col-span-2 flex flex-col justify-center space-y-4">
+                  <div className="bg-gray-50 p-4 sm:p-5 rounded-xl">
+                    <div className="flex justify-between mb-2">
+                      <p className="text-sm sm:text-base font-medium text-gray-700">
+                        핵심 지표 점수
+                      </p>
                       <p className="text-base sm:text-lg font-bold">
                         {investmentRating.coreItemsScore}
                         <span className="text-xs text-gray-400">/10</span>
                       </p>
                     </div>
                     {renderScoreBar(investmentRating.coreItemsScore)}
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-1 sm:mt-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-3">
                       <p className="text-xs sm:text-sm">
                         핵심 지표 통과:{' '}
                         <span className="text-base sm:text-lg font-bold">
@@ -572,16 +574,18 @@ export default function JsonCheckPage() {
                       <p>
                         {investmentRating.hasCriticalFailure && (
                           <span className="text-red-500 mt-1 sm:ml-2 flex items-center text-xs sm:text-sm">
-                            <AlertTriangle size={14} className="mr-0.5 sm:mr-1" /> 미달 항목 있음
+                            <AlertTriangle size={14} className="mr-1 sm:mr-2" /> 미달 항목 있음
                           </span>
                         )}
                       </p>
                     </div>
                   </div>
 
-                  <div className="bg-gray-50 p-3 sm:p-4 rounded-lg sm:rounded-xl">
-                    <div className="flex justify-between mb-0.5 sm:mb-1">
-                      <p className="text-xs sm:text-sm font-medium text-gray-700">세부 지표 점수</p>
+                  <div className="bg-gray-50 p-4 sm:p-5 rounded-xl">
+                    <div className="flex justify-between mb-2">
+                      <p className="text-sm sm:text-base font-medium text-gray-700">
+                        세부 지표 점수
+                      </p>
                       <p className="text-base sm:text-lg font-bold">
                         {investmentRating.detailedItemsScore}
                         <span className="text-xs text-gray-400">/10</span>
@@ -590,26 +594,26 @@ export default function JsonCheckPage() {
                     {renderScoreBar(investmentRating.detailedItemsScore)}
                   </div>
 
-                  <div className="bg-amber-50 p-3 sm:p-4 rounded-lg sm:rounded-xl">
-                    <p className="text-xs sm:text-sm font-medium text-amber-800 mb-1 sm:mb-2">
+                  <div className="bg-amber-50 p-4 sm:p-5 rounded-xl">
+                    <p className="text-sm sm:text-base font-medium text-amber-800 mb-2">
                       투자 분석
                     </p>
-                    <p className="text-xs sm:text-sm text-gray-700">{ratingDescription}</p>
+                    <p className="text-sm text-gray-700">{ratingDescription}</p>
                   </div>
                 </div>
               </div>
 
               {/* 핵심 지표 요약 */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
-                <div className="bg-gray-50 p-2 sm:p-4 rounded-lg sm:rounded-xl">
-                  <p className="text-xs sm:text-sm text-gray-600 mb-0.5 sm:mb-1">ROE</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-gray-50 p-4 rounded-xl">
+                  <p className="text-xs sm:text-sm text-gray-600 mb-1">ROE</p>
                   <p className="text-base sm:text-xl font-bold truncate">
                     {formatNumber((jsonStockData as any)[stockPrice.code].avgRoe)}%
                     <span className="text-xs text-gray-400">(최근 3년)</span>
                   </p>
                 </div>
-                <div className="bg-gray-50 p-2 sm:p-4 rounded-lg sm:rounded-xl">
-                  <p className="text-xs sm:text-sm text-gray-600 mb-0.5 sm:mb-1">PER</p>
+                <div className="bg-gray-50 p-4 rounded-xl">
+                  <p className="text-xs sm:text-sm text-gray-600 mb-1">PER</p>
                   <p className="text-base sm:text-xl font-bold truncate">
                     {stockPrice &&
                       formatNumber(
@@ -619,15 +623,15 @@ export default function JsonCheckPage() {
                     배
                   </p>
                 </div>
-                <div className="bg-gray-50 p-2 sm:p-4 rounded-lg sm:rounded-xl">
-                  <p className="text-xs sm:text-sm text-gray-600 mb-0.5 sm:mb-1">매출 성장률</p>
+                <div className="bg-gray-50 p-4 rounded-xl">
+                  <p className="text-xs sm:text-sm text-gray-600 mb-1">매출 성장률</p>
                   <p className="text-base sm:text-xl font-bold truncate">
                     {formatNumber((jsonStockData as any)[stockPrice.code].revenueGrowthRate)}%
                     <span className="text-xs text-gray-400">(최근 3년)</span>
                   </p>
                 </div>
-                <div className="bg-gray-50 p-2 sm:p-4 rounded-lg sm:rounded-xl">
-                  <p className="text-xs sm:text-sm text-gray-600 mb-0.5 sm:mb-1">부채비율</p>
+                <div className="bg-gray-50 p-4 rounded-xl">
+                  <p className="text-xs sm:text-sm text-gray-600 mb-1">부채비율</p>
                   <p className="text-base sm:text-xl font-bold truncate">
                     {formatNumber((jsonStockData as any)[stockPrice.code].debtRatio)}%
                   </p>
@@ -636,20 +640,20 @@ export default function JsonCheckPage() {
             </div>
 
             {/* 체크리스트 결과 */}
-            <div className="space-y-4 sm:space-y-6">
+            <div className="space-y-6">
               {Object.entries(getHierarchicalCategories()).map(([mainCategory, subCategories]) => (
-                <div key={mainCategory} className="mb-4 sm:mb-8">
-                  <h2 className="text-base sm:text-lg font-medium text-gray-700 mb-2 sm:mb-3">
+                <div key={mainCategory} className="mb-6">
+                  <h2 className="text-base sm:text-lg font-medium text-gray-700 mb-3">
                     {mainCategory}
                   </h2>
-                  <div className="space-y-3 sm:space-y-4">
+                  <div className="space-y-4">
                     {Object.entries(subCategories).map(([subCategory, items]) => (
                       <div
                         key={`${mainCategory}-${subCategory}`}
-                        className="bg-white rounded-xl sm:rounded-2xl shadow-sm overflow-hidden"
+                        className="bg-white rounded-2xl shadow-md overflow-hidden"
                       >
                         <button
-                          className="w-full flex items-center justify-between p-3 sm:p-4 text-left focus:outline-none"
+                          className="w-full flex items-center justify-between p-4 sm:p-5 text-left focus:outline-none"
                           onClick={() => toggleCategory(`${mainCategory}-${subCategory}`)}
                         >
                           <div className="flex items-center min-w-0">
@@ -657,70 +661,69 @@ export default function JsonCheckPage() {
                             {/* 오버플로우 방지 */}
                             {getCategoryIcon(mainCategory)}
                             {mainCategory === '핵심 지표' ? (
-                              <h3 className="text-base sm:text-lg font-medium text-gray-700 ml-2 truncate">
+                              <h3 className="text-base sm:text-lg font-medium text-gray-700 ml-3 truncate">
                                 핵심 지표
                               </h3>
                             ) : (
-                              <span className="text-base sm:text-lg font-bold text-gray-900 ml-2 truncate">
+                              <span className="text-base sm:text-lg font-bold text-gray-800 ml-3 truncate">
                                 {subCategory}
                               </span>
                             )}
-                            <div className="flex items-center ml-2 sm:ml-3">
-                              <p className="bg-gray-100 text-gray-800 font-semibold rounded-full px-2 py-0.5 sm:px-2.5 sm:py-1 text-xs sm:text-sm">
+                            <div className="flex items-center ml-3">
+                              <p className="bg-gray-100 text-gray-800 font-semibold rounded-full px-2.5 py-1 text-sm">
                                 {getSubCategoryScore(items)}
                                 <span className="text-xs text-gray-400">/10</span>
                               </p>
                             </div>
                           </div>
                           {expandedCategory === `${mainCategory}-${subCategory}` ? (
-                            <ChevronUp className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 flex-shrink-0" />
+                            <ChevronUp className="h-5 w-5 text-gray-600 flex-shrink-0" />
                           ) : (
-                            <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 flex-shrink-0" />
+                            <ChevronDown className="h-5 w-5 text-gray-600 flex-shrink-0" />
                           )}
                         </button>
 
                         {expandedCategory === `${mainCategory}-${subCategory}` && (
-                          <div className="px-3 sm:px-6 pb-3 sm:pb-6 divide-y divide-gray-100">
+                          <div className="px-5 sm:px-6 pb-5 sm:pb-6 divide-y divide-gray-100">
                             {items.map((item, idx) => (
-                              <div key={idx} className="py-3 sm:py-4">
+                              <div key={idx} className="py-4">
                                 <div className="flex items-start justify-between">
                                   <div className="flex-1 min-w-0">
                                     {' '}
                                     {/* 오버플로우 방지 */}
-                                    <div className="flex items-center flex-wrap mb-1">
+                                    <div className="flex items-center flex-wrap mb-2">
                                       <span
                                         className={`text-base sm:text-lg font-bold truncate ${
                                           item.isFailCriteria
                                             ? 'text-red-500 line-through'
-                                            : 'text-gray-900'
+                                            : 'text-gray-800'
                                         }`}
                                       >
                                         {item.title}
                                       </span>
                                       <span
-                                        className={`ml-1 sm:ml-2 text-xs sm:text-sm ${
+                                        className={`ml-2 text-sm ${
                                           item.isFailCriteria
                                             ? 'text-red-500 line-through'
-                                            : 'text-gray-900'
+                                            : 'text-gray-800'
                                         }`}
                                       >
                                         {renderImportance(item.importance, item.isFailCriteria)}
                                       </span>
                                       {item.isFailCriteria && (
-                                        <span className="ml-1 sm:ml-2 text-xs text-red-500 flex items-center">
-                                          <AlertTriangle size={10} className="mr-0.5 sm:mr-1" />{' '}
-                                          미달
+                                        <span className="ml-2 text-xs text-red-500 flex items-center">
+                                          <AlertTriangle size={12} className="mr-1" /> 미달
                                         </span>
                                       )}
                                     </div>
-                                    <div className="mt-1 sm:mt-2 flex flex-wrap items-center">
+                                    <div className="mt-2 flex flex-wrap items-center">
                                       <span
-                                        className={`px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-2xl text-xs sm:text-sm font-semibold
+                                        className={`px-2.5 py-1 rounded-2xl text-sm font-semibold
     ${
       item.isFailCriteria
         ? 'border-2 border-red-500 text-red-700'
         : item.score >= 7
-        ? 'border-2 border-green-600 text-green-800'
+        ? 'border-2 border-emerald-600 text-emerald-800'
         : 'border border-gray-400 text-gray-800'
     }`}
                                       >
@@ -731,12 +734,12 @@ export default function JsonCheckPage() {
                                           ? `${item.actualValue.toFixed(2)}`
                                           : item.actualValue || '-'}
                                       </span>
-                                      <span className="text-xs text-gray-400 ml-2 sm:ml-4 mt-1 sm:mt-0">
+                                      <span className="text-xs text-gray-500 ml-4 mt-0">
                                         | 기준: {item.targetValue}
                                       </span>
                                     </div>
-                                    <div className="mt-1 sm:mt-2">
-                                      <div className="flex items-center justify-between mb-0.5">
+                                    <div className="mt-3">
+                                      <div className="flex items-center justify-between mb-1">
                                         <span className="text-xs text-gray-600">점수</span>
                                         <span className="text-xs text-gray-600">
                                           <span className="text-base sm:text-lg font-bold">
@@ -748,18 +751,18 @@ export default function JsonCheckPage() {
                                       {renderScoreBar(item.score, item.maxScore)}
                                     </div>
                                   </div>
-                                  <div className="ml-2 sm:ml-4 flex-shrink-0">
+                                  <div className="ml-4 flex-shrink-0">
                                     {item.isPassed === true ? (
-                                      <div className="bg-gray-900 rounded-full p-1 sm:p-1.5">
-                                        <Check className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+                                      <div className="bg-emerald-600 rounded-full p-1.5">
+                                        <Check className="h-4 w-4 text-white" />
                                       </div>
                                     ) : item.isPassed === false ? (
-                                      <div className="bg-gray-200 rounded-full p-1 sm:p-1.5">
-                                        <XCircle className="h-3 w-3 sm:h-4 sm:w-4 text-gray-600" />
+                                      <div className="bg-gray-200 rounded-full p-1.5">
+                                        <XCircle className="h-4 w-4 text-gray-600" />
                                       </div>
                                     ) : (
-                                      <div className="bg-gray-100 rounded-full p-1 sm:p-1.5">
-                                        <AlertCircle className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
+                                      <div className="bg-gray-100 rounded-full p-1.5">
+                                        <AlertCircle className="h-4 w-4 text-gray-400" />
                                       </div>
                                     )}
                                   </div>
@@ -776,28 +779,28 @@ export default function JsonCheckPage() {
             </div>
 
             {/* 종합 평가 */}
-            <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-8 shadow-sm mt-6 sm:mt-10">
-              <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center">
-                <Award className="mr-1 sm:mr-2 w-4 h-4 sm:w-5 sm:h-5" />
+            <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-md mt-6">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <Award className="mr-3 w-5 h-5 sm:w-6 sm:h-6 text-emerald-600" />
                 종합 투자 평가
               </h2>
 
-              <div className="bg-gray-50 p-3 sm:p-6 rounded-lg sm:rounded-xl">
+              <div className="bg-gray-50 p-5 sm:p-6 rounded-xl mb-6">
                 <div
                   className={`inline-block ${getGradeColor(
                     investmentRating.grade
-                  )} text-base sm:text-lg font-bold rounded-lg px-2 sm:px-3 py-0.5 sm:py-1 mb-2 sm:mb-3`}
+                  )} text-base sm:text-lg font-bold rounded-xl px-3 py-1 mb-3`}
                 >
                   {investmentRating.grade}등급 ({getDisplayScore(investmentRating.percentage)}점)
                 </div>
                 <p className="text-sm sm:text-base text-gray-800">{ratingDescription}</p>
               </div>
 
-              <div className="mt-4 sm:mt-6">
-                <h3 className="font-bold mb-2 sm:mb-3 text-sm sm:text-base text-gray-800">
+              <div className="mt-5">
+                <h3 className="font-bold mb-3 text-sm sm:text-base text-gray-800">
                   카테고리별 평가
                 </h3>
-                <div className="space-y-2 sm:space-y-3">
+                <div className="space-y-3">
                   {Object.entries(getHierarchicalCategories()).map(
                     ([mainCategory, subCategories]) => (
                       <React.Fragment key={mainCategory}>
@@ -810,7 +813,7 @@ export default function JsonCheckPage() {
                           return (
                             <div
                               key={`${mainCategory}-${subCategory}`}
-                              className="flex items-center text-xs sm:text-sm"
+                              className="flex items-center text-sm"
                             >
                               <div className="w-1/3 truncate">{displayName}</div>
                               <div className="w-1/2">{renderScoreBar(categoryScore)}</div>
@@ -824,12 +827,12 @@ export default function JsonCheckPage() {
                 </div>
               </div>
 
-              <div className="mt-4 sm:mt-6">
+              <div className="mt-6">
                 <Link href="/fairprice">
-                  <button className="inline-flex items-center bg-black text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium hover:bg-gray-800 transition-colors">
+                  <button className="inline-flex items-center bg-emerald-600 text-white px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-emerald-700 transition-colors">
                     적정가 계산하기
                     <svg
-                      className="ml-1 sm:ml-2 w-3 h-3 sm:w-4 sm:h-4"
+                      className="ml-2 w-4 h-4 sm:w-5 sm:h-5"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"

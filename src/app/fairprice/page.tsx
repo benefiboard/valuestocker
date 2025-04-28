@@ -1,5 +1,3 @@
-//src/app/fairprice/page.tsx
-
 'use client';
 
 import { useState, ChangeEvent, FormEvent } from 'react';
@@ -18,8 +16,10 @@ import {
   Info,
   Loader2,
   Search as SearchIcon,
+  Target,
 } from 'lucide-react';
 import { extractCalculatedResultsFromJson, getStockDataFromJson } from './FairpriceCalculate';
+// import PriceComparisonVisual from './PriceComparisonVisual';
 
 export default function JsonPricePage() {
   // 상태 관리
@@ -75,11 +75,11 @@ export default function JsonPricePage() {
     let message = '';
 
     if (ratio < 0.7) {
-      signalClass = 'bg-green-500';
+      signalClass = 'bg-emerald-600';
       signalText = '저';
       message = '크게 저평가됨 (30% 이상)';
     } else if (ratio < 0.9) {
-      signalClass = 'bg-green-400';
+      signalClass = 'bg-emerald-500';
       signalText = '저';
       message = '저평가됨 (10-30%)';
     } else if (ratio < 1.1) {
@@ -97,13 +97,13 @@ export default function JsonPricePage() {
     }
 
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         <div
-          className={`rounded-full w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center ${signalClass} text-white font-bold text-xs sm:text-sm`}
+          className={`rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center ${signalClass} text-white font-bold text-sm sm:text-base`}
         >
           {signalText}
         </div>
-        <span className="text-xs sm:text-sm">{message}</span>
+        <span className="text-sm sm:text-base text-gray-700">{message}</span>
       </div>
     );
   };
@@ -163,13 +163,13 @@ export default function JsonPricePage() {
     const percentage = (score / maxScore) * 100;
     let barColor = 'bg-gray-600';
 
-    if (percentage >= 70) barColor = 'bg-green-600';
+    if (percentage >= 70) barColor = 'bg-emerald-600';
     else if (percentage < 20) barColor = 'bg-red-400';
 
     return (
-      <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2">
+      <div className="w-full bg-gray-100 rounded-full h-2 sm:h-2.5">
         <div
-          className={`${barColor} h-1.5 sm:h-2 rounded-full`}
+          className={`${barColor} h-2 sm:h-2.5 rounded-full`}
           style={{ width: `${percentage}%` }}
         ></div>
       </div>
@@ -196,8 +196,8 @@ export default function JsonPricePage() {
     const isPriceDiffPositive = priceDiff < 0;
 
     // 상태에 따른 색상과 텍스트 결정
-    const statusColor = isPriceDiffPositive ? 'text-green-500' : 'text-red-500';
-    const statusText = isPriceDiffPositive ? '저평가' : '고평가';
+    const statusColor = isPriceDiffPositive ? 'text-emerald-600' : 'text-red-500';
+    const statusText = isPriceDiffPositive ? '싸다' : '비싸다';
 
     // 막대 길이 계산 - 항상 차이가 보이는 접근법
     let fairBarWidth, currentBarWidth;
@@ -251,31 +251,32 @@ export default function JsonPricePage() {
     currentBarWidth = barWidths.currentBarWidth;
 
     return (
-      <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-8 shadow-sm mb-6 sm:mb-10">
-        <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4 flex items-center">
-          <Info className="mr-1 sm:mr-2 w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
+      <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-md mb-6">
+        <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-6 flex items-center">
+          <Info className="mr-3 w-5 h-5 sm:w-6 sm:h-6 text-emerald-600" />
           주가 대비 적정가 비교
         </h2>
         {/* 상단 비교 텍스트 */}
-        <div className="mb-4 flex flex-wrap items-end">
-          <span className="text-base font-medium">현재가는 적정가 대비 </span>
-          <span className={`text-xl sm:text-2xl font-bold ${statusColor} mx-1`}>
-            {Math.abs(priceDiffPercent).toFixed(1)}%
-          </span>
-          <span className="text-base font-medium">
-            ({formatNumber(Math.abs(priceDiff))}원) {statusText}
-          </span>
+        <div className="mb-6 flex flex-wrap items-end">
+          <p className={`text-2xl sm:text-3xl font-bold ${statusColor}`}>
+            {/* <span className="text-sm text-gray-500 mr-2">적정가치 대비</span> */}
+            {Math.abs(priceDiffPercent).toFixed(1)}%{' '}
+            <span className="text-lg font-semibold sm:text-xl">{statusText}</span>
+          </p>
+          <p className="text-base sm:text-lg font-medium ml-1">
+            ({formatNumber(Math.abs(priceDiff))}원)
+          </p>
         </div>
 
         {/* 적정가 막대 */}
-        <div className="flex items-center mb-4 h-12">
+        <div className="flex items-center mb-6 h-12">
           <div
-            className="bg-green-500 h-full flex items-center justify-end sm:pr-6 pr-4 rounded-r-xl sm:rounded-r-full"
+            className="bg-emerald-600 h-full flex items-center justify-end pr-4 sm:pr-6 rounded-r-2xl"
             style={{ width: fairBarWidth }}
           >
-            <span className="text-white text-sm font-medium">적정가</span>
+            <span className="text-white text-sm sm:text-base font-medium">적정가</span>
           </div>
-          <div className="sm:ml-4 ml-2 text-base font-medium whitespace-nowrap">
+          <div className="ml-4 text-base sm:text-lg font-medium whitespace-nowrap">
             {formatNumber(fairPrice)}원
           </div>
         </div>
@@ -283,12 +284,12 @@ export default function JsonPricePage() {
         {/* 현재주가 막대 */}
         <div className="flex items-center h-12">
           <div
-            className="bg-gray-400 h-full flex items-center justify-end sm:pr-6 pr-4 rounded-r-xl sm:rounded-r-full"
+            className="bg-gray-500 h-full flex items-center justify-end pr-4 sm:pr-6 rounded-r-2xl"
             style={{ width: currentBarWidth }}
           >
-            <span className="text-white text-sm font-medium">현재주가</span>
+            <span className="text-white text-sm sm:text-base font-medium">현재주가</span>
           </div>
-          <div className="sm:ml-4 ml-2 text-base font-medium whitespace-nowrap">
+          <div className="ml-4 text-base sm:text-lg font-medium whitespace-nowrap">
             {formatNumber(currentPrice)}원
           </div>
         </div>
@@ -297,31 +298,31 @@ export default function JsonPricePage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 p-4 py-6 sm:p-6">
+    <div className="flex flex-col min-h-screen bg-gray-50 px-4 sm:px-6 py-8">
       {/* 헤더 */}
-      <header className="mb-2 sm:mb-4 max-w-5xl mx-auto w-full">
-        <div className="flex items-center ">
+      <header className="mb-6 max-w-4xl mx-auto w-full">
+        <div className="flex items-center">
           <Link
             href="/"
-            className="mr-2 sm:mr-4 text-gray-600 hover:text-gray-900 transition-colors"
+            className="mr-3 sm:mr-4 text-gray-600 hover:text-gray-900 transition-colors"
           >
-            <ArrowLeft size={18} className="sm:w-5 sm:h-5" />
+            <ArrowLeft size={20} className="sm:w-6 sm:h-6" />
           </Link>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center">
-            <BarChart4 className="mr-1 sm:mr-2 text-gray-900 w-5 h-5 sm:w-7 sm:h-7" />
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 flex items-center">
+            <BarChart4 className="mr-3 text-emerald-600 w-6 h-6 sm:w-7 sm:h-7" />
             가치투자 주식 적정가 계산
           </h1>
         </div>
       </header>
 
-      <main className="flex-1 max-w-5xl mx-auto w-full">
+      <main className="flex-1 max-w-4xl mx-auto w-full">
         {/* 검색 영역 - 확장/축소 가능 */}
         {showSearchForm ? (
-          <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-8 shadow-sm mb-2 sm:mb-4">
+          <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-md mb-6">
             <form onSubmit={handleSearch}>
-              <div className="flex flex-col gap-4 sm:gap-6">
+              <div className="flex flex-col gap-5 sm:gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                  <label className="block text-base font-medium text-gray-700 mb-2 sm:mb-3">
                     회사명
                   </label>
                   <CompanySearchInput
@@ -332,12 +333,12 @@ export default function JsonPricePage() {
                 </div>
                 <button
                   type="submit"
-                  className="w-full bg-black hover:bg-gray-800 text-white py-2 sm:py-3 px-4 rounded-lg sm:rounded-xl transition-colors duration-200 flex items-center justify-center mt-1 sm:mt-2"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 sm:py-4 px-4 rounded-xl transition-colors duration-200 flex items-center justify-center mt-3"
                   disabled={loading}
                 >
                   {loading ? (
                     <>
-                      <Loader2 size={16} className="mr-2 animate-spin" />
+                      <Loader2 size={20} className="mr-3 animate-spin" />
                       계산 중...
                     </>
                   ) : (
@@ -348,19 +349,19 @@ export default function JsonPricePage() {
             </form>
           </div>
         ) : (
-          <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-sm mb-2 sm:mb-4 flex justify-between items-center">
+          <div className="bg-white rounded-2xl p-6 sm:px-8 shadow-md mb-6 flex justify-between items-center">
             <div className="flex items-center">
-              <BarChart4 className="h-4 w-4 sm:h-5 sm:w-5 text-gray-900 mr-2" />
-              <p className=" sm:text-lg font-semibold">
+              <Target className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-600 mr-3" />
+              <p className="text-lg sm:text-xl font-semibold text-gray-800">
                 {selectedCompany?.companyName}{' '}
-                <span className="font-normal text-xs sm:text-sm">({latestPrice?.code})</span>
+                <span className="font-normal text-sm text-gray-500">({latestPrice?.code})</span>
               </p>
             </div>
             <button
               onClick={() => setShowSearchForm(true)}
-              className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-1.5 text-xs sm:text-sm rounded-lg flex items-center transition-colors"
+              className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 text-sm rounded-xl flex items-center transition-colors"
             >
-              <SearchIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+              <SearchIcon className="h-4 w-4 mr-2" />
               다른 종목 보기
             </button>
           </div>
@@ -368,12 +369,12 @@ export default function JsonPricePage() {
 
         {/* 오류 메시지 */}
         {error && (
-          <div className="bg-white p-3 sm:p-6 rounded-xl sm:rounded-2xl shadow-sm mb-6 sm:mb-10 border-l-4 border-red-500">
+          <div className="bg-white p-5 sm:p-6 rounded-2xl shadow-md mb-6 border-l-4 border-red-500">
             <div className="flex items-start">
-              <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-500 mr-1 sm:mr-2 mt-0.5" />
+              <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-red-500 mr-3 mt-0.5" />
               <div>
-                <p className="font-medium text-sm sm:text-base text-gray-900">오류</p>
-                <p className="text-xs sm:text-sm text-gray-700 mt-1">{error}</p>
+                <p className="font-medium text-base sm:text-lg text-gray-800">오류</p>
+                <p className="text-sm sm:text-base text-gray-600 mt-2">{error}</p>
               </div>
             </div>
           </div>
@@ -389,20 +390,18 @@ export default function JsonPricePage() {
             />
 
             {/* 적정가 계산 결과 */}
-            <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm mb-6 sm:mb-10 overflow-hidden">
-              <div className="px-3 sm:px-6 py-3 sm:py-4 bg-gray-100 border-b">
-                <h2 className="text-base sm:text-lg font-bold text-gray-900 flex items-center">
-                  <BarChart4 className="mr-1 sm:mr-2 w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
-                  적정 주가 계산 결과
-                </h2>
-              </div>
+            <div className="bg-white rounded-2xl shadow-md mb-6 p-6 sm:p-8">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-5 flex items-center">
+                <BarChart4 className="mr-3 w-5 h-5 sm:w-6 sm:h-6 text-emerald-600" />
+                적정 주가 계산 결과
+              </h2>
 
               {/* 이상치 경고 표시 */}
               {calculatedResults.hasOutliers && (
-                <div className="p-3 sm:p-4 bg-yellow-50">
-                  <div className="flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500" />
-                    <p className="text-xs sm:text-sm font-medium">
+                <div className="p-5 bg-yellow-50 rounded-xl mb-5">
+                  <div className="flex items-center gap-3">
+                    <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-500" />
+                    <p className="text-sm sm:text-base font-medium text-gray-700">
                       일부 평가 모델에서 비정상적인 결과가 검출되었습니다. 결과 해석에 주의가
                       필요합니다.
                     </p>
@@ -410,235 +409,245 @@ export default function JsonPricePage() {
                 </div>
               )}
 
-              <div className="overflow-x-auto">
+              <div>
                 {/* 자산 가치 기반 모델 */}
-                <button
-                  className="w-full flex items-center justify-between px-3 sm:px-6 py-3 bg-gray-100 text-left focus:outline-none"
-                  onClick={() => toggleCategory('assetBased')}
-                >
-                  <div className="flex items-center">
-                    <Info className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 mr-1 sm:mr-2" />
-                    <h3 className="text-sm sm:text-base font-medium">자산 가치 기반 모델</h3>
-                  </div>
-                  {expandedCategories.has('assetBased') ? (
-                    <ChevronUp className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
-                  )}
-                </button>
+                <div className="mb-5">
+                  <button
+                    className="w-full flex items-center justify-between p-5 bg-gray-50 rounded-xl text-left focus:outline-none hover:bg-gray-100 transition-colors"
+                    onClick={() => toggleCategory('assetBased')}
+                  >
+                    <div className="flex items-center">
+                      <Info className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-600 mr-3" />
+                      <h3 className="text-base sm:text-lg font-medium text-gray-800">
+                        자산 가치 기반 모델
+                      </h3>
+                    </div>
+                    {expandedCategories.has('assetBased') ? (
+                      <ChevronUp className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" />
+                    )}
+                  </button>
 
-                {expandedCategories.has('assetBased') && (
-                  <div className="divide-y divide-gray-100">
-                    {calculatedResults.categorizedModels?.assetBased.map((model) => (
-                      <div
-                        key={model.name}
-                        className={`flex justify-between items-center px-3 sm:px-6 py-3 sm:py-4 hover:bg-gray-50 transition-colors ${
-                          calculatedResults.outliers?.some((o) => o.name === model.name)
-                            ? 'bg-gray-50'
-                            : ''
-                        }`}
-                      >
-                        <div className="flex items-center">
-                          <span className="text-xs sm:text-sm font-medium text-gray-900">
-                            {model.name}
-                            {model.name === 'S-RIM 기본 시나리오' &&
-                              calculatedResults.categorizedModels?.srimScenarios &&
-                              calculatedResults.categorizedModels.srimScenarios.length > 0 && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    toggleSrimScenarios();
-                                  }}
-                                  className="ml-1 sm:ml-2 text-blue-500 hover:text-blue-700 focus:outline-none"
-                                >
-                                  {isSrimExpanded ? '▼' : '▶'}
-                                </button>
+                  {expandedCategories.has('assetBased') && (
+                    <div className="mt-3 divide-y divide-gray-100 bg-white rounded-xl overflow-hidden border border-gray-100">
+                      {calculatedResults.categorizedModels?.assetBased.map((model) => (
+                        <div
+                          key={model.name}
+                          className={`flex justify-between items-center px-5 py-4 hover:bg-gray-50 transition-colors ${
+                            calculatedResults.outliers?.some((o) => o.name === model.name)
+                              ? 'bg-gray-50'
+                              : ''
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <span className="text-sm sm:text-base font-medium text-gray-800">
+                              {model.name}
+                              {model.name === 'S-RIM 기본 시나리오' &&
+                                calculatedResults.categorizedModels?.srimScenarios &&
+                                calculatedResults.categorizedModels.srimScenarios.length > 0 && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleSrimScenarios();
+                                    }}
+                                    className="ml-2 sm:ml-3 text-emerald-600 hover:text-emerald-700 focus:outline-none"
+                                  >
+                                    {isSrimExpanded ? '▼' : '▶'}
+                                  </button>
+                                )}
+                              {calculatedResults.outliers?.some((o) => o.name === model.name) && (
+                                <span className="ml-2 sm:ml-3 text-xs text-yellow-600 flex items-center">
+                                  <AlertTriangle size={12} className="mr-1 sm:mr-2" /> 참고용
+                                </span>
                               )}
-                            {calculatedResults.outliers?.some((o) => o.name === model.name) && (
-                              <span className="ml-1 sm:ml-2 text-xs text-yellow-600 flex items-center">
-                                <AlertTriangle size={10} className="mr-0.5 sm:mr-1" /> 참고용
-                              </span>
-                            )}
+                            </span>
+                          </div>
+                          <span className="text-sm sm:text-base font-bold text-gray-800">
+                            {formatNumber(model.value)}원
                           </span>
                         </div>
-                        <span className="text-xs sm:text-sm font-bold text-gray-900">
-                          {formatNumber(model.value)}원
-                        </span>
-                      </div>
-                    ))}
+                      ))}
 
-                    {/* S-RIM 시나리오 섹션 - 토글 상태에 따라 표시/숨김 */}
-                    {isSrimExpanded &&
-                      calculatedResults.categorizedModels?.srimScenarios &&
-                      calculatedResults.categorizedModels.srimScenarios.length > 0 && (
-                        <div className="px-6 sm:px-8 py-2 sm:py-3 bg-gray-50">
-                          <h4 className="text-xs sm:text-sm font-medium text-gray-600 mb-1 sm:mb-2">
-                            S-RIM 추가 시나리오 (참고용)
-                          </h4>
-                          {calculatedResults.categorizedModels.srimScenarios.map((model) => (
-                            <div
-                              key={model.name}
-                              className="flex justify-between text-xs text-gray-600 ml-4 py-1"
-                            >
-                              <span>{model.name}:</span>
-                              <span className="font-medium">{formatNumber(model.value)}원</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                  </div>
-                )}
+                      {/* S-RIM 시나리오 섹션 - 토글 상태에 따라 표시/숨김 */}
+                      {isSrimExpanded &&
+                        calculatedResults.categorizedModels?.srimScenarios &&
+                        calculatedResults.categorizedModels.srimScenarios.length > 0 && (
+                          <div className="px-6 py-4 bg-gray-50">
+                            <h4 className="text-sm sm:text-base font-medium text-gray-700 mb-3">
+                              S-RIM 추가 시나리오 (참고용)
+                            </h4>
+                            {calculatedResults.categorizedModels.srimScenarios.map((model) => (
+                              <div
+                                key={model.name}
+                                className="flex justify-between text-sm text-gray-600 ml-5 py-2"
+                              >
+                                <span>{model.name}:</span>
+                                <span className="font-medium">{formatNumber(model.value)}원</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                    </div>
+                  )}
+                </div>
 
                 {/* 수익 가치 기반 모델 */}
-                <button
-                  className="w-full flex items-center justify-between px-3 sm:px-6 py-3 bg-gray-100 text-left focus:outline-none"
-                  onClick={() => toggleCategory('earningsBased')}
-                >
-                  <div className="flex items-center">
-                    <Info className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 mr-1 sm:mr-2" />
-                    <h3 className="text-sm sm:text-base font-medium">수익 가치 기반 모델</h3>
-                  </div>
-                  {expandedCategories.has('earningsBased') ? (
-                    <ChevronUp className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
-                  )}
-                </button>
+                <div className="mb-5">
+                  <button
+                    className="w-full flex items-center justify-between p-5 bg-gray-50 rounded-xl text-left focus:outline-none hover:bg-gray-100 transition-colors"
+                    onClick={() => toggleCategory('earningsBased')}
+                  >
+                    <div className="flex items-center">
+                      <Info className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-600 mr-3" />
+                      <h3 className="text-base sm:text-lg font-medium text-gray-800">
+                        수익 가치 기반 모델
+                      </h3>
+                    </div>
+                    {expandedCategories.has('earningsBased') ? (
+                      <ChevronUp className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" />
+                    )}
+                  </button>
 
-                {expandedCategories.has('earningsBased') && (
-                  <div className="divide-y divide-gray-100">
-                    {calculatedResults.categorizedModels?.earningsBased.map((model) => (
-                      <div
-                        key={model.name}
-                        className={`flex justify-between items-center px-3 sm:px-6 py-3 sm:py-4 hover:bg-gray-50 transition-colors ${
-                          calculatedResults.outliers?.some((o) => o.name === model.name)
-                            ? 'bg-gray-50'
-                            : ''
-                        }`}
-                      >
-                        <div className="flex items-center">
-                          <span className="text-xs sm:text-sm font-medium text-gray-900">
-                            {model.name}
-                            {calculatedResults.outliers?.some((o) => o.name === model.name) && (
-                              <span className="ml-1 sm:ml-2 text-xs text-yellow-600 flex items-center">
-                                <AlertTriangle size={10} className="mr-0.5 sm:mr-1" /> 참고용
-                              </span>
-                            )}
+                  {expandedCategories.has('earningsBased') && (
+                    <div className="mt-3 divide-y divide-gray-100 bg-white rounded-xl overflow-hidden border border-gray-100">
+                      {calculatedResults.categorizedModels?.earningsBased.map((model) => (
+                        <div
+                          key={model.name}
+                          className={`flex justify-between items-center px-5 py-4 hover:bg-gray-50 transition-colors ${
+                            calculatedResults.outliers?.some((o) => o.name === model.name)
+                              ? 'bg-gray-50'
+                              : ''
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <span className="text-sm sm:text-base font-medium text-gray-800">
+                              {model.name}
+                              {calculatedResults.outliers?.some((o) => o.name === model.name) && (
+                                <span className="ml-2 sm:ml-3 text-xs text-yellow-600 flex items-center">
+                                  <AlertTriangle size={12} className="mr-1 sm:mr-2" /> 참고용
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                          <span className="text-sm sm:text-base font-bold text-gray-800">
+                            {formatNumber(model.value)}원
                           </span>
                         </div>
-                        <span className="text-xs sm:text-sm font-bold text-gray-900">
-                          {formatNumber(model.value)}원
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
+                </div>
 
                 {/* 혼합 모델 */}
-                <button
-                  className="w-full flex items-center justify-between px-3 sm:px-6 py-3 bg-gray-100 text-left focus:outline-none"
-                  onClick={() => toggleCategory('mixedModels')}
-                >
-                  <div className="flex items-center">
-                    <Info className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 mr-1 sm:mr-2" />
-                    <h3 className="text-sm sm:text-base font-medium">혼합 모델</h3>
-                  </div>
-                  {expandedCategories.has('mixedModels') ? (
-                    <ChevronUp className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
-                  )}
-                </button>
+                <div className="mb-1">
+                  <button
+                    className="w-full flex items-center justify-between p-5 bg-gray-50 rounded-xl text-left focus:outline-none hover:bg-gray-100 transition-colors"
+                    onClick={() => toggleCategory('mixedModels')}
+                  >
+                    <div className="flex items-center">
+                      <Info className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-600 mr-3" />
+                      <h3 className="text-base sm:text-lg font-medium text-gray-800">혼합 모델</h3>
+                    </div>
+                    {expandedCategories.has('mixedModels') ? (
+                      <ChevronUp className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" />
+                    )}
+                  </button>
 
-                {expandedCategories.has('mixedModels') && (
-                  <div className="divide-y divide-gray-100">
-                    {calculatedResults.categorizedModels?.mixedModels.map((model) => (
-                      <div
-                        key={model.name}
-                        className={`flex justify-between items-center px-3 sm:px-6 py-3 sm:py-4 hover:bg-gray-50 transition-colors ${
-                          calculatedResults.outliers?.some((o) => o.name === model.name)
-                            ? 'bg-gray-50'
-                            : ''
-                        }`}
-                      >
-                        <div className="flex items-center">
-                          <span className="text-xs sm:text-sm font-medium text-gray-900">
-                            {model.name}
-                            {calculatedResults.outliers?.some((o) => o.name === model.name) && (
-                              <span className="ml-1 sm:ml-2 text-xs text-yellow-600 flex items-center">
-                                <AlertTriangle size={10} className="mr-0.5 sm:mr-1" /> 참고용
-                              </span>
-                            )}
+                  {expandedCategories.has('mixedModels') && (
+                    <div className="mt-3 divide-y divide-gray-100 bg-white rounded-xl overflow-hidden border border-gray-100">
+                      {calculatedResults.categorizedModels?.mixedModels.map((model) => (
+                        <div
+                          key={model.name}
+                          className={`flex justify-between items-center px-5 py-4 hover:bg-gray-50 transition-colors ${
+                            calculatedResults.outliers?.some((o) => o.name === model.name)
+                              ? 'bg-gray-50'
+                              : ''
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <span className="text-sm sm:text-base font-medium text-gray-800">
+                              {model.name}
+                              {calculatedResults.outliers?.some((o) => o.name === model.name) && (
+                                <span className="ml-2 sm:ml-3 text-xs text-yellow-600 flex items-center">
+                                  <AlertTriangle size={12} className="mr-1 sm:mr-2" /> 참고용
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                          <span className="text-sm sm:text-base font-bold text-gray-800">
+                            {formatNumber(model.value)}원
                           </span>
                         </div>
-                        <span className="text-xs sm:text-sm font-bold text-gray-900">
-                          {formatNumber(model.value)}원
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
             {/* 종합 요약 및 투자 판단 */}
-            <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-8 shadow-sm">
-              <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4 flex items-center">
-                <Info className="mr-1 sm:mr-2 w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
+            <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-md">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-5 flex items-center">
+                <Info className="mr-3 w-5 h-5 sm:w-6 sm:h-6 text-emerald-600" />
                 종합 투자 평가
               </h2>
 
               {/* 신호등 시스템 */}
-              <div className="mb-3 sm:mb-4 p-3 bg-gray-50 rounded-lg sm:rounded-xl">
-                <h4 className="text-xs sm:text-sm font-medium text-gray-700 mb-2">가격 평가</h4>
+              <div className="mb-6 p-5 bg-gray-50 rounded-xl">
+                <h4 className="text-sm sm:text-base font-medium text-gray-700 mb-4">가격 평가</h4>
                 <PriceSignal ratio={calculatedResults.priceRatio} />
               </div>
 
               {/* 가격 범위 */}
-              <div className="mb-3 sm:mb-4 p-3 bg-gray-50 rounded-lg sm:rounded-xl">
-                <h4 className="text-xs sm:text-sm font-medium text-gray-700 mb-2">적정가 범위</h4>
+              <div className="mb-6 p-5 bg-gray-50 rounded-xl">
+                <h4 className="text-sm sm:text-base font-medium text-gray-700 mb-3">적정가 범위</h4>
                 {calculatedResults.hasOutliers && (
-                  <p className="text-xs text-gray-600 mb-2">
+                  <p className="text-xs text-gray-600 mb-4">
                     * 이상치를 제외한 값으로 계산된 범위입니다.
                   </p>
                 )}
 
-                <div className="space-y-2 sm:space-y-3">
-                  <div className="flex items-center text-xs sm:text-sm">
-                    <div className="w-1/3">하위 25%</div>
-                    <div className="w-1/2">
+                <div className="space-y-5">
+                  <div className="flex items-center text-sm sm:text-base">
+                    <div className="w-1/4">하위 25%</div>
+                    <div className="w-1/2 px-3">
                       {renderScoreBar(
                         calculatedResults.priceRange.lowRange,
                         calculatedResults.priceRange.highRange
                       )}
                     </div>
-                    <div className="w-1/6 text-right font-bold">
+                    <div className="w-1/4 text-right font-bold">
                       {formatNumber(calculatedResults.priceRange.lowRange)}원
                     </div>
                   </div>
 
-                  <div className="flex items-center text-xs sm:text-sm">
-                    <div className="w-1/3 font-medium">중앙값</div>
-                    <div className="w-1/2">
+                  <div className="flex items-center text-sm sm:text-base">
+                    <div className="w-1/4 font-medium">중앙값</div>
+                    <div className="w-1/2 px-3">
                       {renderScoreBar(
                         calculatedResults.priceRange.midRange,
                         calculatedResults.priceRange.highRange
                       )}
                     </div>
-                    <div className="w-1/6 text-right font-bold">
+                    <div className="w-1/4 text-right font-bold">
                       {formatNumber(calculatedResults.priceRange.midRange)}원
                     </div>
                   </div>
 
-                  <div className="flex items-center text-xs sm:text-sm">
-                    <div className="w-1/3">상위 25%</div>
-                    <div className="w-1/2">
+                  <div className="flex items-center text-sm sm:text-base">
+                    <div className="w-1/4">상위 25%</div>
+                    <div className="w-1/2 px-3">
                       {renderScoreBar(
                         calculatedResults.priceRange.highRange,
                         calculatedResults.priceRange.highRange
                       )}
                     </div>
-                    <div className="w-1/6 text-right font-bold">
+                    <div className="w-1/4 text-right font-bold">
                       {formatNumber(calculatedResults.priceRange.highRange)}원
                     </div>
                   </div>
@@ -646,17 +655,17 @@ export default function JsonPricePage() {
               </div>
 
               {/* 데이터 신뢰성 및 위험 프로필 */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
-                <div className="p-3 bg-gray-50 rounded-lg sm:rounded-xl">
-                  <h4 className="text-xs sm:text-sm font-medium text-gray-700 mb-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+                <div className="p-5 bg-gray-50 rounded-xl">
+                  <h4 className="text-sm sm:text-base font-medium text-gray-700 mb-4">
                     데이터 신뢰성
                   </h4>
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-full bg-gray-200 rounded-full h-2 sm:h-3">
                       <div
-                        className={`h-1.5 sm:h-2 rounded-full ${
+                        className={`h-2 sm:h-3 rounded-full ${
                           calculatedResults.trustScore >= 8
-                            ? 'bg-green-500'
+                            ? 'bg-emerald-600'
                             : calculatedResults.trustScore >= 5
                             ? 'bg-yellow-400'
                             : 'bg-red-500'
@@ -664,11 +673,11 @@ export default function JsonPricePage() {
                         style={{ width: `${calculatedResults.trustScore * 10}%` }}
                       ></div>
                     </div>
-                    <span className="text-xs sm:text-sm font-bold">
+                    <span className="text-sm sm:text-base font-bold">
                       {calculatedResults.trustScore}/10
                     </span>
                   </div>
-                  <p className="text-xs mt-1 text-gray-600">
+                  <p className="text-sm text-gray-600">
                     {calculatedResults.trustScore >= 8
                       ? '데이터 신뢰성이 높습니다.'
                       : calculatedResults.trustScore >= 5
@@ -677,13 +686,15 @@ export default function JsonPricePage() {
                   </p>
                 </div>
 
-                <div className="p-3 bg-gray-50 rounded-lg sm:rounded-xl">
-                  <h4 className="text-xs sm:text-sm font-medium text-gray-700 mb-2">위험 프로필</h4>
-                  <div className="flex items-center gap-2 sm:gap-4">
+                <div className="p-5 bg-gray-50 rounded-xl">
+                  <h4 className="text-sm sm:text-base font-medium text-gray-700 mb-4">
+                    위험 프로필
+                  </h4>
+                  <div className="flex items-center gap-4">
                     <p
-                      className={`px-2 py-1 rounded text-white text-xs ${
+                      className={`px-3 py-1.5 rounded-lg text-white text-sm font-medium ${
                         calculatedResults.riskScore < 0.3
-                          ? 'bg-green-500'
+                          ? 'bg-emerald-600'
                           : calculatedResults.riskScore < 0.6
                           ? 'bg-yellow-400'
                           : 'bg-red-500'
@@ -695,7 +706,7 @@ export default function JsonPricePage() {
                         ? '중간'
                         : '높음'}
                     </p>
-                    <p className="text-xs flex-1">
+                    <p className="text-sm flex-1">
                       {calculatedResults.riskScore < 0.3
                         ? '수익성이 안정적입니다. 예측 가능성이 높은 기업입니다.'
                         : calculatedResults.riskScore < 0.6
@@ -707,21 +718,21 @@ export default function JsonPricePage() {
               </div>
 
               {/* 현재가 대비 적정가 상태 */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
-                <div className="p-3 bg-gray-50 rounded-lg sm:rounded-xl">
-                  <h4 className="text-xs sm:text-sm font-medium text-gray-700 mb-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+                <div className="p-5 bg-gray-50 rounded-xl">
+                  <h4 className="text-sm sm:text-base font-medium text-gray-700 mb-2">
                     적정가 중앙값
                   </h4>
-                  <p className="text-base sm:text-2xl font-bold">
+                  <p className="text-2xl sm:text-3xl font-bold text-emerald-600">
                     {formatNumber(calculatedResults.priceRange.midRange)}원
                   </p>
                 </div>
-                <div className="p-3 bg-gray-50 rounded-lg sm:rounded-xl">
-                  <h4 className="text-xs sm:text-sm font-medium text-gray-700 mb-1">현재 주가</h4>
-                  <p className="text-base sm:text-2xl font-bold">
+                <div className="p-5 bg-gray-50 rounded-xl">
+                  <h4 className="text-sm sm:text-base font-medium text-gray-700 mb-2">현재 주가</h4>
+                  <p className="text-2xl sm:text-3xl font-bold text-gray-800">
                     {formatNumber(latestPrice?.price || 0)}원
                     {latestPrice && latestPrice.formattedDate && (
-                      <span className="text-xs text-gray-500 ml-1">
+                      <span className="text-xs text-gray-500 ml-2">
                         ({latestPrice.formattedDate})
                       </span>
                     )}
@@ -731,15 +742,15 @@ export default function JsonPricePage() {
 
               {/* 이상치 정보 (접이식) */}
               {calculatedResults.hasOutliers && (
-                <details className="mb-3 sm:mb-4 p-3 bg-gray-50 rounded-lg sm:rounded-xl">
-                  <summary className="cursor-pointer text-xs sm:text-sm font-medium">
+                <details className="mb-6 p-5 bg-gray-50 rounded-xl">
+                  <summary className="cursor-pointer text-sm sm:text-base font-medium">
                     참고용 이상치 값 정보 (클릭하여 확인)
                   </summary>
-                  <div className="mt-2">
-                    <p className="text-xs text-gray-600 mb-2">
+                  <div className="mt-4">
+                    <p className="text-sm text-gray-600 mb-3">
                       다음 값들은 다른 모델과 큰 차이를 보여 적정가 계산에서 제외되었습니다:
                     </p>
-                    <ul className="pl-5 text-xs sm:text-sm space-y-1">
+                    <ul className="pl-6 text-sm sm:text-base space-y-2">
                       {calculatedResults.outliers?.map((outlier) => (
                         <li key={outlier.name}>
                           {outlier.name}: {formatNumber(outlier.value)}원
@@ -751,9 +762,9 @@ export default function JsonPricePage() {
               )}
 
               {/* 투자 조언 메시지 */}
-              <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl text-xs sm:text-sm">
-                <p className="font-medium text-gray-800 mb-1">※ 투자 참고 사항:</p>
-                <ul className="list-disc pl-5 space-y-1 text-gray-700">
+              <div className="p-5 bg-gray-50 border border-gray-200 rounded-xl text-sm">
+                <p className="font-medium text-gray-800 mb-3">※ 투자 참고 사항:</p>
+                <ul className="list-disc pl-6 space-y-2 text-gray-700">
                   <li>위 평가는 기초적인 가이드라인으로, 추가 분석이 권장됩니다.</li>
                   <li>적정가 범위는 다양한 모델의 결과 분포를 보여줍니다.</li>
                   <li>데이터 신뢰성이 낮을 경우 결과 해석에 주의가 필요합니다.</li>
@@ -770,12 +781,12 @@ export default function JsonPricePage() {
               </div>
 
               {/* 페이지 하단 네비게이션 버튼 */}
-              <div className="mt-4 sm:mt-6">
+              <div className="mt-6">
                 <Link href="/checklist">
-                  <button className="inline-flex items-center bg-black text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium hover:bg-gray-800 transition-colors">
+                  <button className="inline-flex items-center bg-emerald-600 text-white px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-emerald-700 transition-colors">
                     체크리스트로 돌아가기
                     <svg
-                      className="ml-1 sm:ml-2 w-3 h-3 sm:w-4 sm:h-4"
+                      className="ml-2 w-4 h-4 sm:w-5 sm:h-5"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
