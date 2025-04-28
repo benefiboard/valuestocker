@@ -197,7 +197,7 @@ export default function JsonPricePage() {
 
     // 상태에 따른 색상과 텍스트 결정
     const statusColor = isPriceDiffPositive ? 'text-emerald-600' : 'text-red-500';
-    const statusText = isPriceDiffPositive ? '싸다' : '비싸다';
+    const statusText = isPriceDiffPositive ? '저가' : '고가';
 
     // 막대 길이 계산 - 항상 차이가 보이는 접근법
     let fairBarWidth, currentBarWidth;
@@ -252,10 +252,11 @@ export default function JsonPricePage() {
 
     return (
       <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-md mb-6">
-        <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-6 flex items-center">
+        <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 flex items-center">
           <Info className="mr-3 w-5 h-5 sm:w-6 sm:h-6 text-emerald-600" />
           주가 대비 적정가 비교
         </h2>
+        <hr className="mb-3 border-gray-200" />
         {/* 상단 비교 텍스트 */}
         <div className="mb-6 flex flex-wrap items-end">
           <p className={`text-2xl sm:text-3xl font-bold ${statusColor}`}>
@@ -362,7 +363,7 @@ export default function JsonPricePage() {
               className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 text-sm rounded-xl flex items-center transition-colors"
             >
               <SearchIcon className="h-4 w-4 mr-2" />
-              다른 종목 보기
+              다른 종목
             </button>
           </div>
         )}

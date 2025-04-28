@@ -466,7 +466,7 @@ export default function JsonCheckPage() {
               className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 text-sm rounded-xl flex items-center transition-colors"
             >
               <SearchIcon className="h-4 w-4 mr-2" />
-              다른 종목 보기
+              다른 종목
             </button>
           </div>
         )}
