@@ -2,9 +2,9 @@
 
 import { useState, ChangeEvent, FormEvent } from 'react';
 import CompanySearchInput from '@/app/components/CompanySearchInput';
-import { CompanyInfo } from '../../lib/stockCodeData';
-import { CalculatedResults, StockPrice } from './types';
-import { getIndustryParameters } from '../../lib/industryData';
+import { CompanyInfo } from '../../../lib/stockCodeData';
+import { CalculatedResults, StockPrice } from '../types';
+import { getIndustryParameters } from '../../../lib/industryData';
 import Link from 'next/link';
 import {
   AlertCircle,
@@ -18,7 +18,7 @@ import {
   Search as SearchIcon,
   Target,
 } from 'lucide-react';
-import { extractCalculatedResultsFromSupabase } from './FairpriceCalculate';
+import { extractCalculatedResultsFromJson, getStockDataFromJson } from '../FairpriceCalculate';
 // import PriceComparisonVisual from './PriceComparisonVisual';
 
 export default function JsonPricePage() {
@@ -109,9 +109,6 @@ export default function JsonPricePage() {
   };
 
   // 메인 검색 함수
-  // src/app/fairprice/page.tsx (handleSearch 함수 부분 수정)
-
-  // 메인 검색 함수
   const handleSearch = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -124,6 +121,14 @@ export default function JsonPricePage() {
     // 주식 코드 가져오기
     const stockCode = selectedCompany.stockCode;
 
+    // JSON에서 데이터 확인
+    const stockDataItem = getStockDataFromJson(stockCode);
+
+    if (!stockDataItem) {
+      setError(`${companyName}의 데이터를 JSON에서 찾을 수 없습니다`);
+      return;
+    }
+
     // 모든 상태 초기화
     setCalculatedResults(null);
     setSuccess(false);
@@ -131,11 +136,11 @@ export default function JsonPricePage() {
     setLoading(true);
 
     try {
-      // Supabase에서 적정가 계산 및 최신 주가 가져오기
-      const calculatedResults = await extractCalculatedResultsFromSupabase(stockCode);
+      // 적정가 계산 및 최신 주가 가져오기
+      const calculatedResults = extractCalculatedResultsFromJson(stockCode);
 
       if (!calculatedResults) {
-        throw new Error(`${companyName}의 데이터를 찾을 수 없습니다`);
+        throw new Error(`${companyName}의 데이터를 JSON에서 찾을 수 없습니다`);
       }
 
       setLatestPrice(calculatedResults.latestPrice || null);
@@ -152,6 +157,7 @@ export default function JsonPricePage() {
       setLoading(false);
     }
   };
+
   // 점수 바 렌더링 함수
   const renderScoreBar = (score: number, maxScore: number = 10) => {
     const percentage = (score / maxScore) * 100;

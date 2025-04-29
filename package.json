@@ -6,16 +6,20 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "migrate-data": "node scripts/migrate-data-to-supabase.js",
+    "migrate-checklist": "node scripts/migrate-checklist-to-supabase.js"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.0",
+    "@supabase/supabase-js": "^2.49.4",
     "@vercel/analytics": "^1.5.0",
     "adm-zip": "^0.5.16",
     "axios": "^1.8.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "csv-parser": "^3.2.0",
+    "dotenv": "^16.5.0",
     "lucide-react": "^0.488.0",
     "next": "15.3.0",
     "react": "^19.0.0",
@@ -34,6 +38,7 @@
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.3",
     "tailwindcss": "^4.1.4",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }

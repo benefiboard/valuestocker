@@ -1,13 +1,7 @@
 // src/app/checklist/ChecklistCalculate.ts
 
-import {
-  ChecklistItem,
-  StockPrice,
-  ScoredChecklistItem,
-  InvestmentRating,
-  JsonChecklistData,
-} from './types';
-import { supabase } from '../../lib/supabaseClient';
+import { ChecklistItem, StockPrice, ScoredChecklistItem, InvestmentRating } from './types';
+import precalculatedData from '@/lib/finance/stock_checklist_2025.json';
 import {
   FINANCIAL_COMPANIES,
   EXCLUDED_ITEMS_BY_INDUSTRY,
@@ -17,114 +11,6 @@ import {
 } from './constants/industryThresholds';
 import { initialChecklist, SCORE_THRESHOLDS } from './constants/checklistItems';
 
-// Supabase에서 체크리스트 데이터 가져오기
-export const getStockChecklistFromSupabase = async (
-  stockCode: string
-): Promise<JsonChecklistData | null> => {
-  const { data, error } = await supabase
-    .from('stock_checklist')
-    .select('*')
-    .eq('stock_code', stockCode)
-    .single();
-
-  if (error || !data) {
-    console.error('체크리스트 데이터 조회 실패:', error);
-    return null;
-  }
-
-  // 컬럼명 매핑 (Supabase 소문자 -> CamelCase)
-  return {
-    stock_code: data.stock_code,
-    dart_code: data.dart_code,
-    company_name: data.company_name,
-    shares_outstanding: data.shares_outstanding || '0',
-    last_updated: data.last_updated,
-    industry: data.industry,
-    subIndustry: data.subindustry,
-
-    // 수익성장률 관련 필드
-    revenueGrowthRate: Number(data.revenuegrowthrate || 0),
-    opIncomeGrowthRate: Number(data.opincomegrowthrate || 0),
-    epsGrowthRate: Number(data.epsgrowthrate || 0),
-    netIncomeGrowthRate: Number(data.netincomegrowthrate || 0),
-    bpsGrowthRate: Number(data.bpsgrowthrate || 0),
-    retainedEarningsGrowthRate: Number(data.retainedearningsgrowthrate || 0),
-
-    // 수익성 관련 필드
-    avgOpMargin: Number(data.avgopmargin || 0),
-    avgRoe: Number(data.avgroe || 0),
-
-    // 재무안정성 관련 필드
-    debtRatio: Number(data.debtratio || 0),
-    currentRatio: Number(data.currentratio || 0),
-    interestCoverageRatio: Number(data.interestcoverageratio || 0),
-    nonCurrentLiabilitiesToNetIncome: Number(data.noncurrentliabilitiestonetincome || 0),
-    cashCycleDays: Number(data.cashcycledays || 0),
-    fcfRatio: Number(data.fcfratio || 0),
-    grossProfitMargin: Number(data.grossprofitmargin || 0),
-
-    // 가치평가 관련 필드
-    avgPer: Number(data.avgper || 0),
-    maxPer: Number(data.maxper || 0),
-    maxPerTimes04: Number(data.maxpertimes04 || 0),
-    currentBps: Number(data.currentbps || 0),
-    previousBps: Number(data.previousbps || 0),
-    twoYearsAgoBps: Number(data.twoyearsagobps || 0),
-    currentYearPer: Number(data.currentyearper || 0),
-    previousYearPer: Number(data.previousyearper || 0),
-    twoYearsAgoPer: Number(data.twoyearsagoper || 0),
-    currentYearEps: Number(data.currentyeareps || 0),
-  };
-};
-
-// Supabase에서 주가 데이터 가져오기
-export const getStockPriceFromSupabase = async (stockCode: string): Promise<StockPrice | null> => {
-  const { data, error } = await supabase
-    .from('stock_price')
-    .select('*')
-    .eq('stock_code', stockCode)
-    .single();
-
-  if (error || !data) {
-    console.error('주가 데이터 조회 실패:', error);
-    return null;
-  }
-
-  return {
-    code: data.stock_code,
-    name: data.company_name,
-    price: Number(data.current_price || 0),
-    sharesOutstanding: 0, // 체크리스트 데이터에서 채워질 예정
-    formattedDate: data.last_updated,
-  };
-};
-
-// Supabase에서 데이터를 가져와서 체크리스트 계산
-export const calculateChecklist = async (
-  stockCode: string,
-  industry: string = 'etc'
-): Promise<ScoredChecklistItem[]> => {
-  // 1. 체크리스트 데이터 가져오기
-  const stockData = await getStockChecklistFromSupabase(stockCode);
-  if (!stockData) {
-    console.error(`체크리스트 데이터를 찾을 수 없습니다: ${stockCode}`);
-    return [];
-  }
-
-  // 2. 주가 정보 가져오기
-  const stockPrice = await getStockPriceFromSupabase(stockCode);
-  if (!stockPrice) {
-    console.error(`주가 데이터를 찾을 수 없습니다: ${stockCode}`);
-    return [];
-  }
-
-  // sharesOutstanding 채우기
-  stockPrice.sharesOutstanding = parseFloat(stockData.shares_outstanding || '0');
-
-  // 3. 기존 함수로 체크리스트 계산
-  return calculateJsonChecklist(stockCode, stockPrice, industry);
-};
-
 // 미리 계산된 데이터와 현재 주가를 이용한 체크리스트 계산 함수
 export const calculateJsonChecklist = (
   stockCode: string,
@@ -132,25 +18,7 @@ export const calculateJsonChecklist = (
   industry: string = 'etc'
 ): ScoredChecklistItem[] => {
   // 미리 계산된 데이터 가져오기
-  let stockData: any;
-
-  // Supabase에서 가져온 데이터인 경우 (비동기로 이미 가져온 경우)
-  if (
-    typeof window !== 'undefined' &&
-    (window as any).tempStockData &&
-    (window as any).tempStockData[stockCode]
-  ) {
-    stockData = (window as any).tempStockData[stockCode];
-  } else {
-    // 기존 방식 (JSON 파일에서 로드)
-    try {
-      const precalculatedData = require('@/lib/finance/stock_checklist_2025.json');
-      stockData = precalculatedData[stockCode];
-    } catch (error) {
-      console.error(`JSON 데이터를 로드할 수 없습니다: ${error}`);
-      return [];
-    }
-  }
+  const stockData = (precalculatedData as any)[stockCode];
 
   if (!stockData) {
     console.error(`종목 데이터를 찾을 수 없습니다: ${stockCode}`);
@@ -897,7 +765,7 @@ export const calculateJsonChecklist = (
 };
 
 // 투자 등급 계산 함수 - UI 로직 제거
-export const calculateInvestmentRating = (
+export const calculateJsonInvestmentRating = (
   checklistResults: ScoredChecklistItem[],
   stockCode?: string,
   industry: string = 'etc'
@@ -1000,6 +868,3 @@ export const calculateInvestmentRating = (
     isFinancialCompany,
   };
 };
-
-// 하위 호환성을 위한 함수 별칭
-export const calculateJsonInvestmentRating = calculateInvestmentRating;

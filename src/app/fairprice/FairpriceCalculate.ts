@@ -7,26 +7,79 @@ import {
   StockFairPriceData,
   StockPrice,
 } from './types';
-import stockData from '../../lib/finance/stock_fairprice_2025.json';
-import stockPriceData from '../../lib/finance/stock_price_2025.json';
+import { supabase } from '../../lib/supabaseClient';
 
-// 주식 데이터를 JSON에서 가져오는 함수
-export const getStockDataFromJson = (stockCode: string): StockFairPriceData | null => {
-  // JSON에서 해당 주식 코드에 맞는 데이터 가져오기
-  const data = (stockData as Record<string, StockFairPriceData>)[stockCode];
-  if (!data) return null;
-  return data;
+// Supabase에서 주식 데이터를 가져오는 함수
+export const getStockDataFromSupabase = async (
+  stockCode: string
+): Promise<StockFairPriceData | null> => {
+  const { data, error } = await supabase
+    .from('stock_fairprice')
+    .select('*')
+    .eq('stock_code', stockCode)
+    .single();
+
+  if (error || !data) return null;
+
+  console.log('Supabase 데이터:', data); // 디버깅용 로그
+
+  // Supabase에서 가져온 데이터를 기존 StockFairPriceData 형식으로 변환
+  // 정확한 컬럼명 사용
+  return {
+    stock_code: data.stock_code,
+    dart_code: data.dart_code,
+    company_name: data.company_name,
+    industry: data.industry,
+    subIndustry: data.subindustry || '',
+    last_updated: data.last_updated || new Date().toISOString(),
+    shares_outstanding: data.shares_outstanding || '0',
+
+    // 적정가 모델 결과 - 정확한 컬럼명 사용
+    epsPer: Number(data.epsper || 0),
+    controllingShareHolder: Number(data.controllingshareholder || 0),
+    threeIndicatorsBps: Number(data.threeindicatorsbps || 0),
+    threeIndicatorsEps: Number(data.threeindicatorseps || 0),
+    threeIndicatorsRoeEps: Number(data.threeindicatorsroeeps || 0),
+    yamaguchi: Number(data.yamaguchi || 0),
+    sRimBase: Number(data.srimbase || 0),
+    pegBased: Number(data.pegbased || 0),
+    sRimDecline10pct: Number(data.srimdecline10pct || 0),
+    sRimDecline20pct: Number(data.srimdecline20pct || 0),
+
+    // 부가 정보
+    averageEps: Number(data.averageeps || 0),
+    averagePER: Number(data.averageper || 0),
+    growthRate: Number(data.growthrate || 0),
+    pegBasedPER: Number(data.pegbasedper || 0),
+    latestRoe: Number(data.latestroe || 0),
+
+    // 적정가 범위
+    priceRange_lowRange: Number(data.pricerange_lowrange || 0),
+    priceRange_midRange: Number(data.pricerange_midrange || 0),
+    priceRange_highRange: Number(data.pricerange_highrange || 0),
+
+    // 추가 필드
+    trustScore: Number(data.trustscore || 0),
+    riskScore: Number(data.riskscore || 0),
+  };
 };
 
-// 최신 주가 데이터를 JSON에서 가져오는 함수
-export const getStockPriceFromJson = (stockCode: string): StockPrice | null => {
-  const data = (stockPriceData as Record<string, any>)[stockCode];
-  if (!data) return null;
+// Supabase에서 주가 데이터를 가져오는 함수
+export const getStockPriceFromSupabase = async (stockCode: string): Promise<StockPrice | null> => {
+  const { data, error } = await supabase
+    .from('stock_price')
+    .select('*')
+    .eq('stock_code', stockCode)
+    .single();
+
+  if (error || !data) return null;
+
+  console.log('주가 데이터:', data); // 디버깅용 로그
 
   return {
     code: data.stock_code,
     name: data.company_name,
-    price: Number(data.current_price),
+    price: Number(data.current_price || 0),
     sharesOutstanding: 0, // 필요하면 채울 수 있음
     formattedDate: data.last_updated,
   };
@@ -114,7 +167,125 @@ export const detectOutliers = (
   };
 };
 
-// JSON에서 데이터를 추출해서 CalculatedResults 객체를 생성하는 함수
+// Supabase에서 데이터를 추출해서 CalculatedResults 객체를 생성하는 함수
+export const extractCalculatedResultsFromSupabase = async (
+  stockCode: string
+): Promise<CalculatedResults | null> => {
+  // 디버깅 메시지 추가
+  console.log(`Supabase에서 데이터 가져오기 시작: ${stockCode}`);
+
+  const stockDataItem = await getStockDataFromSupabase(stockCode);
+  if (!stockDataItem) {
+    console.error('주식 데이터를 찾을 수 없음:', stockCode);
+    return null;
+  }
+
+  const latestPrice = await getStockPriceFromSupabase(stockCode);
+  if (!latestPrice) {
+    console.error('주가 데이터를 찾을 수 없음:', stockCode);
+    return null;
+  }
+
+  const currentPrice = latestPrice.price;
+  console.log(`현재가: ${currentPrice}, 적정가 중앙값: ${stockDataItem.priceRange_midRange}`);
+
+  // Supabase 데이터로 결과 생성
+  const results: CalculatedResults = {
+    // 직접 모델 값들 가져오기
+    epsPer: stockDataItem.epsPer,
+    controllingShareHolder: stockDataItem.controllingShareHolder,
+    threeIndicatorsBps: stockDataItem.threeIndicatorsBps,
+    threeIndicatorsEps: stockDataItem.threeIndicatorsEps,
+    threeIndicatorsRoeEps: stockDataItem.threeIndicatorsRoeEps,
+    yamaguchi: stockDataItem.yamaguchi,
+    sRimBase: stockDataItem.sRimBase,
+    pegBased: stockDataItem.pegBased,
+    sRimDecline10pct: stockDataItem.sRimDecline10pct,
+    sRimDecline20pct: stockDataItem.sRimDecline20pct,
+    latestPrice,
+
+    // 적정가 범위 (Supabase에서 priceRange_* 필드로 저장됨)
+    priceRange: {
+      lowRange: stockDataItem.priceRange_lowRange,
+      midRange: stockDataItem.priceRange_midRange,
+      highRange: stockDataItem.priceRange_highRange,
+    },
+
+    // Supabase에서 직접 가져오는 값들
+    trustScore: stockDataItem.trustScore,
+    riskScore: stockDataItem.riskScore,
+    priceRatio: getPriceRatio(currentPrice, stockDataItem.priceRange_midRange),
+  };
+
+  // 문제 진단을 위한 로그 추가
+  console.log('계산된 결과값들:');
+  console.log('epsPer:', results.epsPer);
+  console.log('controllingShareHolder:', results.controllingShareHolder);
+  console.log('threeIndicatorsBps:', results.threeIndicatorsBps);
+  console.log('threeIndicatorsEps:', results.threeIndicatorsEps);
+  console.log('threeIndicatorsRoeEps:', results.threeIndicatorsRoeEps);
+  console.log('yamaguchi:', results.yamaguchi);
+  console.log('sRimBase:', results.sRimBase);
+  console.log('priceRange:', results.priceRange);
+
+  // 모델 분류 및 이상치 계산
+  const categorizedModels = categorizeModels(results);
+  results.categorizedModels = categorizedModels;
+
+  const { outliers, hasOutliers } = detectOutliers(categorizedModels);
+  results.outliers = outliers;
+  results.hasOutliers = hasOutliers;
+
+  // PER 분석 (선택적으로 구현. 원본 코드에 없다면 주석처리하세요)
+  const currentPER = currentPrice / (stockDataItem.averageEps || 1);
+  if (stockDataItem.averageEps <= 0) {
+    results.perAnalysis = {
+      status: 'negative',
+      message: '현재 기업이 손실을 기록 중입니다.',
+    };
+  } else if (currentPER > 100) {
+    results.perAnalysis = {
+      status: 'extreme_high',
+      message: 'PER이 매우 높습니다. 고평가 위험이 있습니다.',
+    };
+  } else {
+    results.perAnalysis = {
+      status: 'normal',
+      message: '정상 범위 내의 PER입니다.',
+    };
+  }
+
+  return results;
+};
+
+// ----- 하위 호환성을 위한 원래 함수 유지 (선택 사항) -----
+
+import stockData from '../../lib/finance/stock_fairprice_2025.json';
+import stockPriceData from '../../lib/finance/stock_price_2025.json';
+
+// 주식 데이터를 JSON에서 가져오는 함수 (기존 함수 유지)
+export const getStockDataFromJson = (stockCode: string): StockFairPriceData | null => {
+  // JSON에서 해당 주식 코드에 맞는 데이터 가져오기
+  const data = (stockData as Record<string, StockFairPriceData>)[stockCode];
+  if (!data) return null;
+  return data;
+};
+
+// 최신 주가 데이터를 JSON에서 가져오는 함수 (기존 함수 유지)
+export const getStockPriceFromJson = (stockCode: string): StockPrice | null => {
+  const data = (stockPriceData as Record<string, any>)[stockCode];
+  if (!data) return null;
+
+  return {
+    code: data.stock_code,
+    name: data.company_name,
+    price: Number(data.current_price),
+    sharesOutstanding: 0, // 필요하면 채울 수 있음
+    formattedDate: data.last_updated,
+  };
+};
+
+// JSON에서 데이터를 추출해서 CalculatedResults 객체를 생성하는 함수 (기존 함수 유지)
 export const extractCalculatedResultsFromJson = (stockCode: string): CalculatedResults | null => {
   const stockDataItem = getStockDataFromJson(stockCode);
   if (!stockDataItem) return null;

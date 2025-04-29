@@ -2,9 +2,9 @@
 
 import { useState, FormEvent } from 'react';
 import CompanySearchInput from '@/app/components/CompanySearchInput';
-import { CompanyInfo } from '../../lib/stockCodeData';
-import { CalculatedResults, StockPrice } from './types';
-import { getIndustryParameters } from '../../lib/industryData';
+import { CompanyInfo } from '../../../lib/stockCodeData';
+import { CalculatedResults, StockPrice } from '../types';
+import { getIndustryParameters } from '../../../lib/industryData';
 import Link from 'next/link';
 import {
   AlertCircle,
@@ -28,7 +28,7 @@ import {
   PieChart,
   Percent,
 } from 'lucide-react';
-import { extractCalculatedResultsFromJson, getStockDataFromJson } from './FairpriceCalculate';
+import { extractCalculatedResultsFromJson, getStockDataFromJson } from '../FairpriceCalculate';
 
 export default function SportStockApp() {
   // 상태 관리 (기존 코드와 동일)

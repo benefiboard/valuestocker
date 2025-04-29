@@ -26,9 +26,11 @@ import {
   Search as SearchIcon,
   Target,
 } from 'lucide-react';
-import { calculateChecklist, calculateInvestmentRating } from './ChecklistCalculate';
+import { calculateJsonChecklist, calculateJsonInvestmentRating } from './ChecklistCalculate';
 import Link from 'next/link';
 import React from 'react';
+import jsonStockData from '@/lib/finance/stock_checklist_2025.json';
+import stockPriceData from '@/lib/finance/stock_price_2025.json';
 import CompanySearchInput from '../components/CompanySearchInput';
 import { FINANCIAL_COMPANIES } from './constants/industryThresholds';
 
@@ -38,7 +40,7 @@ interface HierarchicalCategory {
   };
 }
 
-export default function ChecklistPage() {
+export default function JsonCheckPage() {
   // 상태 관리
   const [companyName, setCompanyName] = useState<string>('');
   const [selectedCompany, setSelectedCompany] = useState<CompanyInfo | null>(null);
@@ -119,49 +121,71 @@ export default function ChecklistPage() {
       console.log(`DART 코드: ${selectedCompany.dartCode}`);
       console.log(`산업군: ${selectedCompany.industry}`);
 
-      // 체크리스트 계산 (Supabase 데이터 활용)
-      console.log('체크리스트 계산 시작...');
-      const checklist = await calculateChecklist(
-        selectedCompany.stockCode,
-        selectedCompany.industry
-      );
+      // 1. 미리 계산된 데이터 가져오기
+      const preCalcData = (jsonStockData as any)[selectedCompany.stockCode];
 
-      if (checklist.length === 0) {
+      // 2. 현재 주가 정보 가져오기
+      const priceData = (stockPriceData as any)[selectedCompany.stockCode];
+
+      if (!preCalcData || !priceData) {
         throw new Error(`${companyName}의 데이터를 찾을 수 없습니다`);
       }
 
-      console.log('체크리스트 계산 결과:', checklist);
-      setChecklistResults(checklist);
+      // 디버깅을 위해 콘솔에 출력
+      console.log('가격 데이터:', priceData);
 
-      // 주가 정보 가져오기 (이제 Supabase가 아닌 계산된 체크리스트에서 추출)
-      // 체크리스트에는 주가 정보가 포함되어 있음 (calculateChecklist 함수 내에서 설정됨)
-      const stockPriceFromChecklist = {
+      // 3. StockPrice 객체 생성
+      const stockPriceObj: StockPrice = {
         code: selectedCompany.stockCode,
         name: selectedCompany.companyName,
-        price: (checklist[0]?.actualValue as number) || 0, // PER 항목의 actualValue로 대체 (실제로는 정확한 방법으로 추출해야 함)
-        sharesOutstanding: 0,
-        formattedDate: new Date().toISOString(),
+        price: priceData && priceData.current_price ? parseFloat(priceData.current_price) : 0,
+        sharesOutstanding: parseFloat(preCalcData.shares_outstanding),
+        formattedDate: priceData ? priceData.last_updated : '',
       };
 
-      setStockPrice(stockPriceFromChecklist);
+      // 디버깅을 위해 생성된 객체 출력
+      console.log('생성된 주가 객체:', stockPriceObj);
 
-      // 투자 등급 계산
-      console.log('투자 등급 계산 시작...');
-      const rating = calculateInvestmentRating(
-        checklist,
-        selectedCompany.stockCode,
-        selectedCompany.industry
-      );
+      setStockPrice(stockPriceObj);
 
-      console.log('투자 등급 계산 결과:', rating);
+      // 4. 체크리스트 계산
+      console.log('4. 체크리스트 계산 시작...');
+      let checklist;
+      try {
+        checklist = calculateJsonChecklist(
+          selectedCompany.stockCode,
+          stockPriceObj,
+          selectedCompany.industry // 산업군 정보 전달
+        );
+        console.log('체크리스트 계산 결과:', checklist);
+      } catch (calcError: any) {
+        console.error('체크리스트 계산 중 오류 발생:', calcError);
+        throw new Error(`체크리스트 계산 실패: ${calcError.message}`);
+      }
+      setChecklistResults(checklist);
 
-      // 등급 설명 생성 및 설정
-      const description = getGradeDescription(
-        rating.grade,
-        rating.hasCriticalFailure,
-        rating.isFinancialCompany
-      );
-      setRatingDescription(description);
+      // 5. 투자 등급 계산
+      console.log('5. 투자 등급 계산 시작...');
+      let rating;
+      try {
+        rating = calculateJsonInvestmentRating(
+          checklist,
+          selectedCompany.stockCode,
+          selectedCompany.industry // 산업군 정보 전달
+        );
+        console.log('투자 등급 계산 결과:', rating);
+
+        // 등급 설명 생성 및 설정
+        const description = getGradeDescription(
+          rating.grade,
+          rating.hasCriticalFailure,
+          rating.isFinancialCompany
+        );
+        setRatingDescription(description);
+      } catch (ratingError: any) {
+        console.error('투자 등급 계산 중 오류 발생:', ratingError);
+        throw new Error(`투자 등급 계산 실패: ${ratingError.message}`);
+      }
       setInvestmentRating(rating);
 
       console.log('분석 완료!');
@@ -579,85 +603,39 @@ export default function ChecklistPage() {
                 </div>
               </div>
 
-              {/* 핵심 지표 요약 - 이 부분은 Supabase로 전환 후 수정이 필요할 수 있음 */}
+              {/* 핵심 지표 요약 */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {/* ROE 자리 - 실제 데이터 바인딩 필요 */}
                 <div className="bg-gray-50 p-4 rounded-xl">
                   <p className="text-xs sm:text-sm text-gray-600 mb-1">ROE</p>
                   <p className="text-base sm:text-xl font-bold truncate">
-                    {formatNumber(
-                      (checklistResults.find((item) => item.title === 'ROE (자기자본이익률)')
-                        ?.actualValue as number) || 0
-                    )}
-                    %<span className="text-xs text-gray-400">(최근 3년)</span>
+                    {formatNumber((jsonStockData as any)[stockPrice.code].avgRoe)}%
+                    <span className="text-xs text-gray-400">(최근 3년)</span>
                   </p>
                 </div>
-                {/* PER 자리 */}
                 <div className="bg-gray-50 p-4 rounded-xl">
                   <p className="text-xs sm:text-sm text-gray-600 mb-1">PER</p>
                   <p className="text-base sm:text-xl font-bold truncate">
-                    {formatNumber(
-                      (checklistResults.find((item) => item.title === 'PER')
-                        ?.actualValue as number) || 0
-                    )}
+                    {stockPrice &&
+                      formatNumber(
+                        stockPrice.price /
+                          parseFloat((jsonStockData as any)[stockPrice.code].currentYearEps)
+                      )}
                     배
                   </p>
                 </div>
-                {/* 금융회사가 아닐 때만 매출 성장률 표시 */}
-                {!investmentRating.isFinancialCompany && (
-                  <div className="bg-gray-50 p-4 rounded-xl">
-                    <p className="text-xs sm:text-sm text-gray-600 mb-1">매출 성장률</p>
-                    <p className="text-base sm:text-xl font-bold truncate">
-                      {formatNumber(
-                        (checklistResults.find((item) => item.title === '매출액 성장률')
-                          ?.actualValue as number) || 0
-                      )}
-                      %<span className="text-xs text-gray-400">(최근 3년)</span>
-                    </p>
-                  </div>
-                )}
-
-                {/* 금융회사가 아닐 때만 부채비율 표시 */}
-                {!investmentRating.isFinancialCompany && (
-                  <div className="bg-gray-50 p-4 rounded-xl">
-                    <p className="text-xs sm:text-sm text-gray-600 mb-1">부채비율</p>
-                    <p className="text-base sm:text-xl font-bold truncate">
-                      {formatNumber(
-                        (checklistResults.find((item) => item.title === '부채비율')
-                          ?.actualValue as number) || 0
-                      )}
-                      %
-                    </p>
-                  </div>
-                )}
-
-                {/* 금융회사일 때 대체 지표 표시 */}
-                {investmentRating.isFinancialCompany && (
-                  <div className="bg-gray-50 p-4 rounded-xl">
-                    <p className="text-xs sm:text-sm text-gray-600 mb-1">순이익 증가율</p>
-                    <p className="text-base sm:text-xl font-bold truncate">
-                      {formatNumber(
-                        (checklistResults.find((item) => item.title === '순이익 증가율')
-                          ?.actualValue as number) || 0
-                      )}
-                      %<span className="text-xs text-gray-400">(최근 3년)</span>
-                    </p>
-                  </div>
-                )}
-
-                {/* 금융회사일 때 대체 지표 표시 */}
-                {investmentRating.isFinancialCompany && (
-                  <div className="bg-gray-50 p-4 rounded-xl">
-                    <p className="text-xs sm:text-sm text-gray-600 mb-1">BPS 성장률</p>
-                    <p className="text-base sm:text-xl font-bold truncate">
-                      {formatNumber(
-                        (checklistResults.find((item) => item.title === 'BPS 성장률')
-                          ?.actualValue as number) || 0
-                      )}
-                      %
-                    </p>
-                  </div>
-                )}
+                <div className="bg-gray-50 p-4 rounded-xl">
+                  <p className="text-xs sm:text-sm text-gray-600 mb-1">매출 성장률</p>
+                  <p className="text-base sm:text-xl font-bold truncate">
+                    {formatNumber((jsonStockData as any)[stockPrice.code].revenueGrowthRate)}%
+                    <span className="text-xs text-gray-400">(최근 3년)</span>
+                  </p>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-xl">
+                  <p className="text-xs sm:text-sm text-gray-600 mb-1">부채비율</p>
+                  <p className="text-base sm:text-xl font-bold truncate">
+                    {formatNumber((jsonStockData as any)[stockPrice.code].debtRatio)}%
+                  </p>
+                </div>
               </div>
             </div>
 
