@@ -19,9 +19,8 @@ import {
   Target,
 } from 'lucide-react';
 import { extractCalculatedResultsFromSupabase } from './FairpriceCalculate';
-// import PriceComparisonVisual from './PriceComparisonVisual';
 
-export default function JsonPricePage() {
+export default function FairPricePage() {
   // 상태 관리
   const [companyName, setCompanyName] = useState<string>('');
   const [selectedCompany, setSelectedCompany] = useState<CompanyInfo | null>(null);

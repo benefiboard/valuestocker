@@ -1,6 +1,6 @@
 // src/app/checklist/ChecklistCalculate.ts
 
-import { ChecklistItem, StockPrice, ScoredChecklistItem, InvestmentRating } from './types';
+import { ChecklistItem, StockPrice, ScoredChecklistItem, InvestmentRating } from '../types';
 import precalculatedData from '@/lib/finance/stock_checklist_2025.json';
 import {
   FINANCIAL_COMPANIES,
@@ -8,8 +8,8 @@ import {
   getCoreItemTitles,
   getIndustryThresholds,
   INDUSTRY_GROUPS,
-} from './constants/industryThresholds';
-import { initialChecklist, SCORE_THRESHOLDS } from './constants/checklistItems';
+} from '../constants/industryThresholds';
+import { initialChecklist, SCORE_THRESHOLDS } from '../constants/checklistItems';
 
 // 미리 계산된 데이터와 현재 주가를 이용한 체크리스트 계산 함수
 export const calculateJsonChecklist = (

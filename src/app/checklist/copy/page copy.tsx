@@ -5,7 +5,7 @@
 import { useState, FormEvent } from 'react';
 
 import { CompanyInfo } from '@/lib/stockCodeData';
-import { ScoredChecklistItem, InvestmentRating, StockPrice } from './types';
+import { ScoredChecklistItem, InvestmentRating, StockPrice } from '../types';
 import {
   ArrowLeft,
   Check,
@@ -26,13 +26,13 @@ import {
   Search as SearchIcon,
   Target,
 } from 'lucide-react';
-import { calculateJsonChecklist, calculateJsonInvestmentRating } from './ChecklistCalculate';
+import { calculateJsonChecklist, calculateJsonInvestmentRating } from '../ChecklistCalculate';
 import Link from 'next/link';
 import React from 'react';
 import jsonStockData from '@/lib/finance/stock_checklist_2025.json';
 import stockPriceData from '@/lib/finance/stock_price_2025.json';
-import CompanySearchInput from '../components/CompanySearchInput';
-import { FINANCIAL_COMPANIES } from './constants/industryThresholds';
+import CompanySearchInput from '../../components/CompanySearchInput';
+import { FINANCIAL_COMPANIES } from '../constants/industryThresholds';
 
 interface HierarchicalCategory {
   [mainCategory: string]: {
