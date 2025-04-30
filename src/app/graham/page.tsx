@@ -16,7 +16,6 @@ import {
   DollarSign,
   PercentIcon,
   LineChart,
-  Building,
   Info,
   TrendingUp,
   ExternalLink,
@@ -26,43 +25,39 @@ import {
 } from 'lucide-react';
 
 // 주식 데이터 타입 정의
-interface FlavorStock {
+interface GrahamStock {
   stock_code: string;
   company_name: string;
   industry: string;
   subindustry: string;
   current_per: number;
-  current_pbr: number;
+  debtratio: number;
   current_price: number;
   dividend_yield: number;
-  assets: number;
 }
 
 // 정렬 타입 정의
 type SortField =
   | 'current_per'
-  | 'current_pbr'
+  | 'debtratio'
   | 'company_name'
   | 'industry'
   | 'subindustry'
   | 'current_price'
-  | 'dividend_yield'
-  | 'assets';
+  | 'dividend_yield';
 type SortDirection = 'asc' | 'desc';
 
-export default function FlavorPage() {
+export default function GrahamPage() {
   // 상태 관리
-  const [stocks, setStocks] = useState<FlavorStock[]>([]);
-  const [filteredStocks, setFilteredStocks] = useState<FlavorStock[]>([]);
+  const [stocks, setStocks] = useState<GrahamStock[]>([]);
+  const [filteredStocks, setFilteredStocks] = useState<GrahamStock[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
-  const [sortField, setSortField] = useState<SortField>('dividend_yield');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [sortField, setSortField] = useState<SortField>('current_per');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [industryFilter, setIndustryFilter] = useState<string>('');
   const [subIndustryFilter, setSubIndustryFilter] = useState<string>('');
-  const [assetMinFilter, setAssetMinFilter] = useState<number | ''>(0);
-  const [assetMaxFilter, setAssetMaxFilter] = useState<number | ''>('');
-  const [dividendMinFilter, setDividendMinFilter] = useState<number | ''>(5);
+  const [dividendMinFilter, setDividendMinFilter] = useState<number | ''>('');
   const [dividendMaxFilter, setDividendMaxFilter] = useState<number | ''>('');
   const [industries, setIndustries] = useState<string[]>([]);
   const [subIndustries, setSubIndustries] = useState<string[]>([]);
@@ -74,51 +69,50 @@ export default function FlavorPage() {
 
   // Supabase에서 조건에 맞는 주식 데이터 가져오기
   useEffect(() => {
-    const fetchFlavorStocks = async () => {
+    const fetchGrahamStocks = async () => {
       try {
         setLoading(true);
 
-        // 1. 배당률 데이터 가져오기 (최소 제한 없이 모든 데이터를 가져오고 나중에 필터링)
-        const { data: dividendData, error: dividendError } = await supabase
-          .from('stock_raw_data')
-          .select('stock_code, 2024_dividend_yield, 2024_assets')
-          .not('2024_dividend_yield', 'is', null);
+        // 1. 부채비율 조건에 맞는 종목 먼저 가져오기
+        const { data: checklist, error: checklistError } = await supabase
+          .from('stock_checklist')
+          .select(
+            `
+            stock_code,
+            company_name,
+            industry,
+            subindustry,
+            debtratio
+          `
+          )
+          .lt('debtratio', 100)
+          .not('debtratio', 'is', null);
 
-        if (dividendError) throw new Error(dividendError.message);
+        if (checklistError) throw new Error(checklistError.message);
 
-        if (!dividendData || dividendData.length === 0) {
-          setError('배당 데이터를 찾을 수 없습니다.');
+        if (!checklist || checklist.length === 0) {
+          setError('부채비율 조건에 맞는 주식을 찾을 수 없습니다.');
           setStocks([]);
           setFilteredStocks([]);
           return;
         }
 
-        // 기본 필터링 조건(PER, PBR)에 맞는 종목 코드만 추출
-        const stockCodes = dividendData
-          .filter((item) => item['2024_dividend_yield'] >= 5) // 기본 최소 배당률 5%
-          .map((item) => item.stock_code);
+        // 가져온 종목들의 코드 목록
+        const stockCodes = checklist.map((item) => item.stock_code);
 
-        if (stockCodes.length === 0) {
-          setError('배당률 조건에 맞는 주식을 찾을 수 없습니다.');
-          setStocks([]);
-          setFilteredStocks([]);
-          return;
-        }
-
-        // 2. PER, PBR 조건에 맞는 종목 가져오기
+        // 2. PER 조건에 맞는 종목 가져오기
         const { data: currentData, error: currentError } = await supabase
           .from('stock_current')
-          .select('stock_code, current_per, current_pbr')
+          .select('stock_code, current_per')
           .in('stock_code', stockCodes)
-          .lte('current_per', 10)
-          .lte('current_pbr', 1)
-          .not('current_per', 'is', null)
-          .not('current_pbr', 'is', null);
+          .gte('current_per', 0.1)
+          .lt('current_per', 10)
+          .not('current_per', 'is', null);
 
         if (currentError) throw new Error(currentError.message);
 
         if (!currentData || currentData.length === 0) {
-          setError('PER, PBR 조건에 맞는 주식을 찾을 수 없습니다.');
+          setError('PER 조건에 맞는 주식을 찾을 수 없습니다.');
           setStocks([]);
           setFilteredStocks([]);
           return;
@@ -127,85 +121,63 @@ export default function FlavorPage() {
         // 조건을 만족하는 종목 코드
         const filteredCodes = currentData.map((item) => item.stock_code);
 
-        // 3. 현재가 및 회사 정보 데이터 가져오기
-        const { data: stockInfo, error: stockInfoError } = await supabase
+        // 3. 현재가 데이터 가져오기
+        const { data: priceData, error: priceError } = await supabase
           .from('stock_price')
-          .select(
-            `
-            stock_code,
-            company_name,
-            current_price
-          `
-          )
+          .select('stock_code, current_price')
           .in('stock_code', filteredCodes);
 
-        if (stockInfoError) throw new Error(stockInfoError.message);
+        if (priceError) throw new Error(priceError.message);
 
-        // 4. 산업 정보 가져오기
-        const { data: industryInfo, error: industryError } = await supabase
-          .from('stock_checklist')
-          .select(
-            `
-            stock_code,
-            industry,
-            subindustry
-          `
-          )
+        // 4. 배당률 데이터 가져오기
+        const { data: dividendAssetsData, error: dividendError } = await supabase
+          .from('stock_raw_data')
+          .select('stock_code, 2024_dividend_yield')
           .in('stock_code', filteredCodes);
 
-        if (industryError) throw new Error(industryError.message);
+        if (dividendError) throw new Error(dividendError.message);
 
         // 5. 데이터 조인
-        const perPbrMap = new Map(
-          currentData.map((item) => [
-            item.stock_code,
-            { per: item.current_per, pbr: item.current_pbr },
-          ])
+        const perMap = new Map(currentData.map((item) => [item.stock_code, item.current_per]));
+        const priceMap = new Map(priceData.map((item) => [item.stock_code, item.current_price]));
+        const dividendMap = new Map(
+          dividendAssetsData.map((item) => [item.stock_code, item['2024_dividend_yield'] || 0])
         );
 
-        const dividendAssetsMap = new Map(
-          dividendData.map((item) => [
-            item.stock_code,
-            {
-              dividend: item['2024_dividend_yield'] || 0,
-              assets: item['2024_assets'] || 0,
-            },
-          ])
+        // 모든 조건을 만족하는 종목만 필터링
+        const filteredChecklist = checklist.filter((item) =>
+          filteredCodes.includes(item.stock_code)
         );
 
-        const industryMap = new Map(
-          industryInfo.map((item) => [
-            item.stock_code,
-            {
-              industry: item.industry || '미분류',
-              subindustry: item.subindustry || '미분류',
-            },
-          ])
-        );
+        if (filteredChecklist.length === 0) {
+          setError('조건에 맞는 주식을 찾을 수 없습니다.');
+          setStocks([]);
+          setFilteredStocks([]);
+          return;
+        }
 
-        // 모든 조건을 만족하는 종목 데이터 구성
-        const flavorStocks: FlavorStock[] = stockInfo.map((item) => ({
+        // 데이터 형식 변환
+        const grahamStocks: GrahamStock[] = filteredChecklist.map((item) => ({
           stock_code: item.stock_code,
           company_name: item.company_name,
-          industry: industryMap.get(item.stock_code)?.industry || '미분류',
-          subindustry: industryMap.get(item.stock_code)?.subindustry || '미분류',
-          current_per: perPbrMap.get(item.stock_code)?.per || 0,
-          current_pbr: perPbrMap.get(item.stock_code)?.pbr || 0,
-          current_price: item.current_price || 0,
-          dividend_yield: dividendAssetsMap.get(item.stock_code)?.dividend || 0,
-          assets: dividendAssetsMap.get(item.stock_code)?.assets || 0,
+          industry: item.industry || '미분류',
+          subindustry: item.subindustry || '미분류',
+          current_per: perMap.get(item.stock_code) || 0,
+          debtratio: item.debtratio || 0,
+          current_price: priceMap.get(item.stock_code) || 0,
+          dividend_yield: dividendMap.get(item.stock_code) || 0,
         }));
 
         // 산업군과 하위 산업군 목록 생성
         const uniqueIndustries = Array.from(
-          new Set(flavorStocks.map((stock) => stock.industry))
+          new Set(grahamStocks.map((stock) => stock.industry))
         ).sort();
         const uniqueSubIndustries = Array.from(
-          new Set(flavorStocks.map((stock) => stock.subindustry))
+          new Set(grahamStocks.map((stock) => stock.subindustry))
         ).sort();
 
-        setStocks(flavorStocks);
-        setFilteredStocks(flavorStocks);
+        setStocks(grahamStocks);
+        setFilteredStocks(grahamStocks);
         setIndustries(uniqueIndustries);
         setSubIndustries(uniqueSubIndustries);
         setCurrentPage(1);
@@ -217,7 +189,7 @@ export default function FlavorPage() {
       }
     };
 
-    fetchFlavorStocks();
+    fetchGrahamStocks();
   }, []);
 
   // 필터 적용
@@ -253,26 +225,13 @@ export default function FlavorPage() {
       filtered = filtered.filter((stock) => stock.subindustry === subIndustryFilter);
     }
 
-    // 자산 금액 범위 필터 (억 단위)
-    const assetMinValue = typeof assetMinFilter === 'number' ? assetMinFilter * 100000000 : 0;
-    if (assetMinValue > 0) {
-      filtered = filtered.filter((stock) => stock.assets >= assetMinValue);
-    }
-
-    const assetMaxValue =
-      typeof assetMaxFilter === 'number' ? assetMaxFilter * 100000000 : Number.MAX_SAFE_INTEGER;
-    if (typeof assetMaxFilter === 'number') {
-      filtered = filtered.filter((stock) => stock.assets <= assetMaxValue);
-    }
-
     // 배당률 범위 필터 추가
-    const dividendMinValue = typeof dividendMinFilter === 'number' ? dividendMinFilter : 5;
-    filtered = filtered.filter((stock) => stock.dividend_yield >= dividendMinValue);
+    if (typeof dividendMinFilter === 'number' && dividendMinFilter > 0) {
+      filtered = filtered.filter((stock) => stock.dividend_yield >= dividendMinFilter);
+    }
 
-    const dividendMaxValue =
-      typeof dividendMaxFilter === 'number' ? dividendMaxFilter : Number.MAX_SAFE_INTEGER;
-    if (typeof dividendMaxFilter === 'number') {
-      filtered = filtered.filter((stock) => stock.dividend_yield <= dividendMaxValue);
+    if (typeof dividendMaxFilter === 'number' && dividendMaxFilter > 0) {
+      filtered = filtered.filter((stock) => stock.dividend_yield <= dividendMaxFilter);
     }
 
     // 정렬 적용
@@ -299,8 +258,6 @@ export default function FlavorPage() {
     stocks,
     industryFilter,
     subIndustryFilter,
-    assetMinFilter,
-    assetMaxFilter,
     dividendMinFilter,
     dividendMaxFilter,
     sortField,
@@ -340,12 +297,25 @@ export default function FlavorPage() {
   const resetFilters = () => {
     setIndustryFilter('');
     setSubIndustryFilter('');
-    setAssetMinFilter(0);
-    setAssetMaxFilter('');
-    setDividendMinFilter(5);
+    setDividendMinFilter('');
     setDividendMaxFilter('');
-    setSortField('dividend_yield');
-    setSortDirection('desc');
+    setSortField('current_per');
+    setSortDirection('asc');
+  };
+
+  // 자산 억/조 단위 변환 함수
+  const formatAsset = (num: number): string => {
+    if (num >= 1000000000000) {
+      // 조 단위 (10^12)
+      const jo = Math.floor(num / 1000000000000);
+      const eok = Math.floor((num % 1000000000000) / 100000000);
+      if (eok > 0) {
+        return `${jo}조 ${eok}억`;
+      }
+      return `${jo}조`;
+    } else {
+      return `${Math.floor(num / 100000000)}억`;
+    }
   };
 
   // 페이지네이션 계산
@@ -367,21 +337,6 @@ export default function FlavorPage() {
     return new Intl.NumberFormat('ko-KR').format(Math.round(num));
   };
 
-  // 자산 억/조 단위 변환 함수
-  const formatAsset = (num: number): string => {
-    if (num >= 1000000000000) {
-      // 조 단위 (10^12)
-      const jo = Math.floor(num / 1000000000000);
-      const eok = Math.floor((num % 1000000000000) / 100000000);
-      if (eok > 0) {
-        return `${jo}조 ${eok}억`;
-      }
-      return `${jo}조`;
-    } else {
-      return `${Math.floor(num / 100000000)}억`;
-    }
-  };
-
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 px-4 sm:px-6 py-8">
       {/* 헤더 */}
@@ -395,7 +350,7 @@ export default function FlavorPage() {
           </Link>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 flex items-center">
             <BarChart4 className="mr-3 text-emerald-600 w-6 h-6 sm:w-7 sm:h-7" />
-            고배당 가치주 리스트
+            벤자민 그레이엄 가치투자 종목
           </h1>
         </div>
       </header>
@@ -407,7 +362,9 @@ export default function FlavorPage() {
             className="flex items-center justify-between cursor-pointer"
             onClick={() => setIsConditionExpanded(!isConditionExpanded)}
           >
-            <h2 className="text-lg sm:text-xl font-semibold text-gray-800">고배당 가치주 조건</h2>
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-800">
+              그레이엄 가치투자 원칙
+            </h2>
             <div className="text-gray-500">
               {isConditionExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
             </div>
@@ -416,17 +373,17 @@ export default function FlavorPage() {
           {isConditionExpanded && (
             <div className="mt-4">
               <p className="text-sm sm:text-base text-gray-700 mb-3">
-                아래 조건을 모두 만족하는 가치주 리스트입니다:
+                벤자민 그레이엄의 가치투자 원칙에 따른 종목 리스트입니다:
               </p>
               <ul className="list-disc pl-5 text-sm sm:text-base text-gray-700 space-y-2">
                 <li>
-                  <strong>PER 10 이하</strong> - 수익성 대비 저평가된 기업
+                  <strong>PER 10 미만</strong> - 수익성 대비 저평가된 기업
                 </li>
                 <li>
-                  <strong>PBR 1 이하</strong> - 자산가치 대비 저평가된 기업
+                  <strong>부채비율 100% 미만</strong> - 재무적으로 안정적인 기업
                 </li>
                 <li>
-                  <strong>배당률 5% 이상</strong> - 안정적인 배당 수익 기대 (필터에서 조정 가능)
+                  <strong>배당률 필터 지원</strong> - 원하는 배당수익률로 추가 필터링 가능
                 </li>
               </ul>
             </div>
@@ -531,33 +488,7 @@ export default function FlavorPage() {
                   </div>
                 </div>
 
-                {/* a자산 규모 필터 (억 단위) */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    자산 규모 (억원)
-                  </label>
-                  <div className="flex space-x-2">
-                    <input
-                      type="number"
-                      value={assetMinFilter}
-                      onChange={(e) =>
-                        setAssetMinFilter(e.target.value === '' ? '' : Number(e.target.value))
-                      }
-                      placeholder="최소"
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
-                    />
-                    <span className="self-center">~</span>
-                    <input
-                      type="number"
-                      value={assetMaxFilter}
-                      onChange={(e) =>
-                        setAssetMaxFilter(e.target.value === '' ? '' : Number(e.target.value))
-                      }
-                      placeholder="최대"
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
-                    />
-                  </div>
-                </div>
+                {/* 자산 규모 제거 - 필터만 제거 */}
 
                 {/* 정렬 필드 */}
                 <div>
@@ -568,11 +499,10 @@ export default function FlavorPage() {
                       onChange={(e) => setSortField(e.target.value as SortField)}
                       className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
                     >
-                      <option value="dividend_yield">배당률</option>
                       <option value="current_per">PER</option>
-                      <option value="current_pbr">PBR</option>
+                      <option value="debtratio">부채비율</option>
+                      <option value="dividend_yield">배당률</option>
                       <option value="current_price">현재가</option>
-                      <option value="assets">자산규모</option>
                       <option value="company_name">회사명</option>
                       <option value="industry">산업군</option>
                       <option value="subindustry">하위 산업군</option>
@@ -647,7 +577,7 @@ export default function FlavorPage() {
               <div className="p-4 sm:p-5 border-b border-gray-200">
                 <div className="flex justify-between items-center">
                   <h2 className="text-lg sm:text-xl font-semibold text-gray-800">
-                    고배당 가치주 리스트
+                    그레이엄 가치주 리스트
                     <span className="ml-2 text-sm font-normal text-gray-500">
                       (총 {filteredStocks.length}개 종목)
                     </span>
@@ -672,7 +602,7 @@ export default function FlavorPage() {
                           <p className="text-sm text-gray-500">{stock.stock_code}</p>
                         </div>
 
-                        {/* 핵심 지표 (PER, PBR, 배당률) */}
+                        {/* 핵심 지표 (PER, 부채비율, 배당률) */}
                         <div className="grid grid-cols-3 gap-2 mb-4">
                           <div className="border rounded-lg p-2 flex flex-col items-center">
                             <span className="text-xs text-gray-600 mb-1 flex items-center">
@@ -685,10 +615,10 @@ export default function FlavorPage() {
 
                           <div className="border rounded-lg p-2 flex flex-col items-center">
                             <span className="text-xs text-gray-600 mb-1 flex items-center">
-                              <BarChart4 size={12} className="mr-1" /> PBR
+                              <BarChart4 size={12} className="mr-1" /> 부채비율
                             </span>
                             <span className="text-gray-800 font-medium">
-                              {stock.current_pbr.toFixed(2)}
+                              {stock.debtratio.toFixed(1)}%
                             </span>
                           </div>
 
@@ -697,7 +627,9 @@ export default function FlavorPage() {
                               <PercentIcon size={12} className="mr-1" /> 배당률
                             </span>
                             <span className="text-emerald-600 font-medium">
-                              {stock.dividend_yield.toFixed(2)}%
+                              {stock.dividend_yield > 0
+                                ? `${stock.dividend_yield.toFixed(2)}%`
+                                : '-'}
                             </span>
                           </div>
                         </div>
@@ -711,13 +643,6 @@ export default function FlavorPage() {
                             <span className="font-medium">
                               {formatNumber(stock.current_price)}원
                             </span>
-                          </div>
-
-                          <div className="flex justify-between">
-                            <span className="text-gray-600 flex items-center">
-                              <Building size={14} className="mr-1 text-gray-400" /> 자산규모
-                            </span>
-                            <span className="font-medium">{formatAsset(stock.assets)}</span>
                           </div>
 
                           <div className="flex justify-between">
@@ -799,11 +724,11 @@ export default function FlavorPage() {
                         <th
                           scope="col"
                           className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                          onClick={() => toggleSort('current_pbr')}
+                          onClick={() => toggleSort('debtratio')}
                         >
                           <div className="flex items-center">
-                            PBR
-                            {sortField === 'current_pbr' &&
+                            부채비율
+                            {sortField === 'debtratio' &&
                               (sortDirection === 'asc' ? (
                                 <ArrowUp size={14} className="ml-1" />
                               ) : (
@@ -843,21 +768,6 @@ export default function FlavorPage() {
                         </th>
                         <th
                           scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                          onClick={() => toggleSort('assets')}
-                        >
-                          <div className="flex items-center">
-                            자산(억원)
-                            {sortField === 'assets' &&
-                              (sortDirection === 'asc' ? (
-                                <ArrowUp size={14} className="ml-1" />
-                              ) : (
-                                <ArrowDown size={14} className="ml-1" />
-                              ))}
-                          </div>
-                        </th>
-                        <th
-                          scope="col"
                           className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
                         >
                           상세
@@ -886,21 +796,20 @@ export default function FlavorPage() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900">
-                              {stock.current_pbr.toFixed(2)}
+                              {stock.debtratio.toFixed(1)}%
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-emerald-600">
-                              {stock.dividend_yield.toFixed(2)}%
+                              {stock.dividend_yield > 0
+                                ? `${stock.dividend_yield.toFixed(2)}%`
+                                : '-'}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-900">
                               {formatNumber(stock.current_price)}원
                             </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{formatAsset(stock.assets)}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <Link href={`/fairprice?stockCode=${stock.stock_code}`} passHref>
