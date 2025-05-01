@@ -1,3 +1,5 @@
+//src/app/flavor/page.tsx
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -78,10 +80,10 @@ export default function FlavorPage() {
       try {
         setLoading(true);
 
-        // 1. 배당률 데이터 가져오기 (최소 제한 없이 모든 데이터를 가져오고 나중에 필터링)
+        // 1. 배당률 데이터 가져오기 (stock_current 테이블에서)
         const { data: dividendData, error: dividendError } = await supabase
-          .from('stock_raw_data')
-          .select('stock_code, 2024_dividend_yield, 2024_assets')
+          .from('stock_current')
+          .select('stock_code, 2024_dividend_yield')
           .not('2024_dividend_yield', 'is', null);
 
         if (dividendError) throw new Error(dividendError.message);
@@ -92,6 +94,17 @@ export default function FlavorPage() {
           setFilteredStocks([]);
           return;
         }
+
+        // 1-2. 자산 데이터 가져오기 (stock_raw_data 테이블에서)
+        const { data: assetsData, error: assetsError } = await supabase
+          .from('stock_raw_data')
+          .select('stock_code, 2024_assets')
+          .in(
+            'stock_code',
+            dividendData.map((item) => item.stock_code)
+          );
+
+        if (assetsError) throw new Error(assetsError.message);
 
         // 기본 필터링 조건(PER, PBR)에 맞는 종목 코드만 추출
         const stockCodes = dividendData
@@ -110,6 +123,7 @@ export default function FlavorPage() {
           .from('stock_current')
           .select('stock_code, current_per, current_pbr')
           .in('stock_code', stockCodes)
+          .gt('current_per', 0)
           .lte('current_per', 10)
           .lte('current_pbr', 1)
           .not('current_per', 'is', null)
@@ -163,12 +177,22 @@ export default function FlavorPage() {
           ])
         );
 
+        const assetsMap = new Map(
+          assetsData.map((item) => [item.stock_code, item['2024_assets'] || 0])
+        );
+
+        // 배당 데이터 맵 생성
+        const dividendMap = new Map(
+          dividendData.map((item) => [item.stock_code, item['2024_dividend_yield'] || 0])
+        );
+
+        // 기존 dividendAssetsMap 대신 두 맵을 사용하여 새로운 맵 생성
         const dividendAssetsMap = new Map(
           dividendData.map((item) => [
             item.stock_code,
             {
               dividend: item['2024_dividend_yield'] || 0,
-              assets: item['2024_assets'] || 0,
+              assets: assetsMap.get(item.stock_code) || 0,
             },
           ])
         );

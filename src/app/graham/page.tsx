@@ -1,3 +1,5 @@
+//src/app/graham/page.tsx
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -73,7 +75,27 @@ export default function GrahamPage() {
       try {
         setLoading(true);
 
-        // 1. 부채비율 조건에 맞는 종목 먼저 가져오기
+        // 1. PER 조건에 맞는 종목 먼저 가져오기
+        const { data: currentData, error: currentError } = await supabase
+          .from('stock_current')
+          .select('stock_code, current_per')
+          .gt('current_per', 0) // PER이 0보다 큰 경우 (0 초과)
+          .lte('current_per', 10) // PER이 10 이하
+          .not('current_per', 'is', null);
+
+        if (currentError) throw new Error(currentError.message);
+
+        if (!currentData || currentData.length === 0) {
+          setError('PER 조건에 맞는 주식을 찾을 수 없습니다.');
+          setStocks([]);
+          setFilteredStocks([]);
+          return;
+        }
+
+        // PER 조건을 만족하는 종목 코드
+        const perStockCodes = currentData.map((item) => item.stock_code);
+
+        // 2. 부채비율 조건에 맞는 종목 가져오기
         const { data: checklist, error: checklistError } = await supabase
           .from('stock_checklist')
           .select(
@@ -85,6 +107,7 @@ export default function GrahamPage() {
             debtratio
           `
           )
+          .in('stock_code', perStockCodes) // PER 조건을 만족하는 종목만 필터링
           .lt('debtratio', 100)
           .not('debtratio', 'is', null);
 
@@ -97,29 +120,8 @@ export default function GrahamPage() {
           return;
         }
 
-        // 가져온 종목들의 코드 목록
-        const stockCodes = checklist.map((item) => item.stock_code);
-
-        // 2. PER 조건에 맞는 종목 가져오기
-        const { data: currentData, error: currentError } = await supabase
-          .from('stock_current')
-          .select('stock_code, current_per')
-          .in('stock_code', stockCodes)
-          .gte('current_per', 0.1)
-          .lt('current_per', 10)
-          .not('current_per', 'is', null);
-
-        if (currentError) throw new Error(currentError.message);
-
-        if (!currentData || currentData.length === 0) {
-          setError('PER 조건에 맞는 주식을 찾을 수 없습니다.');
-          setStocks([]);
-          setFilteredStocks([]);
-          return;
-        }
-
-        // 조건을 만족하는 종목 코드
-        const filteredCodes = currentData.map((item) => item.stock_code);
+        // 최종 조건을 만족하는 종목 코드
+        const filteredCodes = checklist.map((item) => item.stock_code);
 
         // 3. 현재가 데이터 가져오기
         const { data: priceData, error: priceError } = await supabase
@@ -131,7 +133,7 @@ export default function GrahamPage() {
 
         // 4. 배당률 데이터 가져오기
         const { data: dividendAssetsData, error: dividendError } = await supabase
-          .from('stock_raw_data')
+          .from('stock_current')
           .select('stock_code, 2024_dividend_yield')
           .in('stock_code', filteredCodes);
 

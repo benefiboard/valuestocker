@@ -5,11 +5,11 @@ import Link from 'next/link';
 import { BarChart4, CheckSquare, ArrowRight, PercentIcon } from 'lucide-react';
 
 // 가치투자 개념 컴포넌트
-import ValueInvestingConcept from '../components/ValueInvestingConcept';
+import ValueInvestingConcept from '../components/mainpage/ValueInvestingConcept';
 // 가치평가 모델 비교 컴포넌트
-import ValuationModelsComparison from '../components/ValuationModelsComparison';
+import ValuationModelsComparison from '../components/mainpage/ValuationModelsComparison';
 // 워크플로우 컴포넌트
-import WorkflowComponent from '../components/WorkflowComponent';
+import WorkflowComponent from '../components/mainpage/WorkflowComponent';
 // 미니 계산기 컴포넌트
 //import MiniCalculator from '../components/MiniCalculator';
 

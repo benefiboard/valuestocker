@@ -10,7 +10,8 @@
     "migrate-data": "node scripts/migrate-data-to-supabase.js",
     "migrate-checklist": "node scripts/migrate-checklist-to-supabase.js",
     "migrate-fairprice": "node scripts/migrate-fairprice-to-supabase.js",
-    "migrate-currentprice": "node scripts/migrate-currentprice-to-supabase.js"
+    "migrate-currentprice": "node scripts/migrate-currentprice-to-supabase.js",
+    "update-dividend-yield": "node scripts/update-dividend-yield.js"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.0",
