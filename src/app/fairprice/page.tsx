@@ -339,7 +339,7 @@ export default function FairPricePage() {
           >
             <ArrowLeft size={20} className="sm:w-6 sm:h-6" />
           </Link>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 flex items-center">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center">
             <BarChart4 className="mr-3 text-emerald-600 w-6 h-6 sm:w-7 sm:h-7" />
             가치투자 주식 적정가 계산
           </h1>
@@ -388,11 +388,12 @@ export default function FairPricePage() {
                 <span className="font-normal text-sm text-gray-500">({latestPrice?.code})</span>
               </p>
             </div>
+
             <button
               onClick={() => setShowSearchForm(true)}
-              className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 text-sm rounded-xl flex items-center transition-colors"
+              className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-2 sm:px-4 py-2 text-xs sm:text-sm rounded-xl flex items-center transition-colors"
             >
-              <SearchIcon className="h-4 w-4 mr-2" />
+              <SearchIcon className="h-4 w-4 mr-1 sm:mr-2 " />
               다른 종목
             </button>
           </div>
@@ -821,7 +822,7 @@ export default function FairPricePage() {
 
               {/* 페이지 하단 네비게이션 버튼 */}
               <div className="mt-6">
-                <Link href="/checklist">
+                <Link href={`/checklist?stockCode=${selectedCompany?.stockCode}`}>
                   <button className="inline-flex items-center bg-emerald-600 text-white px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-emerald-700 transition-colors">
                     체크리스트로 돌아가기
                     <svg

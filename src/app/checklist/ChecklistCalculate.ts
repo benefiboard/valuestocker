@@ -90,10 +90,12 @@ export const getStockPriceFromSupabase = async (stockCode: string): Promise<Stoc
     return null;
   }
 
+  console.log('주가 데이터:', data);
+
   return {
     code: data.stock_code,
     name: data.company_name,
-    price: Number(data.current_price || 0),
+    price: data.current_price || 0,
     sharesOutstanding: 0, // 체크리스트 데이터에서 채워질 예정
     formattedDate: data.last_updated,
   };
@@ -113,6 +115,7 @@ export const calculateChecklist = async (
 
   // 2. 주가 정보 가져오기
   const stockPrice = await getStockPriceFromSupabase(stockCode);
+  console.log('주가 데이터:', stockPrice);
   if (!stockPrice) {
     console.error(`주가 데이터를 찾을 수 없습니다: ${stockCode}`);
     return [];

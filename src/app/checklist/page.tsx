@@ -27,7 +27,11 @@ import {
   Search as SearchIcon,
   Target,
 } from 'lucide-react';
-import { calculateChecklist, calculateInvestmentRating } from './ChecklistCalculate';
+import {
+  calculateChecklist,
+  calculateInvestmentRating,
+  getStockPriceFromSupabase,
+} from './ChecklistCalculate';
 import Link from 'next/link';
 import React from 'react';
 import CompanySearchInput from '../../components/CompanySearchInput';
@@ -152,16 +156,14 @@ export default function ChecklistPage() {
       console.log('체크리스트 계산 결과:', checklist);
       setChecklistResults(checklist);
 
-      // 주가 정보 가져오기 (이제 Supabase가 아닌 계산된 체크리스트에서 추출)
-      const stockPriceFromChecklist = {
-        code: company.stockCode,
-        name: company.companyName,
-        price: (checklist[0]?.actualValue as number) || 0,
-        sharesOutstanding: 0,
-        formattedDate: new Date().toISOString(),
-      };
+      // 주가 정보 직접 가져오기
+      const stockPriceData = await getStockPriceFromSupabase(company.stockCode);
+      if (!stockPriceData) {
+        throw new Error(`${company.companyName}의 주가 데이터를 찾을 수 없습니다`);
+      }
 
-      setStockPrice(stockPriceFromChecklist);
+      // 주가 정보 설정
+      setStockPrice(stockPriceData);
 
       // 투자 등급 계산
       console.log('투자 등급 계산 시작...');
@@ -416,7 +418,7 @@ export default function ChecklistPage() {
           >
             <ArrowLeft size={20} className="sm:w-6 sm:h-6" />
           </Link>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 flex items-center">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center">
             <CheckSquare className="mr-3 text-emerald-600 w-6 h-6 sm:w-7 sm:h-7" />
             가치투자 체크리스트
           </h1>
@@ -476,9 +478,9 @@ export default function ChecklistPage() {
               </div>
               <button
                 onClick={() => setShowSearchForm(true)}
-                className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 text-sm rounded-xl flex items-center transition-colors"
+                className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-2 sm:px-4 py-2 text-xs sm:text-sm rounded-xl flex items-center transition-colors"
               >
-                <SearchIcon className="h-4 w-4 mr-2" />
+                <SearchIcon className="h-4 w-4 mr-1 sm:mr-2 " />
                 다른 종목
               </button>
             </div>
@@ -513,7 +515,8 @@ export default function ChecklistPage() {
                   </h2>
 
                   <p className="text-sm sm:text-base text-gray-600 mt-1">
-                    현재 주가: {formatNumber(stockPrice.price)}원
+                    현재 주가:{' '}
+                    <span className="text-base font-semibold sm:text-lg">{stockPrice.price}</span>원
                     {stockPrice.formattedDate && (
                       <span className="text-gray-500 ml-2">({stockPrice.formattedDate})</span>
                     )}
