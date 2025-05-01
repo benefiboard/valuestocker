@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, ChangeEvent, FormEvent } from 'react';
-import CompanySearchInput from '@/app/components/CompanySearchInput';
+import CompanySearchInput from '@/components/CompanySearchInput';
 import { CompanyInfo } from '../../../lib/stockCodeData';
 import { CalculatedResults, StockPrice } from '../types';
 import { getIndustryParameters } from '../../../lib/industryData';

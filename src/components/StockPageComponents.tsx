@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 
 // 공통 아코디언 컴포넌트
+// AccordionSection 컴포넌트에서 h2 대신 div 사용
 export function AccordionSection({
   title,
   isExpanded,
@@ -28,7 +29,7 @@ export function AccordionSection({
   return (
     <div className="bg-white rounded-2xl p-5 sm:p-6 shadow-md mb-6">
       <div className="flex items-center justify-between cursor-pointer" onClick={toggleExpanded}>
-        <h2 className="text-lg sm:text-xl font-semibold text-gray-800">{title}</h2>
+        <div className="text-lg sm:text-xl font-semibold text-gray-800">{title}</div>
         <div className="flex items-center">
           {rightContent}
           <div className="text-gray-500">

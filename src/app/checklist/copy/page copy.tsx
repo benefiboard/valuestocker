@@ -31,7 +31,7 @@ import Link from 'next/link';
 import React from 'react';
 import jsonStockData from '@/lib/finance/stock_checklist_2025.json';
 import stockPriceData from '@/lib/finance/stock_price_2025.json';
-import CompanySearchInput from '../../components/CompanySearchInput';
+import CompanySearchInput from '../../../components/CompanySearchInput';
 import { FINANCIAL_COMPANIES } from '../constants/industryThresholds';
 
 interface HierarchicalCategory {

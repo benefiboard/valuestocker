@@ -2,9 +2,10 @@
 
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 
-import { CompanyInfo } from '@/lib/stockCodeData';
+import { CompanyInfo, stockCodeMap } from '@/lib/stockCodeData';
 import { ScoredChecklistItem, InvestmentRating, StockPrice } from './types';
 import {
   ArrowLeft,
@@ -29,7 +30,7 @@ import {
 import { calculateChecklist, calculateInvestmentRating } from './ChecklistCalculate';
 import Link from 'next/link';
 import React from 'react';
-import CompanySearchInput from '../components/CompanySearchInput';
+import CompanySearchInput from '../../components/CompanySearchInput';
 import { FINANCIAL_COMPANIES } from './constants/industryThresholds';
 
 interface HierarchicalCategory {
@@ -39,6 +40,9 @@ interface HierarchicalCategory {
 }
 
 export default function ChecklistPage() {
+  // URL 쿼리 파라미터 가져오기
+  const searchParams = useSearchParams();
+
   // 상태 관리
   const [companyName, setCompanyName] = useState<string>('');
   const [selectedCompany, setSelectedCompany] = useState<CompanyInfo | null>(null);
@@ -48,12 +52,39 @@ export default function ChecklistPage() {
   const [success, setSuccess] = useState<boolean>(false);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [showSearchForm, setShowSearchForm] = useState<boolean>(true);
+  const [autoSearchTriggered, setAutoSearchTriggered] = useState<boolean>(false);
 
   // 체크리스트 결과 상태
   const [checklistResults, setChecklistResults] = useState<ScoredChecklistItem[]>([]);
   const [investmentRating, setInvestmentRating] = useState<InvestmentRating | null>(null);
   // 등급에 따른 설명 상태 추가
   const [ratingDescription, setRatingDescription] = useState<string>('');
+
+  // URL 쿼리 파라미터에서 stockCode를 읽어 자동 검색 수행
+  useEffect(() => {
+    const stockCode = searchParams.get('stockCode');
+
+    // 이미 자동 검색을 수행했거나 stockCode가 없으면 리턴
+    if (autoSearchTriggered || !stockCode) {
+      return;
+    }
+
+    // stockCodeMap에서 해당 종목 코드 찾기
+    const company = Object.values(stockCodeMap).find((company) => company.stockCode === stockCode);
+
+    if (company) {
+      // 회사 정보 설정
+      handleCompanySelect(company);
+
+      // 자동 검색 트리거 표시 (중복 실행 방지)
+      setAutoSearchTriggered(true);
+
+      // 약간의 딜레이 후 검색 실행 (UI가 업데이트될 시간 제공)
+      setTimeout(() => {
+        performSearch(company);
+      }, 100);
+    }
+  }, [searchParams, autoSearchTriggered]);
 
   // 등급에 따른 설명 생성 함수
   const getGradeDescription = (
@@ -93,16 +124,8 @@ export default function ChecklistPage() {
     setSelectedCompany(company);
   };
 
-  // 메인 검색 함수
-  const handleSearch = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    // 선택된 회사가 없으면 에러 표시
-    if (!selectedCompany) {
-      setError('회사를 검색하고 선택해주세요');
-      return;
-    }
-
+  // 검색 수행 함수 (URL 파라미터에서도 사용)
+  const performSearch = async (company: CompanyInfo) => {
     // 모든 상태 초기화
     setStockPrice(null);
     setChecklistResults([]);
@@ -110,35 +133,30 @@ export default function ChecklistPage() {
     setRatingDescription('');
     setSuccess(false);
     setError('');
-
     setLoading(true);
 
     try {
       console.log('===== 검색 시작 =====');
-      console.log(`회사명: ${selectedCompany.companyName} (${selectedCompany.stockCode})`);
-      console.log(`DART 코드: ${selectedCompany.dartCode}`);
-      console.log(`산업군: ${selectedCompany.industry}`);
+      console.log(`회사명: ${company.companyName} (${company.stockCode})`);
+      console.log(`DART 코드: ${company.dartCode}`);
+      console.log(`산업군: ${company.industry}`);
 
       // 체크리스트 계산 (Supabase 데이터 활용)
       console.log('체크리스트 계산 시작...');
-      const checklist = await calculateChecklist(
-        selectedCompany.stockCode,
-        selectedCompany.industry
-      );
+      const checklist = await calculateChecklist(company.stockCode, company.industry);
 
       if (checklist.length === 0) {
-        throw new Error(`${companyName}의 데이터를 찾을 수 없습니다`);
+        throw new Error(`${company.companyName}의 데이터를 찾을 수 없습니다`);
       }
 
       console.log('체크리스트 계산 결과:', checklist);
       setChecklistResults(checklist);
 
       // 주가 정보 가져오기 (이제 Supabase가 아닌 계산된 체크리스트에서 추출)
-      // 체크리스트에는 주가 정보가 포함되어 있음 (calculateChecklist 함수 내에서 설정됨)
       const stockPriceFromChecklist = {
-        code: selectedCompany.stockCode,
-        name: selectedCompany.companyName,
-        price: (checklist[0]?.actualValue as number) || 0, // PER 항목의 actualValue로 대체 (실제로는 정확한 방법으로 추출해야 함)
+        code: company.stockCode,
+        name: company.companyName,
+        price: (checklist[0]?.actualValue as number) || 0,
         sharesOutstanding: 0,
         formattedDate: new Date().toISOString(),
       };
@@ -147,11 +165,7 @@ export default function ChecklistPage() {
 
       // 투자 등급 계산
       console.log('투자 등급 계산 시작...');
-      const rating = calculateInvestmentRating(
-        checklist,
-        selectedCompany.stockCode,
-        selectedCompany.industry
-      );
+      const rating = calculateInvestmentRating(checklist, company.stockCode, company.industry);
 
       console.log('투자 등급 계산 결과:', rating);
 
@@ -177,6 +191,20 @@ export default function ChecklistPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // 메인 검색 함수
+  const handleSearch = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    // 선택된 회사가 없으면 에러 표시
+    if (!selectedCompany) {
+      setError('회사를 검색하고 선택해주세요');
+      return;
+    }
+
+    // 검색 수행
+    await performSearch(selectedCompany);
   };
 
   // 카테고리 확장/축소 핸들러
@@ -396,8 +424,16 @@ export default function ChecklistPage() {
       </header>
 
       <main className="flex-1 max-w-4xl mx-auto w-full">
+        {/* 로딩 상태 */}
+        {loading && (
+          <div className="bg-white rounded-2xl p-10 shadow-md flex justify-center items-center mb-6">
+            <Loader2 size={30} className="animate-spin text-emerald-600 mr-3" />
+            <p className="text-lg text-gray-700">데이터를 분석하는 중...</p>
+          </div>
+        )}
+
         {/* 검색 영역 - 확장/축소 가능 */}
-        {showSearchForm ? (
+        {showSearchForm && !loading ? (
           <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-md mb-6">
             <form onSubmit={handleSearch}>
               <div className="flex flex-col gap-5 sm:gap-6">
@@ -429,26 +465,28 @@ export default function ChecklistPage() {
             </form>
           </div>
         ) : (
-          <div className="bg-white rounded-2xl p-6 sm:px-8 shadow-md mb-6 flex justify-between items-center">
-            <div className="flex items-center">
-              <Target className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-600 mr-3" />
-              <p className="text-lg sm:text-xl font-semibold text-gray-800">
-                {selectedCompany?.companyName}{' '}
-                <span className="font-normal text-sm text-gray-500">({stockPrice?.code})</span>
-              </p>
+          !loading && (
+            <div className="bg-white rounded-2xl p-6 sm:px-8 shadow-md mb-6 flex justify-between items-center">
+              <div className="flex items-center">
+                <Target className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-600 mr-3" />
+                <p className="text-lg sm:text-xl font-semibold text-gray-800">
+                  {selectedCompany?.companyName}{' '}
+                  <span className="font-normal text-sm text-gray-500">({stockPrice?.code})</span>
+                </p>
+              </div>
+              <button
+                onClick={() => setShowSearchForm(true)}
+                className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 text-sm rounded-xl flex items-center transition-colors"
+              >
+                <SearchIcon className="h-4 w-4 mr-2" />
+                다른 종목
+              </button>
             </div>
-            <button
-              onClick={() => setShowSearchForm(true)}
-              className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 text-sm rounded-xl flex items-center transition-colors"
-            >
-              <SearchIcon className="h-4 w-4 mr-2" />
-              다른 종목
-            </button>
-          </div>
+          )
         )}
 
         {/* 오류 메시지 */}
-        {error && (
+        {error && !loading && (
           <div className="bg-white p-5 sm:p-6 rounded-2xl shadow-md mb-6 border-l-4 border-red-500">
             <div className="flex items-start">
               <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-red-500 mr-3 mt-0.5" />
@@ -850,7 +888,7 @@ export default function ChecklistPage() {
               </div>
 
               <div className="mt-6">
-                <Link href="/fairprice">
+                <Link href={`/fairprice?stockCode=${stockPrice.code}`}>
                   <button className="inline-flex items-center bg-emerald-600 text-white px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-emerald-700 transition-colors">
                     적정가 계산하기
                     <svg

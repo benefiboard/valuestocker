@@ -2,8 +2,47 @@
 
 import { supabase } from '@/lib/supabaseClient';
 
+// 타입 정의
+export interface FlavorStock {
+  stock_code: string;
+  company_name: string;
+  industry: string;
+  subindustry: string;
+  current_per: number;
+  current_pbr: number;
+  current_price: number;
+  dividend_yield: number;
+  assets: number;
+}
+
+export interface GrahamStock {
+  stock_code: string;
+  company_name: string;
+  industry: string;
+  subindustry: string;
+  current_per: number;
+  debtratio: number;
+  current_price: number;
+  dividend_yield: number;
+}
+
+export interface StockDataResult<T> {
+  stocks: T[];
+  industries: string[];
+  subIndustries: string[];
+  error: string | null;
+}
+
+// 빈 결과 객체 생성 함수 (타입 안전하게)
+const emptyResult = <T>(error: string): StockDataResult<T> => ({
+  stocks: [],
+  industries: [],
+  subIndustries: [],
+  error,
+});
+
 // 고배당 가치주 데이터 가져오기 (Flavor Stocks)
-export async function fetchFlavorStocks() {
+export async function fetchFlavorStocks(): Promise<StockDataResult<FlavorStock>> {
   try {
     // 1. 배당률 데이터 가져오기 (stock_current 테이블에서)
     const { data: dividendData, error: dividendError } = await supabase
@@ -14,7 +53,7 @@ export async function fetchFlavorStocks() {
     if (dividendError) throw new Error(dividendError.message);
 
     if (!dividendData || dividendData.length === 0) {
-      return { error: '배당 데이터를 찾을 수 없습니다.', stocks: [] };
+      return emptyResult<FlavorStock>('배당 데이터를 찾을 수 없습니다.');
     }
 
     // 1-2. 자산 데이터 가져오기 (stock_raw_data 테이블에서)
@@ -34,7 +73,7 @@ export async function fetchFlavorStocks() {
       .map((item) => item.stock_code);
 
     if (stockCodes.length === 0) {
-      return { error: '배당률 조건에 맞는 주식을 찾을 수 없습니다.', stocks: [] };
+      return emptyResult<FlavorStock>('배당률 조건에 맞는 주식을 찾을 수 없습니다.');
     }
 
     // 2. PER, PBR 조건에 맞는 종목 가져오기
@@ -51,7 +90,7 @@ export async function fetchFlavorStocks() {
     if (currentError) throw new Error(currentError.message);
 
     if (!currentData || currentData.length === 0) {
-      return { error: 'PER, PBR 조건에 맞는 주식을 찾을 수 없습니다.', stocks: [] };
+      return emptyResult<FlavorStock>('PER, PBR 조건에 맞는 주식을 찾을 수 없습니다.');
     }
 
     // 조건을 만족하는 종목 코드
@@ -91,7 +130,7 @@ export async function fetchFlavorStocks() {
     );
 
     const assetsMap = new Map(
-      assetsData.map((item) => [item.stock_code, item['2024_assets'] || 0])
+      assetsData?.map((item) => [item.stock_code, item['2024_assets'] || 0]) || []
     );
 
     // 배당 데이터 맵 생성
@@ -111,27 +150,28 @@ export async function fetchFlavorStocks() {
     );
 
     const industryMap = new Map(
-      industryInfo.map((item) => [
+      industryInfo?.map((item) => [
         item.stock_code,
         {
           industry: item.industry || '미분류',
           subindustry: item.subindustry || '미분류',
         },
-      ])
+      ]) || []
     );
 
     // 모든 조건을 만족하는 종목 데이터 구성
-    const flavorStocks = stockInfo.map((item) => ({
-      stock_code: item.stock_code,
-      company_name: item.company_name,
-      industry: industryMap.get(item.stock_code)?.industry || '미분류',
-      subindustry: industryMap.get(item.stock_code)?.subindustry || '미분류',
-      current_per: perPbrMap.get(item.stock_code)?.per || 0,
-      current_pbr: perPbrMap.get(item.stock_code)?.pbr || 0,
-      current_price: item.current_price || 0,
-      dividend_yield: dividendAssetsMap.get(item.stock_code)?.dividend || 0,
-      assets: dividendAssetsMap.get(item.stock_code)?.assets || 0,
-    }));
+    const flavorStocks: FlavorStock[] =
+      stockInfo?.map((item) => ({
+        stock_code: item.stock_code,
+        company_name: item.company_name,
+        industry: industryMap.get(item.stock_code)?.industry || '미분류',
+        subindustry: industryMap.get(item.stock_code)?.subindustry || '미분류',
+        current_per: perPbrMap.get(item.stock_code)?.per || 0,
+        current_pbr: perPbrMap.get(item.stock_code)?.pbr || 0,
+        current_price: item.current_price || 0,
+        dividend_yield: dividendAssetsMap.get(item.stock_code)?.dividend || 0,
+        assets: dividendAssetsMap.get(item.stock_code)?.assets || 0,
+      })) || [];
 
     // 산업군과 하위 산업군 목록 생성
     const uniqueIndustries = Array.from(
@@ -150,15 +190,14 @@ export async function fetchFlavorStocks() {
     };
   } catch (err) {
     console.error('데이터 가져오기 오류:', err);
-    return {
-      error: err instanceof Error ? err.message : '데이터를 가져오는 중 오류가 발생했습니다.',
-      stocks: [],
-    };
+    return emptyResult<FlavorStock>(
+      err instanceof Error ? err.message : '데이터를 가져오는 중 오류가 발생했습니다.'
+    );
   }
 }
 
 // 그레이엄 가치주 데이터 가져오기 (Graham Stocks)
-export async function fetchGrahamStocks() {
+export async function fetchGrahamStocks(): Promise<StockDataResult<GrahamStock>> {
   try {
     // 1. PER 조건에 맞는 종목 먼저 가져오기
     const { data: currentData, error: currentError } = await supabase
@@ -171,7 +210,7 @@ export async function fetchGrahamStocks() {
     if (currentError) throw new Error(currentError.message);
 
     if (!currentData || currentData.length === 0) {
-      return { error: 'PER 조건에 맞는 주식을 찾을 수 없습니다.', stocks: [] };
+      return emptyResult<GrahamStock>('PER 조건에 맞는 주식을 찾을 수 없습니다.');
     }
 
     // PER 조건을 만족하는 종목 코드
@@ -196,7 +235,7 @@ export async function fetchGrahamStocks() {
     if (checklistError) throw new Error(checklistError.message);
 
     if (!checklist || checklist.length === 0) {
-      return { error: '부채비율 조건에 맞는 주식을 찾을 수 없습니다.', stocks: [] };
+      return emptyResult<GrahamStock>('부채비율 조건에 맞는 주식을 찾을 수 없습니다.');
     }
 
     // 최종 조건을 만족하는 종목 코드
@@ -220,20 +259,22 @@ export async function fetchGrahamStocks() {
 
     // 5. 데이터 조인
     const perMap = new Map(currentData.map((item) => [item.stock_code, item.current_per]));
-    const priceMap = new Map(priceData.map((item) => [item.stock_code, item.current_price]));
+
+    const priceMap = new Map(priceData?.map((item) => [item.stock_code, item.current_price]) || []);
+
     const dividendMap = new Map(
-      dividendAssetsData.map((item) => [item.stock_code, item['2024_dividend_yield'] || 0])
+      dividendAssetsData?.map((item) => [item.stock_code, item['2024_dividend_yield'] || 0]) || []
     );
 
     // 모든 조건을 만족하는 종목만 필터링
     const filteredChecklist = checklist.filter((item) => filteredCodes.includes(item.stock_code));
 
     if (filteredChecklist.length === 0) {
-      return { error: '조건에 맞는 주식을 찾을 수 없습니다.', stocks: [] };
+      return emptyResult<GrahamStock>('조건에 맞는 주식을 찾을 수 없습니다.');
     }
 
     // 데이터 형식 변환
-    const grahamStocks = filteredChecklist.map((item) => ({
+    const grahamStocks: GrahamStock[] = filteredChecklist.map((item) => ({
       stock_code: item.stock_code,
       company_name: item.company_name,
       industry: item.industry || '미분류',
@@ -261,9 +302,8 @@ export async function fetchGrahamStocks() {
     };
   } catch (err) {
     console.error('데이터 가져오기 오류:', err);
-    return {
-      error: err instanceof Error ? err.message : '데이터를 가져오는 중 오류가 발생했습니다.',
-      stocks: [],
-    };
+    return emptyResult<GrahamStock>(
+      err instanceof Error ? err.message : '데이터를 가져오는 중 오류가 발생했습니다.'
+    );
   }
 }

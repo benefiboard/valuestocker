@@ -2,9 +2,10 @@
 
 'use client';
 
-import { useState, ChangeEvent, FormEvent } from 'react';
-import CompanySearchInput from '@/app/components/CompanySearchInput';
-import { CompanyInfo } from '../../lib/stockCodeData';
+import { useState, ChangeEvent, FormEvent, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
+import CompanySearchInput from '@/components/CompanySearchInput';
+import { CompanyInfo, stockCodeMap } from '../../lib/stockCodeData';
 import { CalculatedResults, StockPrice } from './types';
 import { getIndustryParameters } from '../../lib/industryData';
 import Link from 'next/link';
@@ -23,6 +24,9 @@ import {
 import { extractCalculatedResultsFromSupabase } from './FairpriceCalculate';
 
 export default function FairPricePage() {
+  // URL 쿼리 파라미터 가져오기
+  const searchParams = useSearchParams();
+
   // 상태 관리
   const [companyName, setCompanyName] = useState<string>('');
   const [selectedCompany, setSelectedCompany] = useState<CompanyInfo | null>(null);
@@ -40,6 +44,7 @@ export default function FairPricePage() {
     avgPEG: 1.0,
     liabilityMultiplier: 1.2,
   });
+  const [autoSearchTriggered, setAutoSearchTriggered] = useState<boolean>(false);
 
   // 회사 선택 핸들러
   const handleCompanySelect = (company: CompanyInfo) => {
@@ -50,6 +55,32 @@ export default function FairPricePage() {
     const params = getIndustryParameters(company.industry);
     setIndustryParams(params);
   };
+
+  // URL 쿼리 파라미터에서 stockCode를 읽어 자동 검색 수행
+  useEffect(() => {
+    const stockCode = searchParams.get('stockCode');
+
+    // 이미 자동 검색을 수행했거나 stockCode가 없으면 리턴
+    if (autoSearchTriggered || !stockCode) {
+      return;
+    }
+
+    // stockCodeMap에서 해당 종목 코드 찾기
+    const company = Object.values(stockCodeMap).find((company) => company.stockCode === stockCode);
+
+    if (company) {
+      // 회사 정보 설정
+      handleCompanySelect(company);
+
+      // 자동 검색 트리거 표시 (중복 실행 방지)
+      setAutoSearchTriggered(true);
+
+      // 약간의 딜레이 후 검색 실행 (UI가 업데이트될 시간 제공)
+      setTimeout(() => {
+        performSearch(company.stockCode);
+      }, 100);
+    }
+  }, [searchParams, autoSearchTriggered]);
 
   // 토글 함수
   const toggleSrimScenarios = () => {
@@ -109,22 +140,8 @@ export default function FairPricePage() {
     );
   };
 
-  // 메인 검색 함수
-  // src/app/fairprice/page.tsx (handleSearch 함수 부분 수정)
-
-  // 메인 검색 함수
-  const handleSearch = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    // 선택된 회사가 없으면 에러 표시
-    if (!selectedCompany) {
-      setError('회사를 검색하고 선택해주세요');
-      return;
-    }
-
-    // 주식 코드 가져오기
-    const stockCode = selectedCompany.stockCode;
-
+  // 검색 수행 함수 (URL 파라미터에서도 사용)
+  const performSearch = async (stockCode: string) => {
     // 모든 상태 초기화
     setCalculatedResults(null);
     setSuccess(false);
@@ -136,7 +153,7 @@ export default function FairPricePage() {
       const calculatedResults = await extractCalculatedResultsFromSupabase(stockCode);
 
       if (!calculatedResults) {
-        throw new Error(`${companyName}의 데이터를 찾을 수 없습니다`);
+        throw new Error(`${selectedCompany?.companyName || '주식'}의 데이터를 찾을 수 없습니다`);
       }
 
       setLatestPrice(calculatedResults.latestPrice || null);
@@ -153,6 +170,24 @@ export default function FairPricePage() {
       setLoading(false);
     }
   };
+
+  // 메인 검색 함수
+  const handleSearch = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    // 선택된 회사가 없으면 에러 표시
+    if (!selectedCompany) {
+      setError('회사를 검색하고 선택해주세요');
+      return;
+    }
+
+    // 주식 코드 가져오기
+    const stockCode = selectedCompany.stockCode;
+
+    // 검색 수행
+    await performSearch(stockCode);
+  };
+
   // 점수 바 렌더링 함수
   const renderScoreBar = (score: number, maxScore: number = 10) => {
     const percentage = (score / maxScore) * 100;
@@ -363,8 +398,16 @@ export default function FairPricePage() {
           </div>
         )}
 
+        {/* 로딩 상태 표시 */}
+        {loading && (
+          <div className="bg-white rounded-2xl p-10 shadow-md flex justify-center items-center mb-6">
+            <Loader2 size={30} className="animate-spin text-emerald-600 mr-3" />
+            <p className="text-lg text-gray-700">데이터를 불러오는 중...</p>
+          </div>
+        )}
+
         {/* 오류 메시지 */}
-        {error && (
+        {error && !loading && (
           <div className="bg-white p-5 sm:p-6 rounded-2xl shadow-md mb-6 border-l-4 border-red-500">
             <div className="flex items-start">
               <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-red-500 mr-3 mt-0.5" />
