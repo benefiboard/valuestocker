@@ -27,9 +27,9 @@ export function AccordionSection({
   rightContent?: ReactNode;
 }) {
   return (
-    <div className="bg-white rounded-2xl p-5 sm:p-6 shadow-md mb-6">
+    <div className="bg-white rounded-2xl p-5 sm:p-6 shadow-md mb-2">
       <div className="flex items-center justify-between cursor-pointer" onClick={toggleExpanded}>
-        <div className="text-lg sm:text-xl font-semibold text-gray-800">{title}</div>
+        <div className="sm:text-xl font-semibold text-gray-800">{title}</div>
         <div className="flex items-center">
           {rightContent}
           <div className="text-gray-500">

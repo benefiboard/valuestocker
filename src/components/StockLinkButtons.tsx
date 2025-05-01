@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { ExternalLink, TrendingUp, BarChart3 } from 'lucide-react';
 
 // 링크 타입 - 카드형 또는 테이블형
-type LinkStyle = 'card' | 'table';
+type LinkStyle = 'card' | 'table' | 'mobileTable';
 
 interface StockLinkButtonsProps {
   stockCode: string;
@@ -23,6 +23,30 @@ export function StockLinkButtons({ stockCode, style = 'card' }: StockLinkButtons
 
   // 네이버 증권 URL 생성
   const naverFinanceUrl = `https://finance.naver.com/item/main.naver?code=${formattedStockCode}`;
+
+  if (style === 'mobileTable') {
+    return (
+      <div className="flex flex-col items-end gap-1">
+        <Link
+          href={`/fairprice?stockCode=${stockCode}`}
+          className="text-emerald-600 font-bold hover:text-emerald-900 cursor-pointer flex items-center text-xs "
+        >
+          <TrendingUp size={12} className="mr-1" />
+          적정가 확인
+        </Link>
+
+        <a
+          href={naverFinanceUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-gray-600 font-bold hover:text-gray-900 cursor-pointer flex items-center text-xs"
+        >
+          <BarChart3 size={12} className="mr-1" />
+          네이버 증권
+        </a>
+      </div>
+    );
+  }
 
   // 카드형 버튼 스타일
   if (style === 'card') {
@@ -56,7 +80,7 @@ export function StockLinkButtons({ stockCode, style = 'card' }: StockLinkButtons
     <div className="flex flex-col items-end gap-1">
       <Link
         href={`/fairprice?stockCode=${stockCode}`}
-        className="text-emerald-600 font-bold hover:text-emerald-900 cursor-pointer flex items-center text-sm"
+        className="text-emerald-600 font-bold hover:text-emerald-900 cursor-pointer flex items-center text-sm "
       >
         <TrendingUp size={14} className="mr-1" />
         적정가 확인

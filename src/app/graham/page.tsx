@@ -20,6 +20,7 @@ import {
   LineChart,
   Info,
   Briefcase,
+  List,
 } from 'lucide-react';
 import { StockLinkButtons } from '../../components/StockLinkButtons';
 
@@ -33,6 +34,7 @@ type SortField =
   | 'current_price'
   | 'dividend_yield';
 type SortDirection = 'asc' | 'desc';
+type ViewMode = 'card' | 'table' | 'mobileTable'; // mobileTable 추가
 
 export default function GrahamPage() {
   // 상태 관리
@@ -49,7 +51,7 @@ export default function GrahamPage() {
   const [industries, setIndustries] = useState<string[]>([]);
   const [subIndustries, setSubIndustries] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [viewMode, setViewMode] = useState<'card' | 'table'>('card'); // 뷰 모드 상태 추가
+  const [viewMode, setViewMode] = useState<ViewMode>('table'); // 기본값을 table로 설정
   const [isFilterExpanded, setIsFilterExpanded] = useState<boolean>(false); // 필터 영역 확장 상태
   const [isConditionExpanded, setIsConditionExpanded] = useState<boolean>(false); // 조건 영역 확장 상태
   const itemsPerPage = 20;
@@ -156,10 +158,11 @@ export default function GrahamPage() {
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 1024) {
-        // lg 브레이크포인트
+        // 데스크톱: lg 브레이크포인트
         setViewMode('table');
       } else {
-        setViewMode('card');
+        // 태블릿 및 모바일
+        setViewMode('mobileTable');
       }
     };
 
@@ -216,184 +219,200 @@ export default function GrahamPage() {
           >
             <ArrowLeft size={20} className="sm:w-6 sm:h-6" />
           </Link>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 flex items-center">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center">
             <BarChart4 className="mr-3 text-emerald-600 w-6 h-6 sm:w-7 sm:h-7" />
             벤자민 그레이엄 가치투자 종목
           </h1>
         </div>
       </header>
 
-      <main className="flex-1 max-w-6xl mx-auto w-full">
-        {/* 설명 카드 - 아코디언 방식 */}
-        <AccordionSection
-          title="그레이엄 가치투자 원칙"
-          isExpanded={isConditionExpanded}
-          toggleExpanded={() => setIsConditionExpanded(!isConditionExpanded)}
-        >
-          <p className="text-sm sm:text-base text-gray-700 mb-3">
-            벤자민 그레이엄의 가치투자 원칙에 따른 종목 리스트입니다:
-          </p>
-          <ul className="list-disc pl-5 text-sm sm:text-base text-gray-700 space-y-2">
-            <li>
-              <strong>PER 10 미만</strong> - 수익성 대비 저평가된 기업
-            </li>
-            <li>
-              <strong>부채비율 100% 미만</strong> - 재무적으로 안정적인 기업
-            </li>
-            <li>
-              <strong>배당률 필터 지원</strong> - 원하는 배당수익률로 추가 필터링 가능
-            </li>
-          </ul>
-        </AccordionSection>
+      <main className="flex-1 max-w-6xl mx-auto w-full ">
+        <div className="flex flex-col  mb-6">
+          {/* 설명 카드 - 아코디언 방식 */}
+          <AccordionSection
+            title="그레이엄 가치투자 원칙"
+            isExpanded={isConditionExpanded}
+            toggleExpanded={() => setIsConditionExpanded(!isConditionExpanded)}
+          >
+            <p className="text-sm sm:text-base text-gray-700 mb-3">
+              벤자민 그레이엄의 가치투자 원칙에 따른 종목 리스트입니다:
+            </p>
+            <ul className="list-disc pl-5 text-sm sm:text-base text-gray-700 space-y-2">
+              <li>
+                <strong>PER 10 미만</strong> - 수익성 대비 저평가된 기업
+              </li>
+              <li>
+                <strong>부채비율 100% 미만</strong> - 재무적으로 안정적인 기업
+              </li>
+              <li>
+                <strong>배당률 필터 지원</strong> - 원하는 배당수익률로 추가 필터링 가능
+              </li>
+            </ul>
+          </AccordionSection>
 
-        {/* 필터 및 정렬 컨트롤 - 아코디언 방식 */}
-        <AccordionSection
-          title={
-            <div className="flex items-center">
-              <Filter className="w-5 h-5 mr-2 text-emerald-600" />
-              <span className="text-lg font-semibold text-gray-800">필터 및 정렬</span>
-            </div>
-          }
-          isExpanded={isFilterExpanded}
-          toggleExpanded={() => setIsFilterExpanded(!isFilterExpanded)}
-          rightContent={
-            <button
-              onClick={(e) => {
-                e.stopPropagation(); // 버튼 클릭 시 아코디언 확장/축소 방지
-                resetFilters();
-              }}
-              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded-lg transition-colors mr-4"
-            >
-              필터 초기화
-            </button>
-          }
-        >
-          <div className="mt-4 pt-4 border-t border-gray-100">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {/* 산업군 필터 */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">산업군</label>
-                <select
-                  value={industryFilter}
-                  onChange={(e) => setIndustryFilter(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
-                >
-                  <option value="">모든 산업군</option>
-                  {industries.map((industry) => (
-                    <option key={industry} value={industry}>
-                      {industry}
-                    </option>
-                  ))}
-                </select>
+          {/* 필터 및 정렬 컨트롤 - 아코디언 방식 */}
+          <AccordionSection
+            title={
+              <div className="flex items-center">
+                <Filter className="w-5 h-5 mr-2 text-emerald-600" />
+                <span className="sm:text-lg font-semibold text-gray-800">필터 및 정렬</span>
               </div>
-
-              {/* 하위 산업군 필터 */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">하위 산업군</label>
-                <select
-                  value={subIndustryFilter}
-                  onChange={(e) => setSubIndustryFilter(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
-                  disabled={subIndustries.length === 0}
-                >
-                  <option value="">모든 하위 산업군</option>
-                  {subIndustries.map((subIndustry) => (
-                    <option key={subIndustry} value={subIndustry}>
-                      {subIndustry}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* 배당률 범위 필터 추가 */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  배당률 범위 (%)
-                </label>
-                <div className="flex space-x-2">
-                  <input
-                    type="number"
-                    value={dividendMinFilter}
-                    onChange={(e) =>
-                      setDividendMinFilter(e.target.value === '' ? '' : Number(e.target.value))
-                    }
-                    placeholder="최소"
-                    min="0"
-                    step="0.1"
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
-                  />
-                  <span className="self-center">~</span>
-                  <input
-                    type="number"
-                    value={dividendMaxFilter}
-                    onChange={(e) =>
-                      setDividendMaxFilter(e.target.value === '' ? '' : Number(e.target.value))
-                    }
-                    placeholder="최대"
-                    min="0"
-                    step="0.1"
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
-                  />
-                </div>
-              </div>
-
-              {/* 정렬 필드 */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">정렬 기준</label>
-                <div className="flex space-x-2">
+            }
+            isExpanded={isFilterExpanded}
+            toggleExpanded={() => setIsFilterExpanded(!isFilterExpanded)}
+            rightContent={
+              <button
+                onClick={(e) => {
+                  e.stopPropagation(); // 버튼 클릭 시 아코디언 확장/축소 방지
+                  resetFilters();
+                }}
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs rounded-lg transition-colors mr-4"
+              >
+                필터 초기화
+              </button>
+            }
+          >
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {/* 산업군 필터 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">산업군</label>
                   <select
-                    value={sortField}
-                    onChange={(e) => setSortField(e.target.value as SortField)}
-                    className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
+                    value={industryFilter}
+                    onChange={(e) => setIndustryFilter(e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
                   >
-                    <option value="current_per">PER</option>
-                    <option value="debtratio">부채비율</option>
-                    <option value="dividend_yield">배당률</option>
-                    <option value="current_price">현재가</option>
-                    <option value="company_name">회사명</option>
-                    <option value="industry">산업군</option>
-                    <option value="subindustry">하위 산업군</option>
+                    <option value="">모든 산업군</option>
+                    {industries.map((industry) => (
+                      <option key={industry} value={industry}>
+                        {industry}
+                      </option>
+                    ))}
                   </select>
-                  <button
-                    onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
-                    className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
-                  >
-                    {sortDirection === 'asc' ? <ArrowUp size={18} /> : <ArrowDown size={18} />}
-                  </button>
                 </div>
-              </div>
 
-              {/* 뷰 모드 전환 - 모바일/태블릿에서만 */}
-              <div className="sm:col-span-3 lg:hidden">
-                <label className="block text-sm font-medium text-gray-700 mb-1">보기 방식</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => setViewMode('card')}
-                    className={`flex items-center justify-center p-2 rounded-lg border ${
-                      viewMode === 'card'
-                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
-                        : 'border-gray-300 bg-white text-gray-700'
-                    }`}
+                {/* 하위 산업군 필터 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    하위 산업군
+                  </label>
+                  <select
+                    value={subIndustryFilter}
+                    onChange={(e) => setSubIndustryFilter(e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
+                    disabled={subIndustries.length === 0}
                   >
-                    <Briefcase size={18} className="mr-2" />
-                    카드 보기
-                  </button>
-                  <button
-                    onClick={() => setViewMode('table')}
-                    className={`flex items-center justify-center p-2 rounded-lg border ${
-                      viewMode === 'table'
-                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
-                        : 'border-gray-300 bg-white text-gray-700'
-                    }`}
-                  >
-                    <BarChart4 size={18} className="mr-2" />
-                    테이블 보기
-                  </button>
+                    <option value="">모든 하위 산업군</option>
+                    {subIndustries.map((subIndustry) => (
+                      <option key={subIndustry} value={subIndustry}>
+                        {subIndustry}
+                      </option>
+                    ))}
+                  </select>
                 </div>
+
+                {/* 배당률 범위 필터 추가 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    배당률 범위 (%)
+                  </label>
+                  <div className="flex space-x-2">
+                    <input
+                      type="number"
+                      value={dividendMinFilter}
+                      onChange={(e) =>
+                        setDividendMinFilter(e.target.value === '' ? '' : Number(e.target.value))
+                      }
+                      placeholder="최소"
+                      min="0"
+                      step="0.1"
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
+                    />
+                    <span className="self-center">~</span>
+                    <input
+                      type="number"
+                      value={dividendMaxFilter}
+                      onChange={(e) =>
+                        setDividendMaxFilter(e.target.value === '' ? '' : Number(e.target.value))
+                      }
+                      placeholder="최대"
+                      min="0"
+                      step="0.1"
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
+                    />
+                  </div>
+                </div>
+
+                {/* 정렬 필드 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">정렬 기준</label>
+                  <div className="flex space-x-2">
+                    <select
+                      value={sortField}
+                      onChange={(e) => setSortField(e.target.value as SortField)}
+                      className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
+                    >
+                      <option value="current_per">PER</option>
+                      <option value="debtratio">부채비율</option>
+                      <option value="dividend_yield">배당률</option>
+                      <option value="current_price">현재가</option>
+                      <option value="company_name">회사명</option>
+                      <option value="industry">산업군</option>
+                      <option value="subindustry">하위 산업군</option>
+                    </select>
+                    <button
+                      onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
+                      className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+                    >
+                      {sortDirection === 'asc' ? <ArrowUp size={18} /> : <ArrowDown size={18} />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* 뷰 모드 전환 - 주석 처리
+                <div className="sm:col-span-3 lg:hidden">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">보기 방식</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      onClick={() => setViewMode('card')}
+                      className={`flex items-center justify-center p-2 rounded-lg border ${
+                        viewMode === 'card'
+                          ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                          : 'border-gray-300 bg-white text-gray-700'
+                      }`}
+                    >
+                      <Briefcase size={18} className="mr-2" />
+                      카드
+                    </button>
+                    <button
+                      onClick={() => setViewMode('mobileTable')}
+                      className={`flex items-center justify-center p-2 rounded-lg border ${
+                        viewMode === 'mobileTable'
+                          ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                          : 'border-gray-300 bg-white text-gray-700'
+                      }`}
+                    >
+                      <List size={18} className="mr-2" />
+                      모바일표
+                    </button>
+                    <button
+                      onClick={() => setViewMode('table')}
+                      className={`flex items-center justify-center p-2 rounded-lg border ${
+                        viewMode === 'table'
+                          ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                          : 'border-gray-300 bg-white text-gray-700'
+                      }`}
+                    >
+                      <BarChart4 size={18} className="mr-2" />
+                      테이블
+                    </button>
+                  </div>
+                </div>
+                */}
               </div>
             </div>
-          </div>
-        </AccordionSection>
+          </AccordionSection>
+        </div>
 
         {/* 로딩 상태 */}
         {loading && (
@@ -431,7 +450,7 @@ export default function GrahamPage() {
                 </div>
               </div>
 
-              {/* 카드 뷰 (모바일/태블릿 또는 선택 시) */}
+              {/* 카드 뷰 (주석 처리)
               {viewMode === 'card' && (
                 <div className="p-4 sm:p-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -440,7 +459,6 @@ export default function GrahamPage() {
                         key={stock.stock_code}
                         className="bg-white border rounded-xl shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col"
                       >
-                        {/* 회사명 및 종목코드 */}
                         <div className="mb-3">
                           <h3 className="text-lg font-semibold text-gray-900">
                             {stock.company_name}
@@ -448,7 +466,6 @@ export default function GrahamPage() {
                           <p className="text-sm text-gray-500">{stock.stock_code}</p>
                         </div>
 
-                        {/* 핵심 지표 (PER, 부채비율, 배당률) */}
                         <div className="grid grid-cols-3 gap-2 mb-4">
                           <div className="border rounded-lg p-2 flex flex-col items-center">
                             <span className="text-xs text-gray-600 mb-1 flex items-center">
@@ -480,7 +497,6 @@ export default function GrahamPage() {
                           </div>
                         </div>
 
-                        {/* 추가 정보 */}
                         <div className="space-y-2 text-sm mb-3 flex-grow">
                           <div className="flex justify-between">
                             <span className="text-gray-600 flex items-center">
@@ -501,15 +517,147 @@ export default function GrahamPage() {
                           </div>
                         </div>
 
-                        {/* 주식 관련 링크 버튼 */}
                         <StockLinkButtons stockCode={stock.stock_code} style="card" />
                       </div>
                     ))}
                   </div>
                 </div>
+              )
+              */}
+
+              {/* 모바일 테이블 뷰 (새로 추가) */}
+              {viewMode === 'mobileTable' && (
+                <div className="relative overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        {/* 고정된 회사명 헤더 */}
+                        <th
+                          scope="col"
+                          className="sticky left-0 z-10 bg-white px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer border-r border-gray-200 shadow-sm min-w-[120px]"
+                          onClick={() => toggleSort('company_name')}
+                        >
+                          <div className="flex items-center">
+                            회사명
+                            {sortField === 'company_name' &&
+                              (sortDirection === 'asc' ? (
+                                <ArrowUp size={12} className="ml-1" />
+                              ) : (
+                                <ArrowDown size={12} className="ml-1" />
+                              ))}
+                          </div>
+                        </th>
+                        <th
+                          scope="col"
+                          className="bg-gray-100 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-200"
+                          onClick={() => toggleSort('current_per')}
+                        >
+                          <div className="flex items-center whitespace-nowrap">
+                            PER
+                            {sortField === 'current_per' &&
+                              (sortDirection === 'asc' ? (
+                                <ArrowUp size={12} className="ml-1" />
+                              ) : (
+                                <ArrowDown size={12} className="ml-1" />
+                              ))}
+                          </div>
+                        </th>
+                        <th
+                          scope="col"
+                          className="bg-gray-100 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-200"
+                          onClick={() => toggleSort('debtratio')}
+                        >
+                          <div className="flex items-center whitespace-nowrap">
+                            부채비율
+                            {sortField === 'debtratio' &&
+                              (sortDirection === 'asc' ? (
+                                <ArrowUp size={12} className="ml-1" />
+                              ) : (
+                                <ArrowDown size={12} className="ml-1" />
+                              ))}
+                          </div>
+                        </th>
+                        <th
+                          scope="col"
+                          className="bg-gray-100 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-200"
+                          onClick={() => toggleSort('dividend_yield')}
+                        >
+                          <div className="flex items-center whitespace-nowrap">
+                            배당률
+                            {sortField === 'dividend_yield' &&
+                              (sortDirection === 'asc' ? (
+                                <ArrowUp size={12} className="ml-1" />
+                              ) : (
+                                <ArrowDown size={12} className="ml-1" />
+                              ))}
+                          </div>
+                        </th>
+                        <th
+                          scope="col"
+                          className="bg-gray-100 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-200"
+                          onClick={() => toggleSort('current_price')}
+                        >
+                          <div className="flex items-center whitespace-nowrap">
+                            현재가
+                            {sortField === 'current_price' &&
+                              (sortDirection === 'asc' ? (
+                                <ArrowUp size={12} className="ml-1" />
+                              ) : (
+                                <ArrowDown size={12} className="ml-1" />
+                              ))}
+                          </div>
+                        </th>
+                        <th
+                          scope="col"
+                          className="bg-gray-100 px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          상세
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {currentItems.map((stock) => (
+                        <tr key={stock.stock_code} className="hover:bg-gray-50">
+                          {/* 고정된 회사명 셀 */}
+                          <td className="sticky left-0 z-10 bg-white px-3 py-2 border-r border-gray-200 shadow-sm min-w-[120px]">
+                            <div className="text-xs font-semibold text-gray-900">
+                              {stock.company_name}
+                            </div>
+                            <div className="text-xs text-gray-500">({stock.stock_code})</div>
+                          </td>
+                          <td className="bg-gray-50 px-3 py-2 whitespace-nowrap">
+                            <div className="text-xs font-semibold text-gray-900">
+                              {stock.current_per.toFixed(2)}
+                            </div>
+                          </td>
+                          <td className="bg-gray-50 px-3 py-2 whitespace-nowrap">
+                            <div className="text-xs font-semibold text-gray-900">
+                              {stock.debtratio.toFixed(1)}%
+                            </div>
+                          </td>
+                          <td className="bg-gray-50 px-3 py-2 whitespace-nowrap">
+                            <div className="text-xs font-semibold text-emerald-600">
+                              {stock.dividend_yield > 0
+                                ? `${stock.dividend_yield.toFixed(2)}%`
+                                : '-'}
+                            </div>
+                          </td>
+                          <td className="bg-gray-50 px-3 py-2 whitespace-nowrap">
+                            <div className="text-xs text-gray-900 whitespace-nowrap">
+                              {formatNumber(stock.current_price)}원
+                            </div>
+                          </td>
+                          <td className="bg-gray-50 px-3 py-2 text-right whitespace-nowrap">
+                            <StockLinkButtons stockCode={stock.stock_code} style="mobileTable" />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
 
-              {/* 테이블 뷰 (데스크톱 또는 선택 시) */}
+              {/* 기존 테이블 뷰 (데스크톱 또는 선택 시) */}
               {viewMode === 'table' && (
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
@@ -616,30 +764,28 @@ export default function GrahamPage() {
                     <tbody className="bg-white divide-y divide-gray-200">
                       {currentItems.map((stock) => (
                         <tr key={stock.stock_code} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="text-sm font-medium text-gray-900">
-                                {stock.company_name}
-                              </div>
-                              <div className="text-xs text-gray-500 ml-2">({stock.stock_code})</div>
+                          <td className="px-6 py-4 whitespace-normal max-w-[160px]">
+                            <div className="text-sm font-semibold text-gray-900">
+                              {stock.company_name}
                             </div>
+                            <div className="text-xs text-gray-500">({stock.stock_code})</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-900">{stock.industry}</div>
                             <div className="text-xs text-gray-500">{stock.subindustry}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className="text-sm font-semibold text-gray-900">
                               {stock.current_per.toFixed(2)}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className="text-sm font-semibold text-gray-900">
                               {stock.debtratio.toFixed(1)}%
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-emerald-600">
+                            <div className="text-sm font-semibold text-emerald-600">
                               {stock.dividend_yield > 0
                                 ? `${stock.dividend_yield.toFixed(2)}%`
                                 : '-'}
