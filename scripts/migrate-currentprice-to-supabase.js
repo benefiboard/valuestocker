@@ -33,6 +33,7 @@ async function migrateStockPriceData() {
       stock_code: item.stock_code,
       dart_code: item.dart_code,
       company_name: item.company_name,
+      //current_price: item.current_price === '' ? null : parseFloat(item.current_price),
       current_price: parseFloat(item.current_price),
       last_updated: item.last_updated,
     }));

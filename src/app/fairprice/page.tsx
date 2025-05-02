@@ -318,9 +318,14 @@ export default function FairPricePage() {
             className="bg-gray-500 h-full flex items-center justify-end pr-4 sm:pr-6 rounded-r-2xl"
             style={{ width: currentBarWidth }}
           >
-            <span className="text-white text-sm sm:text-base font-medium">현재주가</span>
+            <div className="flex flex-col items-center ">
+              <span className="text-white  text-sm sm:text-base font-medium">현재주가</span>
+              <span className="text-gray-300 text-xs sm:text-sm font-light">
+                ({latestPrice?.formattedDate})
+              </span>
+            </div>
           </div>
-          <div className="ml-4 text-base sm:text-lg font-medium whitespace-nowrap">
+          <div className="ml-4 text-base sm:text-lg font-medium whitespace-nowrap text-gray">
             {formatNumber(currentPrice)}원
           </div>
         </div>
@@ -332,14 +337,14 @@ export default function FairPricePage() {
     <div className="flex flex-col min-h-screen bg-gray-50 px-4 sm:px-6 py-8">
       {/* 헤더 */}
       <header className="mb-6 max-w-4xl mx-auto w-full">
-        <div className="flex items-center">
+        <div className="flex  items-center">
           <Link
             href="/"
             className="mr-3 sm:mr-4 text-gray-600 hover:text-gray-900 transition-colors"
           >
             <ArrowLeft size={20} className="sm:w-6 sm:h-6" />
           </Link>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center">
+          <h1 className="text-xl  sm:text-2xl font-bold text-gray-800 flex items-center">
             <BarChart4 className="mr-3 text-emerald-600 w-6 h-6 sm:w-7 sm:h-7" />
             가치투자 주식 적정가 계산
           </h1>
@@ -428,6 +433,14 @@ export default function FairPricePage() {
               currentPrice={latestPrice?.price || 0}
               fairPrice={calculatedResults.priceRange.midRange}
             />
+
+            {/* 적정가 범위 그래프 추가 */}
+            {/* <PriceRangeGraph
+              lowRange={calculatedResults.priceRange.lowRange}
+              midRange={calculatedResults.priceRange.midRange}
+              highRange={calculatedResults.priceRange.highRange}
+              currentPrice={latestPrice?.price || 0}
+            /> */}
 
             {/* 적정가 계산 결과 */}
             <div className="bg-white rounded-2xl shadow-md mb-6 p-6 sm:p-8">

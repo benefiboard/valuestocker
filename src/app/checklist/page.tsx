@@ -514,11 +514,16 @@ export default function ChecklistPage() {
                     </span>
                   </h2>
 
-                  <p className="text-sm sm:text-base text-gray-600 mt-1">
+                  <p className="text-sm sm:text-base text-gray-600 mt-1 ">
                     현재 주가:{' '}
-                    <span className="text-base font-semibold sm:text-lg">{stockPrice.price}</span>원
+                    <span className="text-gray-800 text-lg sm:text-xl font-semibold sm:text-lg">
+                      {stockPrice.price}
+                    </span>
+                    원
                     {stockPrice.formattedDate && (
-                      <span className="text-gray-500 ml-2">({stockPrice.formattedDate})</span>
+                      <span className="text-gray-500 text-xs sm:text-sm ml-1">
+                        ({stockPrice.formattedDate})
+                      </span>
                     )}
                   </p>
                 </div>
