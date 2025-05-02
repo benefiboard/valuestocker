@@ -1,4 +1,4 @@
-//src/app/choi/page.tsx
+//src/app/quality/page.tsx
 
 'use client';
 

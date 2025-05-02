@@ -10,9 +10,7 @@ import ValueInvestingConcept from '../components/mainpage/ValueInvestingConcept'
 import ValuationModelsComparison from '../components/mainpage/ValuationModelsComparison';
 // 워크플로우 컴포넌트
 import WorkflowComponent from '../components/mainpage/WorkflowComponent';
-// 미니 계산기 컴포넌트
-//import MiniCalculator from '../components/MiniCalculator';
-
+import GrahamWisdomCard from '@/components/GrahamWisdomCard';
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 p-4 sm:p-6 md:p-10">
@@ -76,23 +74,17 @@ export default function Home() {
             </div>
           </div>
         </div>
-        {/* <hr className="mb-6 border-2 border-gray-200 sm:hidden" /> */}
 
         {/* 투자 전략 카드 섹션 */}
         <div className="mb-12">
-          {/* <h2 className="text-xl sm:text-2xl font-bold sm:text-center mb-6">
-            검증된 가치투자 전략
-          </h2> */}
-          {/* <p className="text-gray-600 text-center mb-8">
-            전문가들의 가치투자 전략으로 종목을 선별하세요
-          </p> */}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3  gap-6 sm:gap-8">
             {/* 벤자민 그레이엄 전략 카드 */}
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
               <div className="p-5 border-b border-gray-200">
                 <h3 className="text-xl font-bold text-gray-900 mb-1">벤자민 그레이엄 전략</h3>
-                <p className="text-sm text-gray-600">가치투자의 창시자가 제안한 안전한 투자 원칙</p>
+                <p className="text-sm text-gray-600">
+                  가치투자의 창시자가 벤자민 그레이엄이 제안한 안전한 투자 원칙
+                </p>
               </div>
 
               <div className="p-5">
@@ -187,6 +179,110 @@ export default function Home() {
                 </Link>
               </div>
             </div>
+
+            {/* 비즈니스 퀄리티 종목 카드 */}
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
+              <div className="p-5 border-b border-gray-200">
+                <h3 className="text-xl font-bold text-gray-900 mb-1">비즈니스 퀄리티 종목</h3>
+                <p className="text-sm text-gray-600">
+                  장기적으로 높은 수익을 창출하는 고품질 비즈니스 기업들
+                </p>
+              </div>
+
+              <div className="p-5">
+                <div className="mb-5">
+                  <ul className="space-y-4">
+                    <li className="flex items-start">
+                      <div className="border border-gray-300 p-1 rounded-full mr-3 mt-0.5">
+                        <CheckSquare className="h-4 w-4 text-gray-700" />
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium">ROE 10% 이상</span>
+                        <p className="text-xs text-gray-500">3년 평균 자기자본수익률</p>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="border border-gray-300 p-1 rounded-full mr-3 mt-0.5">
+                        <CheckSquare className="h-4 w-4 text-gray-700" />
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium">영업이익률 15% 이상</span>
+                        <p className="text-xs text-gray-500">3년 평균 영업이익률</p>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="border border-gray-300 p-1 rounded-full mr-3 mt-0.5">
+                        <CheckSquare className="h-4 w-4 text-gray-700" />
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium">경쟁우위를 가진 기업</span>
+                        <p className="text-xs text-gray-500">지속적인 고수익 창출</p>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+
+                <Link href="/quality" className="block w-full">
+                  <button className="w-full bg-black hover:bg-gray-800 text-white px-5 py-3 rounded-xl font-medium transition-colors flex items-center justify-center">
+                    퀄리티 종목 보기
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </button>
+                </Link>
+              </div>
+            </div>
+
+            {/* 벤자민 그레이엄 지혜 카드 - 큰 화면에서만 표시 */}
+            {/* <div className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden lg:block hidden">
+              <div className="p-5 border-b border-gray-200">
+                <h3 className="text-xl font-bold text-gray-900 mb-1">가치투자의 지혜</h3>
+                <p className="text-sm text-gray-600">벤자민 그레이엄의 투자 철학과 원칙</p>
+              </div>
+
+              <div className="p-5">
+                <div className="mb-5">
+                  <ul className="space-y-4">
+                    <li className="flex items-start">
+                      <div className="border border-gray-300 p-1 rounded-full mr-3 mt-0.5">
+                        <CheckSquare className="h-4 w-4 text-gray-700" />
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium">안전마진(Margin of Safety)</span>
+                        <p className="text-xs text-gray-500">
+                          적정가격보다 충분히 낮은 가격에 매수
+                        </p>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="border border-gray-300 p-1 rounded-full mr-3 mt-0.5">
+                        <CheckSquare className="h-4 w-4 text-gray-700" />
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium">Low Risk & Medium Return</span>
+                        <p className="text-xs text-gray-500">낮은 위험으로 적절한 수익 추구</p>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="border border-gray-300 p-1 rounded-full mr-3 mt-0.5">
+                        <CheckSquare className="h-4 w-4 text-gray-700" />
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium">"시장은 투표기가 아닌 저울"</span>
+                        <p className="text-xs text-gray-500">
+                          단기적 인기가 아닌 본질적 가치를 측정
+                        </p>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+
+                <Link href="/graham-wisdom" className="block w-full">
+                  <button className="w-full bg-black hover:bg-gray-800 text-white px-5 py-3 rounded-xl font-medium transition-colors flex items-center justify-center">
+                    투자 지혜 더 보기
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </button>
+                </Link>
+              </div>
+            </div> */}
           </div>
         </div>
         {/* <hr className="mb-6 border-2 border-gray-200 sm:hidden" /> */}
