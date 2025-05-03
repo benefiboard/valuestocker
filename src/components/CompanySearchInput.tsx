@@ -1,4 +1,4 @@
-//src/app/components/CompanySearchInput.tsx
+//src/components/CompanySearchInput.tsx
 
 'use client';
 
@@ -139,9 +139,12 @@ const CompanySearchInput = ({
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>
-      <div className="relative">
+      <div className="relative group">
         <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-          <Search size={18} className="text-gray-400" />
+          <Search
+            size={18}
+            className="text-gray-400 group-hover:text-emerald-500 transition-colors duration-300"
+          />
         </div>
 
         <input
@@ -151,7 +154,7 @@ const CompanySearchInput = ({
           onKeyDown={handleKeyDown}
           onFocus={() => searchTerm && setShowDropdown(true)}
           placeholder={placeholder}
-          className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition"
+          className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-300 shadow-sm focus:shadow-md bg-white"
           autoComplete="off"
         />
 
@@ -163,39 +166,52 @@ const CompanySearchInput = ({
               setSearchResults([]);
               setShowDropdown(false);
             }}
-            className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600"
+            className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors duration-300"
           >
-            <X size={18} />
+            <X size={18} className="hover:scale-110 transition-transform duration-200" />
           </button>
         )}
 
         {isLoading && (
           <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-            <div className="animate-spin h-4 w-4 border-2 border-accent-500 rounded-full border-t-transparent"></div>
+            <div className="h-5 w-5 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin"></div>
           </div>
         )}
       </div>
 
       {showDropdown && searchResults.length > 0 && (
-        <div className="absolute z-10 w-full bg-white border border-gray-200 rounded-xl mt-1 max-h-60 overflow-y-auto shadow-lg">
+        <div className="absolute z-10 w-full bg-white border border-gray-200 rounded-xl mt-1 max-h-60 overflow-y-auto shadow-lg animate-fadeIn">
           {searchResults.map((company, index) => (
             <div
               key={company.stockCode}
-              className={`p-3 cursor-pointer hover:bg-blue-50 ${
-                focusedIndex === index ? 'bg-blue-100' : ''
+              className={`p-3 cursor-pointer transition-colors duration-200 ${
+                focusedIndex === index
+                  ? 'bg-emerald-50 border-l-2 border-emerald-500'
+                  : 'hover:bg-gray-50 border-l-2 border-transparent'
               }`}
               onClick={() => handleSelectCompany(company)}
             >
-              <div className="font-medium text-slate-900">{company.companyName}</div>
-              <div className="text-sm text-gray-500">종목코드: {company.stockCode}</div>
+              <div className="font-medium text-slate-900 flex items-center">
+                <span className="mr-2 text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
+                  {company.stockCode}
+                </span>
+                {company.companyName}
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                {company.industry || '산업군 정보 없음'}
+              </div>
             </div>
           ))}
         </div>
       )}
 
       {showDropdown && searchResults.length === 0 && !isLoading && (
-        <div className="absolute z-10 w-full bg-white border border-gray-200 rounded-xl mt-1 p-4 shadow-lg text-center text-gray-500">
-          검색 결과가 없습니다
+        <div className="absolute z-10 w-full bg-white border border-gray-200 rounded-xl mt-1 p-4 shadow-lg text-center animate-fadeIn">
+          <div className="text-gray-500 flex flex-col items-center">
+            <Search size={24} className="text-gray-300 mb-2" />
+            <p>검색 결과가 없습니다</p>
+            <p className="text-xs text-gray-400 mt-1">다른 키워드로 검색해보세요</p>
+          </div>
         </div>
       )}
     </div>

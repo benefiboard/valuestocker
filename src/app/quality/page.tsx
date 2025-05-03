@@ -5,7 +5,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { formatNumber, formatAsset } from '../../utils/stockUtils';
-import { AccordionSection, Pagination } from '../../components/StockPageComponents';
 import {
   ArrowDown,
   ArrowLeft,
@@ -21,6 +20,10 @@ import {
   Info,
   TrendingUp,
   Database,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { StockLinkButtons } from '../../components/StockLinkButtons';
 import { fetchQualityStocks } from '@/utils/stockDataService';
@@ -71,6 +74,7 @@ export default function QualityPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('table'); // 기본값을 table로 설정
   const [isFilterExpanded, setIsFilterExpanded] = useState<boolean>(false); // 필터 영역 확장 상태
   const [isConditionExpanded, setIsConditionExpanded] = useState<boolean>(false); // 조건 영역 확장 상태
+  const [showScrollHint, setShowScrollHint] = useState<boolean>(false); // 스크롤 힌트 상태
   const itemsPerPage = 20;
 
   // Supabase에서 조건에 맞는 주식 데이터 가져오기
@@ -189,9 +193,11 @@ export default function QualityPage() {
       if (window.innerWidth >= 1024) {
         // 데스크톱: lg 브레이크포인트
         setViewMode('table');
+        setShowScrollHint(false);
       } else {
         // 태블릿 및 모바일
         setViewMode('mobileTable');
+        setShowScrollHint(true);
       }
     };
 
@@ -202,6 +208,16 @@ export default function QualityPage() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // 스크롤 힌트 5초 후 자동 숨김
+  useEffect(() => {
+    if (showScrollHint) {
+      const timer = setTimeout(() => {
+        setShowScrollHint(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [showScrollHint]);
 
   // 정렬 토글 함수
   const toggleSort = (field: SortField) => {
@@ -239,218 +255,294 @@ export default function QualityPage() {
     }
   };
 
+  // 정렬 아이콘 렌더링 함수
+  const renderSortIcon = (field: SortField) => {
+    if (sortField !== field) return null;
+
+    return sortDirection === 'asc' ? (
+      <ArrowUp size={12} className="ml-1 text-emerald-600 sort-icon" />
+    ) : (
+      <ArrowDown size={12} className="ml-1 text-emerald-600 sort-icon" />
+    );
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 px-4 sm:px-6 py-8">
-      {/* 헤더 */}
-      <header className="mb-6 max-w-6xl mx-auto w-full">
-        <div className="flex items-center">
+      {/* 헤더 - 글래스모픽 스타일 */}
+      <header className="mb-6 max-w-6xl mx-auto w-full sticky top-0 z-10">
+        <div className="bg-white bg-opacity-90 backdrop-blur-md shadow-sm rounded-2xl p-4 flex items-center">
           <Link
             href="/"
-            className="mr-3 sm:mr-4 text-gray-600 hover:text-gray-900 transition-colors"
+            className="mr-3 sm:mr-4 text-gray-600 hover:text-gray-900 transition-colors p-2 rounded-full hover:bg-gray-100"
           >
             <ArrowLeft size={20} className="sm:w-6 sm:h-6" />
           </Link>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center">
-            <TrendingUp className="mr-3 text-blue-600 w-6 h-6 sm:w-7 sm:h-7" />
+            <div className="p-2 bg-emerald-50 rounded-full mr-3">
+              <TrendingUp className="text-emerald-600 w-5 h-5 sm:w-6 sm:h-6" />
+            </div>
             비즈니스 퀄리티가 좋은 종목 리스트
           </h1>
         </div>
       </header>
 
-      <main className="flex-1 max-w-6xl mx-auto w-full">
+      <main className="flex-1 max-w-6xl mx-auto w-full animate-fadeIn">
         <div className="flex flex-col mb-6">
-          {/* 설명 카드 - 아코디언 방식 */}
-          <AccordionSection
-            title="비즈니스 퀄리티가 좋은 종목 조건"
-            isExpanded={isConditionExpanded}
-            toggleExpanded={() => setIsConditionExpanded(!isConditionExpanded)}
-          >
-            <p className="text-sm sm:text-base text-gray-700 mb-3">
-              아래 조건을 모두 만족하는 고품질 비즈니스 종목 리스트입니다:
-            </p>
-            <ul className="list-disc pl-5 text-sm sm:text-base text-gray-700 space-y-2">
-              <li>
-                <strong>3년 평균 ROE 10% 이상</strong> - 투자 자본 대비 높은 수익률
-              </li>
-              <li>
-                <strong>3년 평균 영업이익률 15% 이상</strong> - 매출 대비 높은 이익 마진
-              </li>
-            </ul>
-            <p className="text-sm sm:text-base text-gray-700 mt-3">
-              이러한 기업들은 경쟁우위를 가지고 있으며, 고품질 비즈니스 모델로 지속적인 성장이
-              기대됩니다.
-            </p>
-          </AccordionSection>
-
-          {/* 필터 및 정렬 컨트롤 - 아코디언 방식 */}
-          <AccordionSection
-            title={
+          {/* 설명 카드 - 아코디언 방식 (개선된 디자인) */}
+          <div className="mb-4 bg-white rounded-2xl shadow-sm border border-gray-100 transition-all duration-300 hover:shadow-md overflow-hidden">
+            <div
+              className="flex items-center justify-between p-4 sm:p-5 cursor-pointer"
+              onClick={() => setIsConditionExpanded(!isConditionExpanded)}
+            >
               <div className="flex items-center">
-                <Filter className="w-5 h-5 mr-2 text-blue-600" />
-                <span className="sm:text-lg font-semibold text-gray-800">필터 및 정렬</span>
+                <div className="p-2 bg-emerald-50 rounded-full mr-3">
+                  <Info className="w-5 h-5 text-emerald-600" />
+                </div>
+                <h2 className="text-base sm:text-lg font-semibold text-gray-800">
+                  비즈니스 퀄리티가 좋은 종목 조건
+                </h2>
               </div>
-            }
-            isExpanded={isFilterExpanded}
-            toggleExpanded={() => setIsFilterExpanded(!isFilterExpanded)}
-            rightContent={
-              <button
-                onClick={(e) => {
-                  e.stopPropagation(); // 버튼 클릭 시 아코디언 확장/축소 방지
-                  resetFilters();
-                }}
-                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs rounded-lg transition-colors mr-4"
+              <div
+                className={`p-1 rounded-full bg-gray-100 transform transition-transform duration-300 ${
+                  isConditionExpanded ? 'rotate-180' : 'rotate-0'
+                }`}
               >
-                필터 초기화
-              </button>
-            }
-          >
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {/* 산업군 필터 */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">산업군</label>
-                  <select
-                    value={industryFilter}
-                    onChange={(e) => setIndustryFilter(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="">모든 산업군</option>
-                    {industries.map((industry) => (
-                      <option key={industry} value={industry}>
-                        {industry}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {isConditionExpanded ? (
+                  <ChevronUp className="w-5 h-5 text-gray-500" />
+                ) : (
+                  <ChevronDown className="w-5 h-5 text-gray-500" />
+                )}
+              </div>
+            </div>
 
-                {/* 하위 산업군 필터 */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    하위 산업군
-                  </label>
-                  <select
-                    value={subIndustryFilter}
-                    onChange={(e) => setSubIndustryFilter(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                    disabled={subIndustries.length === 0}
-                  >
-                    <option value="">모든 하위 산업군</option>
-                    {subIndustries.map((subIndustry) => (
-                      <option key={subIndustry} value={subIndustry}>
-                        {subIndustry}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+            <div className={`accordion-content ${isConditionExpanded ? 'open' : ''}`}>
+              <div className="p-4 sm:p-5 pt-0 border-t border-gray-100">
+                <p className="text-sm sm:text-base text-gray-700 mb-3">
+                  아래 조건을 모두 만족하는 고품질 비즈니스 종목 리스트입니다:
+                </p>
+                <ul className="list-disc pl-5 text-sm sm:text-base text-gray-700 space-y-2">
+                  <li>
+                    <strong className="text-emerald-700">3년 평균 ROE 10% 이상</strong> - 투자 자본
+                    대비 높은 수익률
+                  </li>
+                  <li>
+                    <strong className="text-emerald-700">3년 평균 영업이익률 15% 이상</strong> -
+                    매출 대비 높은 이익 마진
+                  </li>
+                </ul>
+                <p className="text-sm sm:text-base text-gray-700 mt-3">
+                  이러한 기업들은 경쟁우위를 가지고 있으며, 고품질 비즈니스 모델로 지속적인 성장이
+                  기대됩니다.
+                </p>
+              </div>
+            </div>
+          </div>
 
-                {/* ROE 범위 필터 */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    ROE 범위 (%)
-                  </label>
-                  <div className="flex space-x-2">
-                    <input
-                      type="number"
-                      value={roeMinFilter}
-                      onChange={(e) =>
-                        setRoeMinFilter(e.target.value === '' ? '' : Number(e.target.value))
-                      }
-                      placeholder="최소"
-                      min="0"
-                      step="0.1"
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                    />
-                    <span className="self-center">~</span>
-                    <input
-                      type="number"
-                      value={roeMaxFilter}
-                      onChange={(e) =>
-                        setRoeMaxFilter(e.target.value === '' ? '' : Number(e.target.value))
-                      }
-                      placeholder="최대"
-                      min="0"
-                      step="0.1"
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
+          {/* 필터 및 정렬 컨트롤 - 아코디언 방식 (개선된 디자인) */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 transition-all duration-300 hover:shadow-md overflow-hidden">
+            <div
+              className="flex items-center justify-between p-3 sm:p-4 cursor-pointer"
+              onClick={() => setIsFilterExpanded(!isFilterExpanded)}
+            >
+              <div className="flex items-center">
+                <div className="p-1.5 bg-emerald-50 rounded-full mr-2">
+                  <Filter className="w-4 h-4 text-emerald-600" />
                 </div>
-
-                {/* 영업이익률 범위 필터 */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    영업이익률 범위 (%)
-                  </label>
-                  <div className="flex space-x-2">
-                    <input
-                      type="number"
-                      value={marginMinFilter}
-                      onChange={(e) =>
-                        setMarginMinFilter(e.target.value === '' ? '' : Number(e.target.value))
-                      }
-                      placeholder="최소"
-                      min="0"
-                      step="0.1"
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                    />
-                    <span className="self-center">~</span>
-                    <input
-                      type="number"
-                      value={marginMaxFilter}
-                      onChange={(e) =>
-                        setMarginMaxFilter(e.target.value === '' ? '' : Number(e.target.value))
-                      }
-                      placeholder="최대"
-                      min="0"
-                      step="0.1"
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
+                <h2 className="text-sm sm:text-base font-semibold text-gray-800">필터 및 정렬</h2>
+              </div>
+              <div className="flex items-center">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation(); // 버튼 클릭 시 아코디언 확장/축소 방지
+                    resetFilters();
+                  }}
+                  className="filter-button bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors mr-3 hover:shadow-sm"
+                >
+                  필터 초기화
+                </button>
+                <div
+                  className={`p-1 rounded-full bg-gray-100 transform transition-transform duration-300 ${
+                    isFilterExpanded ? 'rotate-180' : 'rotate-0'
+                  }`}
+                >
+                  {isFilterExpanded ? (
+                    <ChevronUp className="w-4 h-4 text-gray-500" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-gray-500" />
+                  )}
                 </div>
+              </div>
+            </div>
 
-                {/* 정렬 필드 */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">정렬 기준</label>
-                  <div className="flex space-x-2">
+            <div className={`accordion-content ${isFilterExpanded ? 'open' : ''}`}>
+              <div className="filter-container border-t border-gray-100">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {/* 산업군 필터 */}
+                  <div className="filter-section">
+                    <label className="filter-label block font-medium text-gray-700">산업군</label>
                     <select
-                      value={sortField}
-                      onChange={(e) => setSortField(e.target.value as SortField)}
-                      className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                      value={industryFilter}
+                      onChange={(e) => setIndustryFilter(e.target.value)}
+                      className="filter-select w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                     >
-                      <option value="avg_roe">ROE</option>
-                      <option value="avg_operating_margin">영업이익률</option>
-                      <option value="current_per">PER</option>
-                      <option value="current_price">현재가</option>
-                      <option value="dividend_yield">배당률</option>
-                      <option value="company_name">회사명</option>
-                      <option value="industry">산업군</option>
-                      <option value="subindustry">하위 산업군</option>
+                      <option value="">모든 산업군</option>
+                      {industries.map((industry) => (
+                        <option key={industry} value={industry}>
+                          {industry}
+                        </option>
+                      ))}
                     </select>
-                    <button
-                      onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
-                      className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+                  </div>
+
+                  {/* 하위 산업군 필터 */}
+                  <div className="filter-section">
+                    <label className="filter-label block font-medium text-gray-700">
+                      하위 산업군
+                    </label>
+                    <select
+                      value={subIndustryFilter}
+                      onChange={(e) => setSubIndustryFilter(e.target.value)}
+                      className="filter-select w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
+                      disabled={subIndustries.length === 0}
                     >
-                      {sortDirection === 'asc' ? <ArrowUp size={18} /> : <ArrowDown size={18} />}
-                    </button>
+                      <option value="">모든 하위 산업군</option>
+                      {subIndustries.map((subIndustry) => (
+                        <option key={subIndustry} value={subIndustry}>
+                          {subIndustry}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* ROE 범위 필터 */}
+                  <div className="filter-section">
+                    <label className="filter-label block font-medium text-gray-700">
+                      ROE 범위 (%)
+                    </label>
+                    <div className="flex space-x-2">
+                      <input
+                        type="number"
+                        value={roeMinFilter}
+                        onChange={(e) =>
+                          setRoeMinFilter(e.target.value === '' ? '' : Number(e.target.value))
+                        }
+                        placeholder="최소"
+                        min="0"
+                        step="0.1"
+                        className="filter-input w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
+                      />
+                      <span className="self-center text-gray-400 text-sm">~</span>
+                      <input
+                        type="number"
+                        value={roeMaxFilter}
+                        onChange={(e) =>
+                          setRoeMaxFilter(e.target.value === '' ? '' : Number(e.target.value))
+                        }
+                        placeholder="최대"
+                        min="0"
+                        step="0.1"
+                        className="filter-input w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
+                      />
+                    </div>
+                  </div>
+
+                  {/* 영업이익률 범위 필터 */}
+                  <div className="filter-section">
+                    <label className="filter-label block font-medium text-gray-700">
+                      영업이익률 범위 (%)
+                    </label>
+                    <div className="flex space-x-2">
+                      <input
+                        type="number"
+                        value={marginMinFilter}
+                        onChange={(e) =>
+                          setMarginMinFilter(e.target.value === '' ? '' : Number(e.target.value))
+                        }
+                        placeholder="최소"
+                        min="0"
+                        step="0.1"
+                        className="filter-input w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
+                      />
+                      <span className="self-center text-gray-400 text-sm">~</span>
+                      <input
+                        type="number"
+                        value={marginMaxFilter}
+                        onChange={(e) =>
+                          setMarginMaxFilter(e.target.value === '' ? '' : Number(e.target.value))
+                        }
+                        placeholder="최대"
+                        min="0"
+                        step="0.1"
+                        className="filter-input w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
+                      />
+                    </div>
+                  </div>
+
+                  {/* 정렬 필드 */}
+                  <div className="filter-section">
+                    <label className="filter-label block font-medium text-gray-700">
+                      정렬 기준
+                    </label>
+                    <div className="flex space-x-2">
+                      <select
+                        value={sortField}
+                        onChange={(e) => setSortField(e.target.value as SortField)}
+                        className="filter-select flex-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
+                      >
+                        <option value="avg_roe">ROE</option>
+                        <option value="avg_operating_margin">영업이익률</option>
+                        <option value="current_per">PER</option>
+                        <option value="current_price">현재가</option>
+                        <option value="dividend_yield">배당률</option>
+                        <option value="company_name">회사명</option>
+                        <option value="industry">산업군</option>
+                        <option value="subindustry">하위 산업군</option>
+                      </select>
+                      <button
+                        onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
+                        className="filter-button bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all duration-200 group p-1"
+                      >
+                        {sortDirection === 'asc' ? (
+                          <ArrowUp
+                            size={16}
+                            className="group-hover:scale-125 transition-transform duration-200"
+                          />
+                        ) : (
+                          <ArrowDown
+                            size={16}
+                            className="group-hover:scale-125 transition-transform duration-200"
+                          />
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </AccordionSection>
+          </div>
         </div>
 
-        {/* 로딩 상태 */}
+        {/* 로딩 상태 - 세련된 로딩 애니메이션 */}
         {loading && (
-          <div className="bg-white rounded-2xl p-10 shadow-md flex justify-center items-center">
-            <Loader2 size={30} className="animate-spin text-blue-600 mr-3" />
-            <p className="text-lg text-gray-700">데이터를 불러오는 중...</p>
+          <div className="bg-white rounded-2xl p-8 shadow-md flex flex-col items-center justify-center mb-6 transition-all duration-300 border border-gray-100">
+            <div className="relative w-16 h-16 mb-4">
+              <div className="absolute inset-0 rounded-full border-4 border-gray-200"></div>
+              <div className="absolute inset-0 rounded-full border-4 border-t-emerald-600 animate-spin"></div>
+            </div>
+            <div className="text-center">
+              <p className="text-lg text-gray-700 font-medium mb-2">데이터를 불러오는 중...</p>
+              <p className="text-sm text-gray-500">잠시만 기다려주세요</p>
+            </div>
           </div>
         )}
 
-        {/* 오류 메시지 */}
+        {/* 오류 메시지 - 세련된 알림 디자인 */}
         {error && !loading && (
-          <div className="bg-white p-5 sm:p-6 rounded-2xl shadow-md mb-6 border-l-4 border-red-500">
+          <div className="bg-white p-5 sm:p-6 rounded-2xl shadow-md mb-6 border-l-4 border-red-500 transition-all duration-300 hover:shadow-lg animate-fadeIn">
             <div className="flex items-start">
-              <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-red-500 mr-3 mt-0.5" />
+              <div className="bg-red-50 p-2 rounded-full mr-3">
+                <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-red-500" />
+              </div>
               <div>
                 <p className="font-medium text-base sm:text-lg text-gray-800">오류</p>
                 <p className="text-sm sm:text-base text-gray-600 mt-2">{error}</p>
@@ -459,91 +551,72 @@ export default function QualityPage() {
           </div>
         )}
 
-        {/* 데이터 표시 부분 */}
+        {/* 데이터 표시 부분 - 개선된 테이블 디자인 */}
         {!loading && !error && filteredStocks.length > 0 && (
           <>
-            <div className="bg-white rounded-2xl shadow-md overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100 transition-all duration-300 hover:shadow-lg">
               <div className="p-4 sm:p-5 border-b border-gray-200">
                 <div className="flex justify-between items-center">
-                  <h2 className="text-lg sm:text-xl font-semibold text-gray-800">
-                    비즈니스 퀄리티가 좋은 종목 리스트
-                    <span className="ml-2 text-sm font-normal text-gray-500">
-                      (총 {filteredStocks.length}개 종목)
+                  <h2 className="text-lg sm:text-xl font-semibold text-gray-800 flex items-center">
+                    <span>비즈니스 퀄리티가 좋은 종목 리스트</span>
+                    <span className="ml-2 text-sm font-normal bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">
+                      총 {filteredStocks.length}개 종목
                     </span>
                   </h2>
                 </div>
               </div>
 
-              {/* 모바일 테이블 뷰 */}
+              {/* 모바일 테이블 뷰 (개선된 디자인) */}
               {viewMode === 'mobileTable' && (
                 <div className="relative overflow-x-auto">
+                  {showScrollHint && <div className="scrollable-hint"></div>}
                   <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                       <tr>
                         {/* 고정된 회사명 헤더 */}
                         <th
                           scope="col"
-                          className="sticky left-0 z-10 bg-white px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer border-r border-gray-200 shadow-sm min-w-[120px]"
+                          className="sticky-left sticky left-0 z-10 bg-white px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer border-r border-gray-200 shadow-sm min-w-[120px] table-head-cell"
                           onClick={() => toggleSort('company_name')}
                         >
                           <div className="flex items-center">
                             회사명
-                            {sortField === 'company_name' &&
-                              (sortDirection === 'asc' ? (
-                                <ArrowUp size={12} className="ml-1" />
-                              ) : (
-                                <ArrowDown size={12} className="ml-1" />
-                              ))}
+                            {renderSortIcon('company_name')}
                           </div>
                         </th>
                         <th
                           scope="col"
-                          className="bg-gray-100 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-200"
+                          className="bg-gray-50 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
                           onClick={() => toggleSort('avg_roe')}
                         >
                           <div className="flex items-center whitespace-nowrap">
                             ROE(%)
-                            {sortField === 'avg_roe' &&
-                              (sortDirection === 'asc' ? (
-                                <ArrowUp size={12} className="ml-1" />
-                              ) : (
-                                <ArrowDown size={12} className="ml-1" />
-                              ))}
+                            {renderSortIcon('avg_roe')}
                           </div>
                         </th>
                         <th
                           scope="col"
-                          className="bg-gray-100 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-200"
+                          className="bg-gray-50 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
                           onClick={() => toggleSort('avg_operating_margin')}
                         >
                           <div className="flex items-center whitespace-nowrap">
                             이익률(%)
-                            {sortField === 'avg_operating_margin' &&
-                              (sortDirection === 'asc' ? (
-                                <ArrowUp size={12} className="ml-1" />
-                              ) : (
-                                <ArrowDown size={12} className="ml-1" />
-                              ))}
+                            {renderSortIcon('avg_operating_margin')}
                           </div>
                         </th>
                         <th
                           scope="col"
-                          className="bg-gray-100 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-200"
+                          className="bg-gray-50 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
                           onClick={() => toggleSort('current_per')}
                         >
                           <div className="flex items-center whitespace-nowrap">
                             PER
-                            {sortField === 'current_per' &&
-                              (sortDirection === 'asc' ? (
-                                <ArrowUp size={12} className="ml-1" />
-                              ) : (
-                                <ArrowDown size={12} className="ml-1" />
-                              ))}
+                            {renderSortIcon('current_per')}
                           </div>
                         </th>
                         <th
                           scope="col"
-                          className="bg-gray-100 px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          className="bg-gray-50 px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
                         >
                           상세
                         </th>
@@ -551,30 +624,33 @@ export default function QualityPage() {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {currentItems.map((stock) => (
-                        <tr key={stock.stock_code} className="hover:bg-gray-50">
+                        <tr
+                          key={stock.stock_code}
+                          className="hover:bg-gray-50 transition-colors duration-200 table-row-hover"
+                        >
                           {/* 고정된 회사명 셀 */}
-                          <td className="sticky left-0 z-10 bg-white px-3 py-2 border-r border-gray-200 shadow-sm min-w-[120px]">
+                          <td className="sticky-left sticky left-0 z-10 bg-white px-3 py-3 border-r border-gray-200 shadow-sm min-w-[120px]">
                             <div className="text-xs font-semibold text-gray-900">
                               {stock.company_name}
                             </div>
                             <div className="text-xs text-gray-500">({stock.stock_code})</div>
                           </td>
-                          <td className="bg-gray-50 px-3 py-2 whitespace-nowrap">
-                            <div className="text-xs font-semibold text-blue-600">
+                          <td className="bg-gray-50 px-3 py-3 whitespace-nowrap">
+                            <div className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded inline-block">
                               {stock.avg_roe.toFixed(2)}%
                             </div>
                           </td>
-                          <td className="bg-gray-50 px-3 py-2 whitespace-nowrap">
-                            <div className="text-xs font-semibold text-blue-600">
+                          <td className="bg-gray-50 px-3 py-3 whitespace-nowrap">
+                            <div className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded inline-block">
                               {stock.avg_operating_margin.toFixed(2)}%
                             </div>
                           </td>
-                          <td className="bg-gray-50 px-3 py-2 whitespace-nowrap">
+                          <td className="bg-gray-50 px-3 py-3 whitespace-nowrap">
                             <div className="text-xs font-semibold text-gray-900">
                               {stock.current_per.toFixed(2)}
                             </div>
                           </td>
-                          <td className="bg-gray-50 px-3 py-2 text-right whitespace-nowrap">
+                          <td className="bg-gray-50 px-3 py-3 text-right whitespace-nowrap">
                             <StockLinkButtons stockCode={stock.stock_code} style="mobileTable" />
                           </td>
                         </tr>
@@ -584,115 +660,80 @@ export default function QualityPage() {
                 </div>
               )}
 
-              {/* 테이블 뷰 (데스크톱 또는 선택 시) */}
+              {/* 테이블 뷰 (데스크톱 또는 선택 시) (개선된 디자인) */}
               {viewMode === 'table' && (
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                       <tr>
                         <th
                           scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
                           onClick={() => toggleSort('company_name')}
                         >
                           <div className="flex items-center">
                             회사명
-                            {sortField === 'company_name' &&
-                              (sortDirection === 'asc' ? (
-                                <ArrowUp size={14} className="ml-1" />
-                              ) : (
-                                <ArrowDown size={14} className="ml-1" />
-                              ))}
+                            {renderSortIcon('company_name')}
                           </div>
                         </th>
                         <th
                           scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
                           onClick={() => toggleSort('industry')}
                         >
                           <div className="flex items-center">
                             산업군
-                            {sortField === 'industry' &&
-                              (sortDirection === 'asc' ? (
-                                <ArrowUp size={14} className="ml-1" />
-                              ) : (
-                                <ArrowDown size={14} className="ml-1" />
-                              ))}
+                            {renderSortIcon('industry')}
                           </div>
                         </th>
                         <th
                           scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
                           onClick={() => toggleSort('avg_roe')}
                         >
                           <div className="flex items-center">
                             ROE(%)
-                            {sortField === 'avg_roe' &&
-                              (sortDirection === 'asc' ? (
-                                <ArrowUp size={14} className="ml-1" />
-                              ) : (
-                                <ArrowDown size={14} className="ml-1" />
-                              ))}
+                            {renderSortIcon('avg_roe')}
                           </div>
                         </th>
                         <th
                           scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
                           onClick={() => toggleSort('avg_operating_margin')}
                         >
                           <div className="flex items-center">
                             영업이익률(%)
-                            {sortField === 'avg_operating_margin' &&
-                              (sortDirection === 'asc' ? (
-                                <ArrowUp size={14} className="ml-1" />
-                              ) : (
-                                <ArrowDown size={14} className="ml-1" />
-                              ))}
+                            {renderSortIcon('avg_operating_margin')}
                           </div>
                         </th>
                         <th
                           scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
                           onClick={() => toggleSort('current_per')}
                         >
                           <div className="flex items-center">
                             PER
-                            {sortField === 'current_per' &&
-                              (sortDirection === 'asc' ? (
-                                <ArrowUp size={14} className="ml-1" />
-                              ) : (
-                                <ArrowDown size={14} className="ml-1" />
-                              ))}
+                            {renderSortIcon('current_per')}
                           </div>
                         </th>
                         <th
                           scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
                           onClick={() => toggleSort('dividend_yield')}
                         >
                           <div className="flex items-center">
                             배당률(%)
-                            {sortField === 'dividend_yield' &&
-                              (sortDirection === 'asc' ? (
-                                <ArrowUp size={14} className="ml-1" />
-                              ) : (
-                                <ArrowDown size={14} className="ml-1" />
-                              ))}
+                            {renderSortIcon('dividend_yield')}
                           </div>
                         </th>
                         <th
                           scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
                           onClick={() => toggleSort('current_price')}
                         >
                           <div className="flex items-center">
                             현재가
-                            {sortField === 'current_price' &&
-                              (sortDirection === 'asc' ? (
-                                <ArrowUp size={14} className="ml-1" />
-                              ) : (
-                                <ArrowDown size={14} className="ml-1" />
-                              ))}
+                            {renderSortIcon('current_price')}
                           </div>
                         </th>
                         <th
@@ -705,7 +746,10 @@ export default function QualityPage() {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {currentItems.map((stock) => (
-                        <tr key={stock.stock_code} className="hover:bg-gray-50">
+                        <tr
+                          key={stock.stock_code}
+                          className="hover:bg-gray-50 transition-all duration-200 table-row-hover"
+                        >
                           <td className="px-6 py-4 whitespace-normal max-w-[160px]">
                             <div className="text-sm font-bold text-gray-900">
                               {stock.company_name}
@@ -717,12 +761,12 @@ export default function QualityPage() {
                             <div className="text-xs text-gray-500">{stock.subindustry}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-semibold text-blue-600">
+                            <div className="text-sm font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg inline-block">
                               {stock.avg_roe.toFixed(2)}%
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-semibold text-blue-600">
+                            <div className="text-sm font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg inline-block">
                               {stock.avg_operating_margin.toFixed(2)}%
                             </div>
                           </td>
@@ -751,23 +795,157 @@ export default function QualityPage() {
                 </div>
               )}
 
-              {/* 페이지네이션 */}
+              {/* 개선된 페이지네이션 */}
               {totalPages > 1 && (
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  startIndex={startIndex}
-                  endIndex={endIndex}
-                  totalItems={filteredStocks.length}
-                  handlePageChange={handlePageChange}
-                />
+                <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 sm:px-6 flex items-center justify-between">
+                  <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm text-gray-700">
+                        <span className="font-medium">{startIndex + 1}</span> ~{' '}
+                        <span className="font-medium">
+                          {Math.min(endIndex, filteredStocks.length)}
+                        </span>{' '}
+                        / <span className="font-medium">{filteredStocks.length}</span> 개 결과
+                      </p>
+                    </div>
+                    <div>
+                      <nav
+                        className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                        aria-label="Pagination"
+                      >
+                        <button
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          disabled={currentPage === 1}
+                          className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${
+                            currentPage === 1
+                              ? 'text-gray-300 cursor-not-allowed'
+                              : 'text-gray-500 hover:bg-gray-50'
+                          }`}
+                        >
+                          <span className="sr-only">Previous</span>
+                          <ChevronLeft className="h-5 w-5" />
+                        </button>
+
+                        {[...Array(totalPages)].map((_, i) => {
+                          const pageNumber = i + 1;
+                          // 현재 페이지, 첫 페이지, 마지막 페이지, 그리고 현재 페이지 양쪽 1페이지만 표시
+                          const isVisible =
+                            pageNumber === 1 ||
+                            pageNumber === totalPages ||
+                            Math.abs(pageNumber - currentPage) <= 1;
+
+                          // 생략 부호(...) 표시 조건
+                          const showEllipsisBefore = i === 1 && currentPage > 3;
+                          const showEllipsisAfter =
+                            i === totalPages - 2 && currentPage < totalPages - 2;
+
+                          if (showEllipsisBefore) {
+                            return (
+                              <span
+                                key={`ellipsis-before`}
+                                className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700"
+                              >
+                                ...
+                              </span>
+                            );
+                          }
+
+                          if (showEllipsisAfter) {
+                            return (
+                              <span
+                                key={`ellipsis-after`}
+                                className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700"
+                              >
+                                ...
+                              </span>
+                            );
+                          }
+
+                          if (isVisible) {
+                            return (
+                              <button
+                                key={pageNumber}
+                                onClick={() => handlePageChange(pageNumber)}
+                                className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-colors duration-200 ${
+                                  currentPage === pageNumber
+                                    ? 'z-10 bg-emerald-50 border-emerald-500 text-emerald-600 hover:bg-emerald-100'
+                                    : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                                }`}
+                              >
+                                {pageNumber}
+                              </button>
+                            );
+                          }
+
+                          return null;
+                        })}
+
+                        <button
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          disabled={currentPage === totalPages}
+                          className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${
+                            currentPage === totalPages
+                              ? 'text-gray-300 cursor-not-allowed'
+                              : 'text-gray-500 hover:bg-gray-50'
+                          }`}
+                        >
+                          <span className="sr-only">Next</span>
+                          <ChevronRight className="h-5 w-5" />
+                        </button>
+                      </nav>
+                    </div>
+                  </div>
+
+                  {/* 모바일 페이지네이션 */}
+                  <div className="flex flex-1 justify-between sm:hidden">
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
+                        currentPage === 1
+                          ? 'text-gray-300 bg-gray-50 cursor-not-allowed'
+                          : 'text-gray-700 bg-white hover:bg-gray-50'
+                      }`}
+                    >
+                      이전
+                    </button>
+                    <span className="text-sm text-gray-700 pt-2">
+                      <span className="font-medium">{currentPage}</span> / {totalPages}
+                    </span>
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
+                        currentPage === totalPages
+                          ? 'text-gray-300 bg-gray-50 cursor-not-allowed'
+                          : 'text-gray-700 bg-white hover:bg-gray-50'
+                      }`}
+                    >
+                      다음
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
 
-            {/* 데이터 없음 메시지 */}
+            {/* 개선된 데이터 없음 메시지 */}
             {filteredStocks.length === 0 && !loading && !error && (
-              <div className="bg-white rounded-2xl p-10 shadow-md flex justify-center items-center">
-                <p className="text-lg text-gray-700">조건에 맞는 주식이 없습니다.</p>
+              <div className="bg-white rounded-2xl p-8 shadow-md flex flex-col items-center justify-center animate-fadeIn">
+                <div className="p-4 bg-gray-100 rounded-full mb-4">
+                  <Filter className="h-8 w-8 text-gray-400" />
+                </div>
+                <p className="text-lg text-gray-700 font-medium mb-2">
+                  조건에 맞는 주식이 없습니다
+                </p>
+                <p className="text-sm text-gray-500 mb-4 text-center">
+                  필터 조건을 조정하여 다시 시도해보세요
+                </p>
+                <button
+                  onClick={resetFilters}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors text-sm font-medium"
+                >
+                  필터 초기화
+                </button>
               </div>
             )}
           </>

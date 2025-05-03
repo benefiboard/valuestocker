@@ -235,14 +235,20 @@ export default function ChecklistPage() {
   const renderScoreBar = (score: number, maxScore: number = 10) => {
     const percentage = (score / maxScore) * 100;
     let barColor = 'bg-gray-600';
+    let glowEffect = '';
 
-    if (percentage >= 70) barColor = 'bg-emerald-600';
-    else if (percentage < 20) barColor = 'bg-red-400';
+    if (percentage >= 70) {
+      barColor = 'bg-gradient-to-r from-emerald-500 to-emerald-600';
+      glowEffect = 'shadow-[0_0_8px_rgba(16,185,129,0.4)]';
+    } else if (percentage < 20) {
+      barColor = 'bg-gradient-to-r from-red-400 to-red-500';
+      glowEffect = 'shadow-[0_0_8px_rgba(248,113,113,0.4)]';
+    }
 
     return (
-      <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2">
+      <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2 overflow-hidden">
         <div
-          className={`${barColor} h-1.5 sm:h-2 rounded-full`}
+          className={`${barColor} ${glowEffect} h-1.5 sm:h-2 rounded-full transition-all duration-500 ease-out`}
           style={{ width: `${percentage}%` }}
         ></div>
       </div>
@@ -254,29 +260,29 @@ export default function ChecklistPage() {
     switch (grade) {
       // 상위 등급: 녹색 계열 (A+, A, B+)
       case 'A+':
-        return 'bg-emerald-600 text-white'; // 짙은 녹색
+        return 'bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-md'; // 짙은 녹색
       case 'A':
-        return 'bg-emerald-500 text-white'; // 녹색
+        return 'bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-md'; // 녹색
       case 'B+':
-        return 'bg-emerald-400 text-white'; // 밝은 녹색
+        return 'bg-gradient-to-br from-emerald-300 to-emerald-500 text-white shadow-md'; // 밝은 녹색
 
       // 중간 등급: 회색 계열 (B, C+, C)
       case 'B':
-        return 'bg-gray-600 text-white'; // 짙은 회색
+        return 'bg-gradient-to-br from-gray-500 to-gray-700 text-white shadow-md'; // 짙은 회색
       case 'C+':
-        return 'bg-gray-500 text-white'; // 회색
+        return 'bg-gradient-to-br from-gray-400 to-gray-600 text-white shadow-md'; // 회색
       case 'C':
-        return 'bg-gray-400 text-white'; // 밝은 회색
+        return 'bg-gradient-to-br from-gray-300 to-gray-500 text-white shadow-md'; // 밝은 회색
 
       // 하위 등급: 빨간색 계열 (D, F)
       case 'D':
-        return 'bg-red-500 text-white'; // 빨간색
+        return 'bg-gradient-to-br from-red-400 to-red-600 text-white shadow-md'; // 빨간색
       case 'F':
-        return 'bg-red-600 text-white'; // 짙은 빨간색
+        return 'bg-gradient-to-br from-red-500 to-red-700 text-white shadow-md'; // 짙은 빨간색
 
       // 기본값
       default:
-        return 'bg-gray-400 text-white';
+        return 'bg-gradient-to-br from-gray-300 to-gray-500 text-white shadow-md';
     }
   };
 
@@ -286,7 +292,7 @@ export default function ChecklistPage() {
     return new Intl.NumberFormat('ko-KR').format(Math.round(num * 100) / 100);
   };
 
-  // 카테고리별 항목 그룹화 (예시: 세부 지표 - 자산가치 등)
+  // 카테고리별 항목 그룹화
   const getCategorizedItems = () => {
     const categories: { [key: string]: ScoredChecklistItem[] } = {};
 
@@ -366,7 +372,9 @@ export default function ChecklistPage() {
     // 모바일에서는 크기를 줄임
     const mobileAdjustedSize = typeof window !== 'undefined' && window.innerWidth < 640 ? 90 : size;
     const radius = mobileAdjustedSize / 2;
-    const circumference = radius * 2 * Math.PI;
+    const strokeWidth = 8;
+    const normalizedRadius = radius - strokeWidth / 2;
+    const circumference = normalizedRadius * 2 * Math.PI;
     // 실제 값으로 원 채우기 계산 (시각적 표현은 원래 값 그대로 유지)
     const strokeDashoffset = circumference - (value / 100) * circumference;
     // 화면에 표시될 점수는 20점 추가
@@ -374,30 +382,34 @@ export default function ChecklistPage() {
 
     return (
       <div className="relative" style={{ width: mobileAdjustedSize, height: mobileAdjustedSize }}>
+        {/* 배경 원 */}
         <svg
           width={mobileAdjustedSize}
           height={mobileAdjustedSize}
           viewBox={`0 0 ${mobileAdjustedSize} ${mobileAdjustedSize}`}
+          className="rotate-[-90deg]"
         >
           <circle
             cx={radius}
             cy={radius}
-            r={radius - 5}
+            r={normalizedRadius}
             fill="none"
-            stroke="#f2f2f2"
-            strokeWidth="5"
+            stroke="#f3f4f6"
+            strokeWidth={strokeWidth}
           />
           <circle
             cx={radius}
             cy={radius}
-            r={radius - 5}
+            r={normalizedRadius}
             fill="none"
-            stroke="#000000"
-            strokeWidth="8"
+            strokeWidth={strokeWidth}
             strokeDasharray={circumference}
             strokeDashoffset={strokeDashoffset}
-            transform={`rotate(-90 ${radius} ${radius})`}
             strokeLinecap="round"
+            className="transition-all duration-1000 ease-out stroke-emerald-600"
+            style={{
+              filter: 'drop-shadow(0 0 2px rgba(16,185,129,0.3))',
+            }}
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
@@ -409,89 +421,121 @@ export default function ChecklistPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 px-4 sm:px-6 py-8">
-      {/* 헤더 */}
-      <header className="mb-6 max-w-4xl mx-auto w-full">
-        <div className="flex items-center">
+      {/* 헤더 - 글래스모픽 스타일 */}
+      <header className="mb-6 max-w-4xl mx-auto w-full sticky top-0 z-10">
+        <div className="bg-white bg-opacity-90 backdrop-blur-md shadow-sm rounded-2xl p-4 flex items-center">
           <Link
             href="/"
-            className="mr-3 sm:mr-4 text-gray-600 hover:text-gray-900 transition-colors"
+            className="mr-3 sm:mr-4 text-gray-600 hover:text-gray-900 transition-colors p-2 rounded-full hover:bg-gray-100"
           >
             <ArrowLeft size={20} className="sm:w-6 sm:h-6" />
           </Link>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center">
-            <CheckSquare className="mr-3 text-emerald-600 w-6 h-6 sm:w-7 sm:h-7" />
+            <div className="p-2 bg-emerald-50 rounded-full mr-3">
+              <CheckSquare className="text-emerald-600 w-5 h-5 sm:w-6 sm:h-6" />
+            </div>
             가치투자 체크리스트
           </h1>
         </div>
       </header>
 
       <main className="flex-1 max-w-4xl mx-auto w-full">
-        {/* 로딩 상태 */}
+        {/* 로딩 상태 - 세련된 로딩 애니메이션 */}
         {loading && (
-          <div className="bg-white rounded-2xl p-10 shadow-md flex justify-center items-center mb-6">
-            <Loader2 size={30} className="animate-spin text-emerald-600 mr-3" />
-            <p className="text-lg text-gray-700">데이터를 분석하는 중...</p>
+          <div className="bg-white rounded-2xl p-8 shadow-md flex flex-col items-center justify-center mb-6 transition-all duration-300">
+            <div className="relative w-16 h-16 mb-4">
+              <div className="absolute inset-0 rounded-full border-4 border-gray-200"></div>
+              <div className="absolute inset-0 rounded-full border-4 border-t-emerald-600 animate-spin"></div>
+            </div>
+            <div className="text-center">
+              <p className="text-lg text-gray-700 font-medium mb-2">데이터를 분석하는 중...</p>
+              <p className="text-sm text-gray-500">잠시만 기다려주세요</p>
+            </div>
           </div>
         )}
 
-        {/* 검색 영역 - 확장/축소 가능 */}
+        {/* 검색 영역 - 세련된 카드 디자인 */}
         {showSearchForm && !loading ? (
-          <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-md mb-6">
-            <form onSubmit={handleSearch}>
+          <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-md mb-6 border border-gray-100 transition-all duration-300 hover:shadow-lg">
+            <div className="mb-4">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-2">기업 검색</h2>
+              <p className="text-sm text-gray-600">분석하고 싶은 기업을 검색하세요</p>
+            </div>
+
+            <form onSubmit={handleSearch} className="transition-all duration-300">
               <div className="flex flex-col gap-5 sm:gap-6">
-                <div>
-                  <label className="block text-base font-medium text-gray-700 mb-2 sm:mb-3">
+                <div className="relative">
+                  <label className="block text-sm font-medium text-gray-700 mb-2 sm:mb-3">
                     회사명
                   </label>
-                  <CompanySearchInput
-                    onCompanySelect={handleCompanySelect}
-                    initialValue={companyName}
-                    placeholder="회사명 또는 종목코드 입력"
-                  />
+                  <div className="group transition-all duration-300 hover:shadow-md rounded-xl">
+                    <CompanySearchInput
+                      onCompanySelect={handleCompanySelect}
+                      initialValue={companyName}
+                      placeholder="회사명 또는 종목코드 입력"
+                      className="transition-all duration-300 focus-within:shadow-md"
+                    />
+                  </div>
                 </div>
                 <button
                   type="submit"
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 sm:py-4 px-4 rounded-xl transition-colors duration-200 flex items-center justify-center mt-3"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 sm:py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center mt-3 shadow-sm hover:shadow group relative overflow-hidden"
                   disabled={loading}
                 >
-                  {loading ? (
-                    <>
-                      <Loader2 size={20} className="mr-3 animate-spin" />
-                      분석 중...
-                    </>
-                  ) : (
-                    '기업 분석하기'
-                  )}
+                  {/* 버튼 배경 효과 */}
+                  <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-emerald-500 to-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                  {/* 버튼 텍스트 */}
+                  <span className="relative flex items-center">
+                    {loading ? (
+                      <>
+                        <Loader2 size={20} className="mr-3 animate-spin" />
+                        분석 중...
+                      </>
+                    ) : (
+                      <>
+                        <SearchIcon
+                          size={20}
+                          className="mr-3 group-hover:scale-110 transition-transform duration-300"
+                        />
+                        기업 분석하기
+                      </>
+                    )}
+                  </span>
                 </button>
               </div>
             </form>
           </div>
         ) : (
           !loading && (
-            <div className="bg-white rounded-2xl p-6 sm:px-8 shadow-md mb-6 flex justify-between items-center">
+            <div className="bg-white rounded-2xl p-5 sm:px-6 shadow-md mb-6 flex justify-between items-center border border-gray-100 transition-all duration-300 hover:shadow-md">
               <div className="flex items-center">
-                <Target className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-600 mr-3" />
-                <p className="text-lg sm:text-xl font-semibold text-gray-800">
+                <div className="p-2 bg-emerald-50 rounded-full mr-3">
+                  <Target className="h-5 w-5 sm:h-5 sm:w-5 text-emerald-600" />
+                </div>
+                <p className="text-lg font-semibold text-gray-800 truncate">
                   {selectedCompany?.companyName}{' '}
                   <span className="font-normal text-sm text-gray-500">({stockPrice?.code})</span>
                 </p>
               </div>
               <button
                 onClick={() => setShowSearchForm(true)}
-                className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-2 sm:px-4 py-2 text-xs sm:text-sm rounded-xl flex items-center transition-colors"
+                className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-2 text-sm rounded-xl flex items-center transition-all duration-300 group"
               >
-                <SearchIcon className="h-4 w-4 mr-1 sm:mr-2 " />
+                <SearchIcon className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
                 다른 종목
               </button>
             </div>
           )
         )}
 
-        {/* 오류 메시지 */}
+        {/* 오류 메시지 - 세련된 알림 디자인 */}
         {error && !loading && (
-          <div className="bg-white p-5 sm:p-6 rounded-2xl shadow-md mb-6 border-l-4 border-red-500">
+          <div className="bg-white p-5 sm:p-6 rounded-2xl shadow-md mb-6 border-l-4 border-red-500 transition-all duration-300 hover:shadow-lg animate-fadeIn">
             <div className="flex items-start">
-              <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-red-500 mr-3 mt-0.5" />
+              <div className="bg-red-50 p-2 rounded-full mr-3">
+                <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-red-500" />
+              </div>
               <div>
                 <p className="font-medium text-base sm:text-lg text-gray-800">오류</p>
                 <p className="text-sm sm:text-base text-gray-600 mt-2">{error}</p>
@@ -503,8 +547,8 @@ export default function ChecklistPage() {
         {/* 결과 영역 */}
         {success && stockPrice && checklistResults.length > 0 && investmentRating && (
           <>
-            {/* 기업 요약 정보 */}
-            <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-md mb-6">
+            {/* 기업 요약 정보 - 세련된 카드 디자인 */}
+            <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-md mb-6 border border-gray-100 transition-all duration-300 hover:shadow-lg">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 sm:mb-6">
                 <div className="w-full">
                   <h2 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center break-words">
@@ -514,26 +558,27 @@ export default function ChecklistPage() {
                     </span>
                   </h2>
 
-                  <p className="text-sm sm:text-base text-gray-600 mt-1 ">
-                    현재 주가:{' '}
-                    <span className="text-gray-800 text-lg sm:text-xl font-semibold sm:text-lg">
-                      {stockPrice.price}
+                  <p className="text-sm sm:text-base text-gray-600 mt-1 flex items-center">
+                    <span>현재 주가: </span>
+                    <span className="text-gray-800 text-lg sm:text-xl font-semibold ml-1">
+                      {stockPrice.price}원
                     </span>
-                    원
                     {stockPrice.formattedDate && (
-                      <span className="text-gray-500 text-xs sm:text-sm ml-1">
-                        ({stockPrice.formattedDate})
+                      <span className="text-gray-500 text-xs sm:text-sm ml-2 bg-gray-100 px-2 py-0.5 rounded-full">
+                        {stockPrice.formattedDate}
                       </span>
                     )}
                   </p>
                 </div>
               </div>
 
-              {/* 금융사인 경우 안내 메시지 추가 */}
+              {/* 금융사인 경우 안내 메시지 추가 - 세련된 알림 디자인 */}
               {investmentRating.isFinancialCompany && (
-                <div className="bg-blue-50 p-4 sm:p-5 rounded-xl mb-5">
+                <div className="bg-blue-50 p-4 sm:p-5 rounded-xl mb-5 border border-blue-100 transition-all duration-300 hover:shadow-md">
                   <div className="flex items-start">
-                    <Info className="h-5 w-5 sm:h-6 sm:w-6 text-blue-500 mr-3 mt-0.5" />
+                    <div className="p-2 bg-blue-100 rounded-full mr-3 flex-shrink-0">
+                      <Info className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+                    </div>
                     <div>
                       <p className="font-medium text-sm sm:text-base text-blue-800">
                         금융회사 특화 평가
@@ -548,12 +593,12 @@ export default function ChecklistPage() {
               )}
 
               {/* 구분선 */}
-              <hr className="mb-6 border-gray-200" />
+              <div className="w-full h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent mb-6"></div>
 
-              {/* 투자 등급 영역 */}
+              {/* 투자 등급 영역 - 세련된 그리드 레이아웃 */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div className="flex flex-col items-center justify-center">
-                  <div className="relative mb-3">
+                  <div className="relative mb-3 transform transition-transform duration-300 hover:scale-105">
                     <CircularProgress value={investmentRating.percentage} />
                     <div className="absolute -top-1 -right-1">
                       <div
@@ -572,12 +617,13 @@ export default function ChecklistPage() {
                 </div>
 
                 <div className="col-span-2 flex flex-col justify-center space-y-4">
-                  <div className="bg-gray-50 p-4 sm:p-5 rounded-xl">
+                  <div className="bg-gray-50 p-4 sm:p-5 rounded-xl border border-gray-100 transition-all duration-300 hover:shadow-md group">
                     <div className="flex justify-between mb-2">
-                      <p className="text-sm sm:text-base font-medium text-gray-700">
+                      <p className="text-sm sm:text-base font-medium text-gray-700 flex items-center">
+                        <LineChart className="w-4 h-4 mr-2 text-emerald-600 group-hover:scale-110 transition-transform duration-300" />
                         핵심 지표 점수
                       </p>
-                      <p className="text-base sm:text-lg font-bold">
+                      <p className="text-base sm:text-lg font-bold group-hover:text-emerald-600 transition-colors duration-300">
                         {investmentRating.coreItemsScore}
                         <span className="text-xs text-gray-400">/10</span>
                       </p>
@@ -586,7 +632,7 @@ export default function ChecklistPage() {
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-3">
                       <p className="text-xs sm:text-sm">
                         핵심 지표 통과:{' '}
-                        <span className="text-base sm:text-lg font-bold">
+                        <span className="text-base sm:text-lg font-bold group-hover:text-emerald-600 transition-colors duration-300">
                           {investmentRating.coreItemsPassCount}
                         </span>
                         <span className="text-xs text-gray-400">
@@ -596,19 +642,21 @@ export default function ChecklistPage() {
                       <p>
                         {investmentRating.hasCriticalFailure && (
                           <span className="text-red-500 mt-1 sm:ml-2 flex items-center text-xs sm:text-sm">
-                            <AlertTriangle size={14} className="mr-1 sm:mr-2" /> 미달 항목 있음
+                            <AlertTriangle size={14} className="mr-1 sm:mr-2 animate-pulse" /> 미달
+                            항목 있음
                           </span>
                         )}
                       </p>
                     </div>
                   </div>
 
-                  <div className="bg-gray-50 p-4 sm:p-5 rounded-xl">
+                  <div className="bg-gray-50 p-4 sm:p-5 rounded-xl border border-gray-100 transition-all duration-300 hover:shadow-md group">
                     <div className="flex justify-between mb-2">
-                      <p className="text-sm sm:text-base font-medium text-gray-700">
+                      <p className="text-sm sm:text-base font-medium text-gray-700 flex items-center">
+                        <Info className="w-4 h-4 mr-2 text-emerald-600 group-hover:scale-110 transition-transform duration-300" />
                         세부 지표 점수
                       </p>
-                      <p className="text-base sm:text-lg font-bold">
+                      <p className="text-base sm:text-lg font-bold group-hover:text-emerald-600 transition-colors duration-300">
                         {investmentRating.detailedItemsScore}
                         <span className="text-xs text-gray-400">/10</span>
                       </p>
@@ -616,8 +664,9 @@ export default function ChecklistPage() {
                     {renderScoreBar(investmentRating.detailedItemsScore)}
                   </div>
 
-                  <div className="bg-amber-50 p-4 sm:p-5 rounded-xl">
-                    <p className="text-sm sm:text-base font-medium text-amber-800 mb-2">
+                  <div className="bg-amber-50 p-4 sm:p-5 rounded-xl border border-amber-100 transition-all duration-300 hover:shadow-md">
+                    <p className="text-sm sm:text-base font-medium text-amber-800 mb-2 flex items-center">
+                      <Award className="w-4 h-4 mr-2 text-amber-700" />
                       투자 분석
                     </p>
                     <p className="text-sm text-gray-700">{ratingDescription}</p>
@@ -625,23 +674,29 @@ export default function ChecklistPage() {
                 </div>
               </div>
 
-              {/* 핵심 지표 요약 - 이 부분은 Supabase로 전환 후 수정이 필요할 수 있음 */}
+              {/* 핵심 지표 요약 - 세련된 그리드 레이아웃 */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {/* ROE 자리 - 실제 데이터 바인딩 필요 */}
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <p className="text-xs sm:text-sm text-gray-600 mb-1">ROE</p>
-                  <p className="text-base sm:text-xl font-bold truncate">
+                {/* ROE 자리 */}
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 transition-all duration-300 hover:shadow-md hover:bg-white group">
+                  <p className="text-xs sm:text-sm text-gray-600 mb-1 flex items-center">
+                    <TrendingUp className="w-3 h-3 mr-1 text-emerald-600 group-hover:scale-110 transition-transform duration-300" />
+                    ROE
+                  </p>
+                  <p className="text-base sm:text-xl font-bold truncate group-hover:text-emerald-600 transition-colors duration-300">
                     {formatNumber(
                       (checklistResults.find((item) => item.title === 'ROE (자기자본이익률)')
                         ?.actualValue as number) || 0
                     )}
-                    %<span className="text-xs text-gray-400">(최근 3년)</span>
+                    %<span className="text-xs text-gray-400 ml-1">(최근 3년)</span>
                   </p>
                 </div>
                 {/* PER 자리 */}
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <p className="text-xs sm:text-sm text-gray-600 mb-1">PER</p>
-                  <p className="text-base sm:text-xl font-bold truncate">
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 transition-all duration-300 hover:shadow-md hover:bg-white group">
+                  <p className="text-xs sm:text-sm text-gray-600 mb-1 flex items-center">
+                    <Percent className="w-3 h-3 mr-1 text-emerald-600 group-hover:scale-110 transition-transform duration-300" />
+                    PER
+                  </p>
+                  <p className="text-base sm:text-xl font-bold truncate group-hover:text-emerald-600 transition-colors duration-300">
                     {formatNumber(
                       (checklistResults.find((item) => item.title === 'PER')
                         ?.actualValue as number) || 0
@@ -651,23 +706,29 @@ export default function ChecklistPage() {
                 </div>
                 {/* 금융회사가 아닐 때만 매출 성장률 표시 */}
                 {!investmentRating.isFinancialCompany && (
-                  <div className="bg-gray-50 p-4 rounded-xl">
-                    <p className="text-xs sm:text-sm text-gray-600 mb-1">매출 성장률</p>
-                    <p className="text-base sm:text-xl font-bold truncate">
+                  <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 transition-all duration-300 hover:shadow-md hover:bg-white group">
+                    <p className="text-xs sm:text-sm text-gray-600 mb-1 flex items-center">
+                      <TrendingUp className="w-3 h-3 mr-1 text-emerald-600 group-hover:scale-110 transition-transform duration-300" />
+                      매출 성장률
+                    </p>
+                    <p className="text-base sm:text-xl font-bold truncate group-hover:text-emerald-600 transition-colors duration-300">
                       {formatNumber(
                         (checklistResults.find((item) => item.title === '매출액 성장률')
                           ?.actualValue as number) || 0
                       )}
-                      %<span className="text-xs text-gray-400">(최근 3년)</span>
+                      %<span className="text-xs text-gray-400 ml-1">(최근 3년)</span>
                     </p>
                   </div>
                 )}
 
                 {/* 금융회사가 아닐 때만 부채비율 표시 */}
                 {!investmentRating.isFinancialCompany && (
-                  <div className="bg-gray-50 p-4 rounded-xl">
-                    <p className="text-xs sm:text-sm text-gray-600 mb-1">부채비율</p>
-                    <p className="text-base sm:text-xl font-bold truncate">
+                  <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 transition-all duration-300 hover:shadow-md hover:bg-white group">
+                    <p className="text-xs sm:text-sm text-gray-600 mb-1 flex items-center">
+                      <ShieldAlert className="w-3 h-3 mr-1 text-emerald-600 group-hover:scale-110 transition-transform duration-300" />
+                      부채비율
+                    </p>
+                    <p className="text-base sm:text-xl font-bold truncate group-hover:text-emerald-600 transition-colors duration-300">
                       {formatNumber(
                         (checklistResults.find((item) => item.title === '부채비율')
                           ?.actualValue as number) || 0
@@ -679,23 +740,29 @@ export default function ChecklistPage() {
 
                 {/* 금융회사일 때 대체 지표 표시 */}
                 {investmentRating.isFinancialCompany && (
-                  <div className="bg-gray-50 p-4 rounded-xl">
-                    <p className="text-xs sm:text-sm text-gray-600 mb-1">순이익 증가율</p>
-                    <p className="text-base sm:text-xl font-bold truncate">
+                  <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 transition-all duration-300 hover:shadow-md hover:bg-white group">
+                    <p className="text-xs sm:text-sm text-gray-600 mb-1 flex items-center">
+                      <TrendingUp className="w-3 h-3 mr-1 text-emerald-600 group-hover:scale-110 transition-transform duration-300" />
+                      순이익 증가율
+                    </p>
+                    <p className="text-base sm:text-xl font-bold truncate group-hover:text-emerald-600 transition-colors duration-300">
                       {formatNumber(
                         (checklistResults.find((item) => item.title === '순이익 증가율')
                           ?.actualValue as number) || 0
                       )}
-                      %<span className="text-xs text-gray-400">(최근 3년)</span>
+                      %<span className="text-xs text-gray-400 ml-1">(최근 3년)</span>
                     </p>
                   </div>
                 )}
 
                 {/* 금융회사일 때 대체 지표 표시 */}
                 {investmentRating.isFinancialCompany && (
-                  <div className="bg-gray-50 p-4 rounded-xl">
-                    <p className="text-xs sm:text-sm text-gray-600 mb-1">BPS 성장률</p>
-                    <p className="text-base sm:text-xl font-bold truncate">
+                  <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 transition-all duration-300 hover:shadow-md hover:bg-white group">
+                    <p className="text-xs sm:text-sm text-gray-600 mb-1 flex items-center">
+                      <TrendingUp className="w-3 h-3 mr-1 text-emerald-600 group-hover:scale-110 transition-transform duration-300" />
+                      BPS 성장률
+                    </p>
+                    <p className="text-base sm:text-xl font-bold truncate group-hover:text-emerald-600 transition-colors duration-300">
                       {formatNumber(
                         (checklistResults.find((item) => item.title === 'BPS 성장률')
                           ?.actualValue as number) || 0
@@ -707,58 +774,64 @@ export default function ChecklistPage() {
               </div>
             </div>
 
-            {/* 체크리스트 결과 */}
+            {/* 체크리스트 결과 - 세련된 아코디언 디자인 */}
             <div className="space-y-6">
               {Object.entries(getHierarchicalCategories()).map(([mainCategory, subCategories]) => (
                 <div key={mainCategory} className="mb-6">
-                  <h2 className="text-base sm:text-lg font-medium text-gray-700 mb-3">
-                    {mainCategory}
+                  <h2 className="text-base sm:text-lg font-medium text-gray-800 mb-3 flex items-center">
+                    {getCategoryIcon(mainCategory)}
+                    <span className="ml-2">{mainCategory}</span>
                   </h2>
                   <div className="space-y-4">
                     {Object.entries(subCategories).map(([subCategory, items]) => (
                       <div
                         key={`${mainCategory}-${subCategory}`}
-                        className="bg-white rounded-2xl shadow-md overflow-hidden"
+                        className="bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100 transition-all duration-300 hover:shadow-lg"
                       >
                         <button
-                          className="w-full flex items-center justify-between p-4 sm:p-5 text-left focus:outline-none"
+                          className="w-full flex items-center justify-between p-4 sm:p-5 text-left focus:outline-none group"
                           onClick={() => toggleCategory(`${mainCategory}-${subCategory}`)}
                         >
                           <div className="flex items-center min-w-0">
-                            {' '}
-                            {/* 오버플로우 방지 */}
-                            {getCategoryIcon(mainCategory)}
+                            <div className="p-2 bg-emerald-50 rounded-full mr-3 group-hover:bg-emerald-100 transition-colors duration-300">
+                              {getCategoryIcon(mainCategory)}
+                            </div>
                             {mainCategory === '핵심 지표' ? (
-                              <h3 className="text-base sm:text-lg font-medium text-gray-700 ml-3 truncate">
+                              <h3 className="text-base sm:text-lg font-medium text-gray-700 truncate group-hover:text-gray-900 transition-colors duration-300">
                                 핵심 지표
                               </h3>
                             ) : (
-                              <span className="text-base sm:text-lg font-bold text-gray-800 ml-3 truncate">
+                              <span className="text-base sm:text-lg font-bold text-gray-800 truncate group-hover:text-gray-900 transition-colors duration-300">
                                 {subCategory}
                               </span>
                             )}
                             <div className="flex items-center ml-3">
-                              <p className="bg-gray-100 text-gray-800 font-semibold rounded-full px-2.5 py-1 text-sm">
+                              <p className="bg-gray-100 text-gray-800 font-semibold rounded-full px-2.5 py-1 text-sm group-hover:bg-emerald-50 group-hover:text-emerald-700 transition-colors duration-300">
                                 {getSubCategoryScore(items)}
                                 <span className="text-xs text-gray-400">/10</span>
                               </p>
                             </div>
                           </div>
-                          {expandedCategory === `${mainCategory}-${subCategory}` ? (
-                            <ChevronUp className="h-5 w-5 text-gray-600 flex-shrink-0" />
-                          ) : (
-                            <ChevronDown className="h-5 w-5 text-gray-600 flex-shrink-0" />
-                          )}
+                          <div className="bg-gray-100 p-2 rounded-full group-hover:bg-emerald-50 transition-colors duration-300">
+                            {expandedCategory === `${mainCategory}-${subCategory}` ? (
+                              <ChevronUp className="h-5 w-5 text-gray-600 group-hover:text-emerald-600 transition-colors duration-300 transform rotate-0 group-hover:rotate-180 " />
+                            ) : (
+                              <ChevronDown className="h-5 w-5 text-gray-600 group-hover:text-emerald-600 transition-colors duration-300 transform rotate-0 group-hover:rotate-180 " />
+                            )}
+                          </div>
                         </button>
 
                         {expandedCategory === `${mainCategory}-${subCategory}` && (
-                          <div className="px-5 sm:px-6 pb-5 sm:pb-6 divide-y divide-gray-100">
+                          <div className="px-5 sm:px-6 pb-5 sm:pb-6 animate-fadeIn">
                             {items.map((item, idx) => (
-                              <div key={idx} className="py-4">
+                              <div
+                                key={idx}
+                                className={`py-4 ${
+                                  idx > 0 ? 'border-t border-gray-100' : ''
+                                } transition-all duration-300 hover:bg-gray-50 rounded-lg p-2`}
+                              >
                                 <div className="flex items-start justify-between">
                                   <div className="flex-1 min-w-0">
-                                    {' '}
-                                    {/* 오버플로우 방지 */}
                                     <div className="flex items-center flex-wrap mb-2">
                                       <span
                                         className={`text-base sm:text-lg font-bold truncate ${
@@ -779,21 +852,21 @@ export default function ChecklistPage() {
                                         {renderImportance(item.importance, item.isFailCriteria)}
                                       </span>
                                       {item.isFailCriteria && (
-                                        <span className="ml-2 text-xs text-red-500 flex items-center">
+                                        <span className="ml-2 text-xs text-white bg-red-500 px-2 py-0.5 rounded-full flex items-center animate-pulse">
                                           <AlertTriangle size={12} className="mr-1" /> 미달
                                         </span>
                                       )}
                                     </div>
                                     <div className="mt-2 flex flex-wrap items-center">
                                       <span
-                                        className={`px-2.5 py-1 rounded-2xl text-sm font-semibold
-    ${
-      item.isFailCriteria
-        ? 'border-2 border-red-500 text-red-700'
-        : item.score >= 7
-        ? 'border-2 border-emerald-600 text-emerald-800'
-        : 'border border-gray-400 text-gray-800'
-    }`}
+                                        className={`px-3 py-1 rounded-xl text-sm font-semibold transition-all duration-300
+                                          ${
+                                            item.isFailCriteria
+                                              ? 'border-2 border-red-500 text-red-700 bg-red-50'
+                                              : item.score >= 7
+                                              ? 'border-2 border-emerald-600 text-emerald-800 bg-emerald-50'
+                                              : 'border border-gray-400 text-gray-800 bg-gray-50'
+                                          }`}
                                       >
                                         {typeof item.actualValue === 'number' &&
                                         item.actualValue < 0
@@ -810,7 +883,15 @@ export default function ChecklistPage() {
                                       <div className="flex items-center justify-between mb-1">
                                         <span className="text-xs text-gray-600">점수</span>
                                         <span className="text-xs text-gray-600">
-                                          <span className="text-base sm:text-lg font-bold">
+                                          <span
+                                            className={`text-base sm:text-lg font-bold ${
+                                              item.score >= 7
+                                                ? 'text-emerald-600'
+                                                : item.score <= 3
+                                                ? 'text-red-500'
+                                                : 'text-gray-800'
+                                            }`}
+                                          >
                                             {item.score}
                                           </span>
                                           /{item.maxScore}
@@ -821,15 +902,15 @@ export default function ChecklistPage() {
                                   </div>
                                   <div className="ml-4 flex-shrink-0">
                                     {item.isPassed === true ? (
-                                      <div className="bg-emerald-600 rounded-full p-1.5">
+                                      <div className="bg-emerald-600 rounded-full p-1.5 shadow-md transition-transform duration-300 hover:scale-110 transform">
                                         <Check className="h-4 w-4 text-white" />
                                       </div>
                                     ) : item.isPassed === false ? (
-                                      <div className="bg-gray-200 rounded-full p-1.5">
+                                      <div className="bg-gray-200 rounded-full p-1.5 shadow-sm transition-transform duration-300 hover:scale-110 transform">
                                         <XCircle className="h-4 w-4 text-gray-600" />
                                       </div>
                                     ) : (
-                                      <div className="bg-gray-100 rounded-full p-1.5">
+                                      <div className="bg-gray-100 rounded-full p-1.5 shadow-sm transition-transform duration-300 hover:scale-110 transform">
                                         <AlertCircle className="h-4 w-4 text-gray-400" />
                                       </div>
                                     )}
@@ -846,14 +927,16 @@ export default function ChecklistPage() {
               ))}
             </div>
 
-            {/* 종합 평가 */}
-            <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-md mt-6">
+            {/* 종합 평가 - 세련된 카드 디자인 */}
+            <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-md mt-6 border border-gray-100 transition-all duration-300 hover:shadow-lg">
               <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 flex items-center">
-                <Award className="mr-3 w-5 h-5 sm:w-6 sm:h-6 text-emerald-600" />
+                <div className="p-2 bg-emerald-50 rounded-full mr-3">
+                  <Award className="mr-1 w-5 h-5 sm:w-6 sm:h-6 text-emerald-600" />
+                </div>
                 종합 투자 평가
               </h2>
 
-              <div className="bg-gray-50 p-5 sm:p-6 rounded-xl mb-6">
+              <div className="bg-gray-50 p-5 sm:p-6 rounded-xl mb-6 border border-gray-100 transition-all duration-300 hover:shadow-md">
                 <div
                   className={`inline-block ${getGradeColor(
                     investmentRating.grade
@@ -865,7 +948,8 @@ export default function ChecklistPage() {
               </div>
 
               <div className="mt-5">
-                <h3 className="font-bold mb-3 text-sm sm:text-base text-gray-800">
+                <h3 className="font-bold mb-3 text-sm sm:text-base text-gray-800 flex items-center">
+                  <LineChart className="w-4 h-4 mr-2 text-emerald-600" />
                   카테고리별 평가
                 </h3>
                 <div className="space-y-3">
@@ -881,11 +965,16 @@ export default function ChecklistPage() {
                           return (
                             <div
                               key={`${mainCategory}-${subCategory}`}
-                              className="flex items-center text-sm"
+                              className="flex items-center text-sm group hover:bg-gray-50 rounded-lg p-2 transition-colors duration-300"
                             >
-                              <div className="w-1/3 truncate">{displayName}</div>
-                              <div className="w-1/2">{renderScoreBar(categoryScore)}</div>
-                              <div className="w-1/6 text-right">{categoryScore}/10</div>
+                              <div className="w-1/3 truncate flex items-center">
+                                <div className="w-2 h-2 rounded-full bg-emerald-600 mr-2 group-hover:scale-150 transition-transform duration-300"></div>
+                                {displayName}
+                              </div>
+                              <div className="w-1/2 px-2">{renderScoreBar(categoryScore)}</div>
+                              <div className="w-1/6 text-right font-semibold group-hover:text-emerald-600 transition-colors duration-300">
+                                {categoryScore}/10
+                              </div>
                             </div>
                           );
                         })}
@@ -897,22 +986,28 @@ export default function ChecklistPage() {
 
               <div className="mt-6">
                 <Link href={`/fairprice?stockCode=${stockPrice.code}`}>
-                  <button className="inline-flex items-center bg-emerald-600 text-white px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-emerald-700 transition-colors">
-                    적정가 계산하기
-                    <svg
-                      className="ml-2 w-4 h-4 sm:w-5 sm:h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
+                  <button className="inline-flex items-center bg-emerald-600 text-white px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-emerald-700 transition-all duration-300 shadow-sm hover:shadow group relative overflow-hidden">
+                    {/* 버튼 배경 효과 */}
+                    <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-emerald-500 to-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                    {/* 버튼 텍스트 */}
+                    <span className="relative flex items-center">
+                      적정가 계산하기
+                      <svg
+                        className="ml-2 w-4 h-4 sm:w-5 sm:h-5 transform group-hover:translate-x-1 transition-transform duration-300"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </span>
                   </button>
                 </Link>
               </div>
@@ -922,4 +1017,23 @@ export default function ChecklistPage() {
       </main>
     </div>
   );
+}
+
+// 애니메이션 키프레임 추가
+const styles = `
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+`;
+
+// 스타일 태그 추가
+if (typeof document !== 'undefined') {
+  const styleTag = document.createElement('style');
+  styleTag.textContent = styles;
+  document.head.appendChild(styleTag);
 }
