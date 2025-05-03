@@ -4,79 +4,30 @@
 import Link from 'next/link';
 import { BarChart4, CheckSquare, ArrowRight, PercentIcon } from 'lucide-react';
 
-// 가치투자 개념 컴포넌트
-import ValueInvestingConcept from '../components/mainpage/ValueInvestingConcept';
-// 가치평가 모델 비교 컴포넌트
-import ValuationModelsComparison from '../components/mainpage/ValuationModelsComparison';
-// 워크플로우 컴포넌트
-import WorkflowComponent from '../components/mainpage/WorkflowComponent';
-import GrahamWisdomCard from '@/components/GrahamWisdomCard';
+import EnhancedHeader from '@/components/mainpage/EnhancedHeader';
+import EnhancedFeatureCards from '@/components/mainpage/EnhancedFeatureCards';
+import EnhancedValueInvestingConcept from '@/components/mainpage/EnhancedValueInvestingConcept';
+import EnhancedWorkflowComponent from '@/components/mainpage/EnhancedWorkflowComponent';
+import ValuationModelMatrix from '@/components/mainpage/ValuationModelMatrix';
+
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 p-4 sm:p-6 md:p-10">
       <main className="flex-1 max-w-5xl mx-auto w-full">
-        {/* 헤더 섹션 - 더 강력한 CTA 포함 */}
-        <div className="mb-8 sm:mb-12 text-center md:text-left">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-3">
-            ValueTargeter
-          </h1>
-          <p className="text-gray-600 text-base sm:text-lg">
-            주식 가치 평가를 위한 포괄적인 도구 모음
-          </p>
-        </div>
+        {/* 헤더 섹션 */}
+        <EnhancedHeader />
 
         {/* 카드 섹션 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 mb-8 sm:mb-12 ">
-          {/* 가치투자 체크리스트 카드 */}
-          <div className="bg-black rounded-2xl p-6 sm:p-8 shadow-sm hover:shadow-md transition-all duration-300 h-full">
-            <div className="flex flex-col h-full">
-              <div className="flex items-center justify-between mb-6 sm:mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-white">가치투자 체크리스트</h2>
-                <div className="bg-gray-100 p-3 rounded-full">
-                  <CheckSquare className="h-5 w-5 sm:h-6 sm:w-6 text-gray-800" />
-                </div>
-              </div>
-              <p className="text-gray-300 text-sm sm:text-base mb-6 sm:mb-8">
-                가치투자흫 위해 기업을 분석하고 투자 등급을 확인합니다.
-                <br />
-                필수적인 핵심 지표와 재무 안정성을 종합 평가합니다.
-              </p>
-              <Link href="/checklist" className="block">
-                <button className="w-full border-2 border-white bg-transparent text-white px-5 py-3 rounded-xl font-medium transition-colors flex items-center justify-center cursor-pointer">
-                  <CheckSquare className="mr-2 h-5 w-5" />
-                  체크리스트 사용하기
-                </button>
-              </Link>
-            </div>
-          </div>
-
-          {/* 적정가 계산기 카드 */}
-          <div className="bg-black rounded-2xl p-6 sm:p-8 shadow-sm hover:shadow-md transition-all duration-300 h-full">
-            <div className="flex flex-col h-full">
-              <div className="flex items-center justify-between mb-6 sm:mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-white">적정가 계산기</h2>
-                <div className="bg-gray-100 p-3 rounded-full">
-                  <BarChart4 className="h-5 w-5 sm:h-6 sm:w-6 text-gray-800" />
-                </div>
-              </div>
-              <p className="text-gray-300 text-sm sm:text-base mb-6 sm:mb-8">
-                7가지 검증된 가치평가 방법을 통해 적정 가격을 계산합니다.
-                <br />
-                현재 주가 대비 저평가/고평가 여부를 확인할 수 있습니다.
-              </p>
-              <Link href="/fairprice" className="block">
-                <button className="w-full bg-white text-black px-5 py-3 rounded-xl font-medium  transition-colors flex items-center justify-center cursor-pointer">
-                  <BarChart4 className="mr-2 h-5 w-5" />
-                  적정가격 계산하기
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </button>
-              </Link>
-            </div>
-          </div>
+        <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm mb-8 sm:mb-12">
+          <EnhancedFeatureCards />
         </div>
 
         {/* 투자 전략 카드 섹션 */}
-        <div className="mb-12">
+        <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm mb-8 sm:mb-12">
+          <h2 className="text-xl sm:text-2xl font-bold text-center mb-12 relative">
+            전략별 종목 리스트
+          </h2>
+
           <div className="grid grid-cols-1 md:grid-cols-3  gap-6 sm:gap-8">
             {/* 벤자민 그레이엄 전략 카드 */}
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
@@ -285,25 +236,24 @@ export default function Home() {
             </div> */}
           </div>
         </div>
-        {/* <hr className="mb-6 border-2 border-gray-200 sm:hidden" /> */}
 
         {/* 가치투자 핵심 원칙 섹션 */}
-        <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm mb-12">
-          <ValueInvestingConcept />
+        <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm mb-8 sm:mb-12">
+          <EnhancedValueInvestingConcept />
         </div>
 
         {/* 워크플로우 섹션 */}
-        <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm mb-12">
-          <WorkflowComponent />
+        <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm mb-8 sm:mb-12">
+          <EnhancedWorkflowComponent />
         </div>
 
         {/* 가치평가 모델 비교 섹션 */}
-        <div className="mb-12">
-          <ValuationModelsComparison />
+        <div className="mb-8 sm:mb-12">
+          <ValuationModelMatrix />
         </div>
 
         {/* Info Section */}
-        <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm mb-12">
+        <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm mb-8 sm:mb-12">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">가치투자자를 위한 툴</h2>
           <p className="text-gray-600 text-sm sm:text-base">
             ValueTargeter는 기업의 본질적 가치를 평가하고 합리적인 투자 결정을 내리는 데 도움을
@@ -312,7 +262,7 @@ export default function Home() {
         </div>
 
         {/* 법적 고지사항 섹션 */}
-        <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-sm mb-12">
+        <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-sm mb-8 sm:mb-12">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">법적 고지사항</h2>
           <p className="text-gray-600 text-sm sm:text-base">
             ValueTargeter의 모든 계산 및 분석은 금융감독원 API 자료와 공공데이터 포털 API를 기반으로
