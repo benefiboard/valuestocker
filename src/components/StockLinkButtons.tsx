@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ExternalLink, TrendingUp, BarChart3 } from 'lucide-react';
+import { ExternalLink, TrendingUp, BarChart3, CheckSquare } from 'lucide-react';
 
 // 링크 타입 - 카드형 또는 테이블형
 type LinkStyle = 'card' | 'table' | 'mobileTable';
@@ -26,13 +26,20 @@ export function StockLinkButtons({ stockCode, style = 'card' }: StockLinkButtons
 
   if (style === 'mobileTable') {
     return (
-      <div className="flex flex-col items-end gap-1">
+      <div className="flex flex-col items-end gap-[6px]">
         <Link
           href={`/fairprice?stockCode=${stockCode}`}
           className="text-emerald-600 font-bold hover:text-emerald-900 cursor-pointer flex items-center text-xs "
         >
           <TrendingUp size={12} className="mr-1" />
-          적정가 확인
+          적정가확인
+        </Link>
+        <Link
+          href={`/checklist?stockCode=${stockCode}`}
+          className="text-emerald-600 font-bold hover:text-emerald-900 cursor-pointer flex items-center text-xs "
+        >
+          <CheckSquare size={12} className="mr-1" />
+          체크리스트
         </Link>
 
         <a
@@ -42,7 +49,7 @@ export function StockLinkButtons({ stockCode, style = 'card' }: StockLinkButtons
           className="text-gray-600 font-bold hover:text-gray-900 cursor-pointer flex items-center text-xs"
         >
           <BarChart3 size={12} className="mr-1" />
-          네이버 증권
+          네이버증권
         </a>
       </div>
     );
@@ -77,13 +84,21 @@ export function StockLinkButtons({ stockCode, style = 'card' }: StockLinkButtons
 
   // 테이블형 텍스트 링크 스타일
   return (
-    <div className="flex flex-col items-end gap-1">
+    <div className="flex flex-col items-end  gap-2">
       <Link
         href={`/fairprice?stockCode=${stockCode}`}
         className="text-emerald-600 font-bold hover:text-emerald-900 cursor-pointer flex items-center text-sm "
       >
         <TrendingUp size={14} className="mr-1" />
-        적정가 확인
+        적정가확인
+      </Link>
+
+      <Link
+        href={`/checklist?stockCode=${stockCode}`}
+        className="text-emerald-600 font-bold hover:text-emerald-900 cursor-pointer flex items-center text-sm "
+      >
+        <CheckSquare size={14} className="mr-1" />
+        체크리스트
       </Link>
 
       <a
@@ -93,7 +108,7 @@ export function StockLinkButtons({ stockCode, style = 'card' }: StockLinkButtons
         className="text-gray-600 font-bold hover:text-gray-900 cursor-pointer flex items-center text-sm"
       >
         <BarChart3 size={14} className="mr-1" />
-        네이버 증권
+        네이버증권
       </a>
     </div>
   );

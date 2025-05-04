@@ -16200,13 +16200,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: 'IT/소프트웨어',
     subIndustry: '건강관리기술',
   },
-  '477530': {
-    dartCode: '01814312',
-    companyName: '한국제14호스팩',
-    stockCode: '477530',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+
   '477760': {
     dartCode: '01814589',
     companyName: '디비금융스팩12호',

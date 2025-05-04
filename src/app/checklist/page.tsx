@@ -26,6 +26,7 @@ import {
   AlertTriangle,
   Search as SearchIcon,
   Target,
+  ExternalLink,
 } from 'lucide-react';
 import {
   calculateChecklist,
@@ -368,11 +369,64 @@ export default function ChecklistPage() {
   };
 
   // 원형 프로그레스 바 컴포넌트
-  const CircularProgress = ({ value, size = 120 }: { value: number; size?: number }) => {
-    // 모바일에서는 크기를 줄임
-    const mobileAdjustedSize = typeof window !== 'undefined' && window.innerWidth < 640 ? 90 : size;
-    const radius = mobileAdjustedSize / 2;
-    const strokeWidth = 8;
+  const CircularProgress = ({
+    value,
+    grade,
+    size = 120,
+  }: {
+    value: number;
+    grade: string;
+    size?: number;
+  }) => {
+    // 반응형 크기 조절 - 화면 크기별로 다른 사이즈 적용
+    const [progressSize, setProgressSize] = useState(size);
+    const [gradeSize, setGradeSize] = useState(40); // 등급 원 크기
+    const [gradePosition, setGradePosition] = useState({ top: -4, right: -4 }); // 등급 원 위치
+
+    // 화면 크기에 따라 프로그레스 바 크기 및 관련 요소 조정
+    useEffect(() => {
+      const updateSizes = () => {
+        let newSize, newGradeSize, newGradePosition;
+
+        if (window.innerWidth < 640) {
+          // 모바일 (sm 미만)
+          newSize = 90;
+          newGradeSize = 32; // w-8 h-8
+          newGradePosition = { top: -4, right: -4 }; // -top-1 -right-1
+        } else if (window.innerWidth < 768) {
+          // 태블릿 (sm)
+          newSize = 140;
+          newGradeSize = 40; // w-10 h-10
+          newGradePosition = { top: -5, right: -5 };
+        } else if (window.innerWidth < 1024) {
+          // 작은 데스크탑 (md)
+          newSize = 160;
+          newGradeSize = 48;
+          newGradePosition = { top: -6, right: -6 };
+        } else {
+          // 큰 데스크탑 (lg 이상)
+          newSize = 180;
+          newGradeSize = 56;
+          newGradePosition = { top: -8, right: -8 };
+        }
+
+        setProgressSize(newSize);
+        setGradeSize(newGradeSize);
+        setGradePosition(newGradePosition);
+      };
+
+      // 초기 사이즈 설정
+      if (typeof window !== 'undefined') {
+        updateSizes();
+        // 윈도우 리사이즈 이벤트 리스너
+        window.addEventListener('resize', updateSizes);
+        // 클린업 함수
+        return () => window.removeEventListener('resize', updateSizes);
+      }
+    }, []);
+
+    const radius = progressSize / 2;
+    const strokeWidth = Math.max(8, progressSize * 0.067); // 최소 8px, 크기에 비례
     const normalizedRadius = radius - strokeWidth / 2;
     const circumference = normalizedRadius * 2 * Math.PI;
     // 실제 값으로 원 채우기 계산 (시각적 표현은 원래 값 그대로 유지)
@@ -380,13 +434,21 @@ export default function ChecklistPage() {
     // 화면에 표시될 점수는 20점 추가
     const displayValue = getDisplayScore(value);
 
+    // 메인 숫자 텍스트 크기 계산
+    const getFontSizeClass = () => {
+      if (progressSize <= 90) return 'text-2xl';
+      if (progressSize <= 140) return 'text-3xl';
+      if (progressSize <= 160) return 'text-4xl';
+      return 'text-5xl';
+    };
+
     return (
-      <div className="relative" style={{ width: mobileAdjustedSize, height: mobileAdjustedSize }}>
+      <div className="relative" style={{ width: progressSize, height: progressSize }}>
         {/* 배경 원 */}
         <svg
-          width={mobileAdjustedSize}
-          height={mobileAdjustedSize}
-          viewBox={`0 0 ${mobileAdjustedSize} ${mobileAdjustedSize}`}
+          width={progressSize}
+          height={progressSize}
+          viewBox={`0 0 ${progressSize} ${progressSize}`}
           className="rotate-[-90deg]"
         >
           <circle
@@ -408,12 +470,34 @@ export default function ChecklistPage() {
             strokeLinecap="round"
             className="transition-all duration-1000 ease-out stroke-emerald-600"
             style={{
-              filter: 'drop-shadow(0 0 2px rgba(16,185,129,0.3))',
+              filter: 'drop-shadow(0 0 4px rgba(16,185,129,0.4))',
             }}
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-2xl sm:text-3xl font-bold">{displayValue}</span>
+          <span className={`${getFontSizeClass()} font-bold`}>{displayValue}</span>
+        </div>
+
+        {/* 등급 표시 원 */}
+        <div
+          className="absolute"
+          style={{
+            top: `${gradePosition.top}px`,
+            right: `${gradePosition.right}px`,
+          }}
+        >
+          <div
+            className={`rounded-full flex items-center justify-center ${getGradeColor(grade)}`}
+            style={{ width: `${gradeSize}px`, height: `${gradeSize}px` }}
+          >
+            <span
+              className={`${
+                gradeSize <= 40 ? 'text-sm' : gradeSize <= 48 ? 'text-base' : 'text-lg'
+              } font-medium`}
+            >
+              {grade}
+            </span>
+          </div>
         </div>
       </div>
     );
@@ -431,7 +515,7 @@ export default function ChecklistPage() {
             <ArrowLeft size={20} className="sm:w-6 sm:h-6" />
           </Link>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center">
-            <div className="p-2 bg-emerald-50 rounded-full mr-3">
+            <div className="hidden sm:block p-2 bg-emerald-50 rounded-full mr-3">
               <CheckSquare className="text-emerald-600 w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             가치투자 체크리스트
@@ -599,16 +683,11 @@ export default function ChecklistPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div className="flex flex-col items-center justify-center">
                   <div className="relative mb-3 transform transition-transform duration-300 hover:scale-105">
-                    <CircularProgress value={investmentRating.percentage} />
-                    <div className="absolute -top-1 -right-1">
-                      <div
-                        className={`rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center ${getGradeColor(
-                          investmentRating.grade
-                        )}`}
-                      >
-                        <span className="text-sm sm:text-base">{investmentRating.grade}</span>
-                      </div>
-                    </div>
+                    {/* grade 속성 추가 */}
+                    <CircularProgress
+                      value={investmentRating.percentage}
+                      grade={investmentRating.grade}
+                    />
                   </div>
                   <h3 className="text-base sm:text-lg font-bold text-gray-800 mt-2">투자 등급</h3>
                   <p className="text-xs sm:text-sm text-gray-600 text-center">
@@ -984,15 +1063,17 @@ export default function ChecklistPage() {
                 </div>
               </div>
 
-              <div className="mt-6">
-                <Link href={`/fairprice?stockCode=${stockPrice.code}`}>
-                  <button className="inline-flex items-center bg-emerald-600 text-white px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-emerald-700 transition-all duration-300 shadow-sm hover:shadow group relative overflow-hidden">
+              <hr className="mt-6" />
+
+              <div className="mt-6 w-1/2 grid grid-cols-1 sm:grid-cols-2 gap-4 ">
+                <Link href={`/fairprice?stockCode=${stockPrice.code}`} className="w-full">
+                  <button className="w-full inline-flex items-center justify-center bg-emerald-600 text-white px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-emerald-700 transition-all duration-300 shadow-sm hover:shadow group relative overflow-hidden">
                     {/* 버튼 배경 효과 */}
                     <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-emerald-500 to-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
                     {/* 버튼 텍스트 */}
                     <span className="relative flex items-center">
-                      적정가 계산하기
+                      적정가계산
                       <svg
                         className="ml-2 w-4 h-4 sm:w-5 sm:h-5 transform group-hover:translate-x-1 transition-transform duration-300"
                         fill="none"
@@ -1010,6 +1091,38 @@ export default function ChecklistPage() {
                     </span>
                   </button>
                 </Link>
+
+                {/* 네이버 증권 버튼 추가 */}
+                <a
+                  href={`https://finance.naver.com/item/main.naver?code=${stockPrice.code}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full"
+                >
+                  <button className="w-full inline-flex items-center justify-center bg-emerald-600 text-white px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-emerald-700 transition-all duration-300 shadow-sm hover:shadow group relative overflow-hidden">
+                    {/* 버튼 배경 효과 */}
+                    <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-emerald-500 to-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                    {/* 버튼 텍스트 */}
+                    <span className="relative flex items-center">
+                      네이버증권
+                      <svg
+                        className="ml-2 w-4 h-4 sm:w-5 sm:h-5 transform group-hover:translate-x-1 transition-transform duration-300"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                        />
+                      </svg>
+                    </span>
+                  </button>
+                </a>
               </div>
             </div>
           </>
