@@ -27,6 +27,7 @@ import {
   Search as SearchIcon,
   Target,
   ExternalLink,
+  X,
 } from 'lucide-react';
 import {
   calculateChecklist,
@@ -539,11 +540,24 @@ export default function ChecklistPage() {
         )}
 
         {/* 검색 영역 - 세련된 카드 디자인 */}
+
         {showSearchForm && !loading ? (
           <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-md mb-6 border border-gray-100 transition-all duration-300 hover:shadow-lg">
-            <div className="mb-4">
-              <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-2">기업 검색</h2>
-              <p className="text-sm text-gray-600">분석하고 싶은 기업을 검색하세요</p>
+            <div className="mb-4 flex justify-between items-center">
+              <div>
+                <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-2">기업 검색</h2>
+                <p className="text-sm text-gray-600">분석하고 싶은 기업을 검색하세요</p>
+              </div>
+              <button
+                onClick={() => setShowSearchForm(false)}
+                className="bg-gray-100 p-2 rounded-full hover:bg-gray-100 transition-colors duration-200 group"
+                aria-label="닫기"
+              >
+                <X
+                  size={16}
+                  className="text-gray-400 group-hover:text-gray-600 transition-colors duration-200"
+                />
+              </button>
             </div>
 
             <form onSubmit={handleSearch} className="transition-all duration-300">
@@ -604,10 +618,10 @@ export default function ChecklistPage() {
               </div>
               <button
                 onClick={() => setShowSearchForm(true)}
-                className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-2 text-sm rounded-xl flex items-center transition-all duration-300 group"
+                className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 text-sm rounded-xl flex items-center transition-all duration-300 group"
               >
-                <SearchIcon className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
-                다른 종목
+                <SearchIcon className="h-4 w-4 sm:mr-2   group-hover:scale-110 transition-transform duration-300" />
+                <span className="hidden sm:block">다른 종목</span>
               </button>
             </div>
           )
