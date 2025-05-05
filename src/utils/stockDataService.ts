@@ -26,6 +26,13 @@ export interface GrahamStock {
   dividend_yield: number;
 }
 
+export interface EnhancedGrahamStock extends GrahamStock {
+  graham_price: number; // 그레이엄 가격
+  consecutive_dividend: boolean; // 연속 배당 여부
+  bps: number; // 주당 순자산가치 (Book Per Share)
+  avg_eps: number; // 3년 평균 EPS
+}
+
 export interface QualityStock {
   stock_code: string;
   company_name: string;
@@ -315,6 +322,132 @@ export async function fetchGrahamStocks(): Promise<StockDataResult<GrahamStock>>
   } catch (err) {
     console.error('데이터 가져오기 오류:', err);
     return emptyResult<GrahamStock>(
+      err instanceof Error ? err.message : '데이터를 가져오는 중 오류가 발생했습니다.'
+    );
+  }
+}
+
+// 향상된 그레이엄 가치주 데이터 가져오기
+export async function fetchEnhancedGrahamStocks(): Promise<StockDataResult<EnhancedGrahamStock>> {
+  try {
+    // 1. 기본 그레이엄 가치주 가져오기 (PER, 부채비율 조건)
+    const baseGrahamResult = await fetchGrahamStocks();
+
+    if (baseGrahamResult.error) {
+      return {
+        stocks: [],
+        industries: [],
+        subIndustries: [],
+        error: baseGrahamResult.error,
+      };
+    }
+
+    // 기본 그레이엄 주식이 없는 경우
+    if (baseGrahamResult.stocks.length === 0) {
+      return {
+        stocks: [],
+        industries: [],
+        subIndustries: [],
+        error: '기본 그레이엄 조건에 맞는 주식을 찾을 수 없습니다.',
+      };
+    }
+
+    // 2. 기본 그레이엄 종목 코드 추출
+    const stockCodes = baseGrahamResult.stocks.map((stock) => stock.stock_code);
+
+    // 3. 그레이엄 가격 계산에 필요한 추가 데이터 가져오기 (EPS, 자본, 발행주식수)
+    const { data: rawData, error: rawDataError } = await supabase
+      .from('stock_raw_data')
+      .select(
+        `
+        stock_code,
+        2022_eps, 2023_eps, 2024_eps,
+        2024_equity,
+        shares_outstanding,
+        2022_dividend, 2023_dividend, 2024_dividend
+      `
+      )
+      .in('stock_code', stockCodes);
+
+    if (rawDataError) throw new Error(rawDataError.message);
+
+    if (!rawData || rawData.length === 0) {
+      return emptyResult<EnhancedGrahamStock>('재무 데이터를 찾을 수 없습니다.');
+    }
+
+    // 4. 데이터 맵 생성
+    const rawDataMap = new Map(rawData.map((item) => [item.stock_code, item]));
+
+    // 5. 그레이엄 가격 계산 및 연속 배당 확인
+    const enhancedGrahamStocks: EnhancedGrahamStock[] = [];
+
+    for (const baseStock of baseGrahamResult.stocks) {
+      const rawStockData = rawDataMap.get(baseStock.stock_code);
+
+      if (!rawStockData) continue; // 데이터가 없으면 건너뜀
+
+      // EPS 데이터 추출 및 평균 계산
+      const epsData = [
+        rawStockData['2022_eps'] || 0,
+        rawStockData['2023_eps'] || 0,
+        rawStockData['2024_eps'] || 0,
+      ];
+
+      // 최소 하나의 EPS 값이 있는지 확인
+      const hasEpsData = epsData.some((eps) => eps !== 0);
+
+      // 평균 EPS 계산
+      const avgEps = hasEpsData
+        ? epsData.reduce((sum, eps) => sum + eps, 0) / epsData.filter((eps) => eps !== 0).length
+        : 0;
+
+      // BPS 계산 (주당 순자산가치)
+      const equity = rawStockData['2024_equity'] || 0;
+      const sharesOutstanding = rawStockData['shares_outstanding']
+        ? Number(rawStockData['shares_outstanding'].replace(/,/g, ''))
+        : 0;
+
+      const bps = sharesOutstanding > 0 ? equity / sharesOutstanding : 0;
+
+      // 그레이엄 가격 계산: [{(3년간 eps 평균 * 8) + 2024년 bps} / 2] * 67%
+      const grahamPrice = ((avgEps * 8 + bps) / 2) * 0.67;
+
+      // 연속 배당 확인
+      const consecutiveDividend =
+        rawStockData['2022_dividend'] > 0 &&
+        rawStockData['2023_dividend'] > 0 &&
+        rawStockData['2024_dividend'] > 0;
+
+      // 그레이엄 가격 조건 체크 (현재가 <= 그레이엄 가격)
+      if (baseStock.current_price <= grahamPrice) {
+        enhancedGrahamStocks.push({
+          ...baseStock,
+          graham_price: grahamPrice,
+          consecutive_dividend: consecutiveDividend,
+          bps: bps,
+          avg_eps: avgEps,
+        });
+      }
+    }
+
+    // 6. 산업군과 하위 산업군 목록 생성
+    const uniqueIndustries = Array.from(
+      new Set(enhancedGrahamStocks.map((stock) => stock.industry))
+    ).sort();
+
+    const uniqueSubIndustries = Array.from(
+      new Set(enhancedGrahamStocks.map((stock) => stock.subindustry))
+    ).sort();
+
+    return {
+      stocks: enhancedGrahamStocks,
+      industries: uniqueIndustries,
+      subIndustries: uniqueSubIndustries,
+      error: null,
+    };
+  } catch (err) {
+    console.error('데이터 가져오기 오류:', err);
+    return emptyResult<EnhancedGrahamStock>(
       err instanceof Error ? err.message : '데이터를 가져오는 중 오류가 발생했습니다.'
     );
   }
