@@ -1,5 +1,3 @@
-//src/newrgraham/page.tsx
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -40,8 +38,11 @@ type SortField =
   | 'current_price'
   | 'dividend_yield'
   | 'graham_price'
+  | 'modified_graham_price'
   | 'discount_rate'
-  | 'consecutive_dividend';
+  | 'consecutive_dividend'
+  | 'ncav'
+  | 'ncav_price'; // NCAV 관련 정렬 필드 추가
 
 type SortDirection = 'asc' | 'desc';
 type ViewMode = 'card' | 'table' | 'mobileTable';
@@ -348,6 +349,10 @@ export default function EnhancedGrahamPage() {
                     그레이엄의 가격 원칙에 따른 고평가 여부
                   </li>
                   <li>
+                    <strong className="text-emerald-700">NCAV 가격</strong> - (유동자산 - 총부채) ÷
+                    발행주식수 × 67%
+                  </li>
+                  <li>
                     <strong className="text-emerald-700">연속 배당 여부 표시</strong> - 3년
                     연속(2022-2024) 배당금 지급 체크
                   </li>
@@ -508,6 +513,8 @@ export default function EnhancedGrahamPage() {
                         <option value="dividend_yield">배당률</option>
                         <option value="current_price">현재가</option>
                         <option value="graham_price">그레이엄 가격</option>
+                        <option value="ncav">NCAV</option>
+                        <option value="ncav_price">NCAV 가격</option>
                         <option value="discount_rate">저평가율</option>
                         <option value="company_name">회사명</option>
                         <option value="industry">산업군</option>
@@ -612,13 +619,14 @@ export default function EnhancedGrahamPage() {
                         <th
                           scope="col"
                           className="bg-gray-50 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
-                          onClick={() => toggleSort('graham_price')}
+                          onClick={() => toggleSort('modified_graham_price')}
                         >
                           <div className="flex items-center whitespace-nowrap">
                             그레이엄가
-                            {renderSortIcon('graham_price')}
+                            {renderSortIcon('modified_graham_price')}
                           </div>
                         </th>
+
                         <th
                           scope="col"
                           className="bg-gray-50 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
@@ -677,27 +685,34 @@ export default function EnhancedGrahamPage() {
                           </td>
                           <td className="bg-gray-50 px-3 py-3 whitespace-nowrap">
                             <div className="text-xs font-semibold text-blue-600">
-                              {formatNumber(stock.graham_price)}원
+                              {formatNumber(stock.modified_graham_price)}원
                             </div>
                           </td>
+
                           <td className="bg-gray-50 px-3 py-3 whitespace-nowrap">
-                            {stock.current_price < stock.graham_price ? (
+                            {stock.current_price < stock.modified_graham_price ? (
                               <div className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-1 py-0.5 rounded">
-                                {(
-                                  ((stock.graham_price - stock.current_price) /
-                                    stock.graham_price) *
-                                  100
-                                ).toFixed(1)}
-                                %↓
+                                <div>
+                                  {(
+                                    ((stock.modified_graham_price - stock.current_price) /
+                                      stock.modified_graham_price) *
+                                    100
+                                  ).toFixed(1)}
+                                  %
+                                </div>
+                                <div>저평가</div>
                               </div>
                             ) : (
                               <div className="text-xs font-semibold text-red-600 bg-red-50 px-1 py-0.5 rounded">
-                                {(
-                                  ((stock.current_price - stock.graham_price) /
-                                    stock.graham_price) *
-                                  100
-                                ).toFixed(1)}
-                                %↑
+                                <div>
+                                  {(
+                                    ((stock.current_price - stock.modified_graham_price) /
+                                      stock.modified_graham_price) *
+                                    100
+                                  ).toFixed(1)}
+                                  %
+                                </div>
+                                <div>고평가</div>
                               </div>
                             )}
                           </td>
@@ -756,11 +771,22 @@ export default function EnhancedGrahamPage() {
                         <th
                           scope="col"
                           className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
-                          onClick={() => toggleSort('graham_price')}
+                          onClick={() => toggleSort('modified_graham_price')}
                         >
                           <div className="flex items-center">
                             그레이엄 가격
-                            {renderSortIcon('graham_price')}
+                            {renderSortIcon('modified_graham_price')}
+                          </div>
+                        </th>
+
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
+                          onClick={() => toggleSort('ncav_price')}
+                        >
+                          <div className="flex items-center">
+                            NCAV
+                            {renderSortIcon('ncav_price')}
                           </div>
                         </th>
                         <th
@@ -842,27 +868,39 @@ export default function EnhancedGrahamPage() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg inline-block">
-                              {formatNumber(stock.graham_price)}원
+                              {formatNumber(stock.modified_graham_price)}원
+                            </div>
+                          </td>
+
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-semibold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg inline-block">
+                              {formatNumber(stock.ncav_price)}원
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            {stock.current_price < stock.graham_price ? (
-                              <div className="text-sm font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg inline-block">
-                                {(
-                                  ((stock.graham_price - stock.current_price) /
-                                    stock.graham_price) *
-                                  100
-                                ).toFixed(1)}
-                                % 저평가
+                            {stock.current_price < stock.modified_graham_price ? (
+                              <div className="text-sm font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg inline-block text-center">
+                                <div>
+                                  {(
+                                    ((stock.modified_graham_price - stock.current_price) /
+                                      stock.modified_graham_price) *
+                                    100
+                                  ).toFixed(1)}
+                                  %
+                                </div>
+                                <div>저평가</div>
                               </div>
                             ) : (
-                              <div className="text-sm font-semibold text-red-600 bg-red-50 px-2 py-1 rounded-lg inline-block">
-                                {(
-                                  ((stock.current_price - stock.graham_price) /
-                                    stock.graham_price) *
-                                  100
-                                ).toFixed(1)}
-                                % 고평가
+                              <div className="text-sm font-semibold text-red-600 bg-red-50 px-2 py-1 rounded-lg inline-block text-center">
+                                <div>
+                                  {(
+                                    ((stock.current_price - stock.modified_graham_price) /
+                                      stock.modified_graham_price) *
+                                    100
+                                  ).toFixed(1)}
+                                  %
+                                </div>
+                                <div>고평가</div>
                               </div>
                             )}
                           </td>

@@ -31,6 +31,9 @@ export interface EnhancedGrahamStock extends GrahamStock {
   consecutive_dividend: boolean; // 연속 배당 여부
   bps: number; // 주당 순자산가치 (Book Per Share)
   avg_eps: number; // 3년 평균 EPS
+  ncav: number; // 순유동자산가치 (Net Current Asset Value) 추가
+  ncav_price: number; // NCAV의 2/3 가격 (그레이엄의 NCAV 투자 기준) 추가
+  modified_graham_price: number; // 수정 그레이엄 가격 [(3년간 EPS 평균 × 8) + NCAV] ÷ 2 × 67% 추가
 }
 
 export interface QualityStock {
@@ -364,7 +367,8 @@ export async function fetchEnhancedGrahamStocks(): Promise<StockDataResult<Enhan
         2022_eps, 2023_eps, 2024_eps,
         2024_equity,
         shares_outstanding,
-        2022_dividend, 2023_dividend, 2024_dividend
+        2022_dividend, 2023_dividend, 2024_dividend,
+        2024_current_assets, 2024_current_liabilities, 2024_non_current_liabilities
       `
       )
       .in('stock_code', stockCodes);
@@ -394,23 +398,74 @@ export async function fetchEnhancedGrahamStocks(): Promise<StockDataResult<Enhan
       ];
 
       // 최소 하나의 EPS 값이 있는지 확인
-      const hasEpsData = epsData.some((eps) => eps !== 0);
+      const hasEpsData = epsData.some(
+        (eps) => eps !== null && eps !== undefined && !isNaN(eps) && eps !== 0
+      );
 
-      // 평균 EPS 계산
+      // 평균 EPS 계산 - NaN 방지를 위한 안전 처리
       const avgEps = hasEpsData
-        ? epsData.reduce((sum, eps) => sum + eps, 0) / epsData.filter((eps) => eps !== 0).length
+        ? epsData
+            .filter((eps) => typeof eps === 'number' && !isNaN(eps))
+            .reduce((sum, eps) => sum + eps, 0) /
+          epsData.filter((eps) => typeof eps === 'number' && !isNaN(eps) && eps !== 0).length
         : 0;
 
       // BPS 계산 (주당 순자산가치)
-      const equity = rawStockData['2024_equity'] || 0;
-      const sharesOutstanding = rawStockData['shares_outstanding']
-        ? Number(rawStockData['shares_outstanding'].replace(/,/g, ''))
-        : 0;
+      const equity =
+        typeof rawStockData['2024_equity'] === 'number' && !isNaN(rawStockData['2024_equity'])
+          ? rawStockData['2024_equity']
+          : 0;
+
+      // shares_outstanding이 문자열인지 숫자인지 확인하여 적절히 처리
+      let sharesOutstanding = 0;
+      if (rawStockData['shares_outstanding']) {
+        if (typeof rawStockData['shares_outstanding'] === 'string') {
+          sharesOutstanding = Number(rawStockData['shares_outstanding'].replace(/,/g, ''));
+        } else {
+          sharesOutstanding = Number(rawStockData['shares_outstanding']);
+        }
+      }
+
+      // NaN 체크
+      sharesOutstanding = isNaN(sharesOutstanding) ? 0 : sharesOutstanding;
 
       const bps = sharesOutstanding > 0 ? equity / sharesOutstanding : 0;
 
-      // 그레이엄 가격 계산: [{(3년간 eps 평균 * 8) + 2024년 bps} / 2] * 67%
+      // 그레이엄 가격 계산: [(3년간 eps 평균 * 8) + 2024년 bps} / 2] * 67%
       const grahamPrice = ((avgEps * 8 + bps) / 2) * 0.67;
+
+      // NCAV 계산 추가
+      const currentAssets =
+        typeof rawStockData['2024_current_assets'] === 'number' &&
+        !isNaN(rawStockData['2024_current_assets'])
+          ? rawStockData['2024_current_assets']
+          : 0;
+      const currentLiabilities =
+        typeof rawStockData['2024_current_liabilities'] === 'number' &&
+        !isNaN(rawStockData['2024_current_liabilities'])
+          ? rawStockData['2024_current_liabilities']
+          : 0;
+      const nonCurrentLiabilities =
+        typeof rawStockData['2024_non_current_liabilities'] === 'number' &&
+        !isNaN(rawStockData['2024_non_current_liabilities'])
+          ? rawStockData['2024_non_current_liabilities']
+          : 0;
+
+      // 회사 전체 NCAV 계산
+      const totalNCAV = currentAssets - (currentLiabilities + nonCurrentLiabilities);
+
+      // 주당 NCAV 계산 (앞서 계산된 sharesOutstanding 사용)
+      const ncavPerShare = sharesOutstanding > 0 ? totalNCAV / sharesOutstanding : 0;
+
+      // NCAV가 음수인 경우 0으로 처리
+      const nonNegativeNcav = ncavPerShare > 0 ? ncavPerShare : 0;
+
+      // NCAV의 2/3 가격 (그레이엄의 투자 기준)
+      const ncavPrice = nonNegativeNcav * (2 / 3);
+
+      // 수정 그레이엄 가격 계산: [(3년간 EPS 평균 × 8) + NCAV] ÷ 2 × 67%
+      // NCAV가 음수인 경우 0으로 처리
+      const modifiedGrahamPrice = ((avgEps * 8 + nonNegativeNcav) / 2) * 0.67;
 
       // 연속 배당 확인
       const consecutiveDividend =
@@ -426,6 +481,9 @@ export async function fetchEnhancedGrahamStocks(): Promise<StockDataResult<Enhan
           consecutive_dividend: consecutiveDividend,
           bps: bps,
           avg_eps: avgEps,
+          ncav: ncavPerShare,
+          ncav_price: ncavPrice,
+          modified_graham_price: modifiedGrahamPrice,
         });
       }
     }
