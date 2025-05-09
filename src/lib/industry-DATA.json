@@ -8,7 +8,11 @@
     "maxPEG": 0.8,
     "avgPEG": 0.8,
     "liabilityMultiplier": 1.2,
-    "subIndustries": ["etc"]
+    "subIndustries": ["etc"],
+    "minGrowthRate": 2,
+    "maxGrowthRate": 4,
+    "minPerpetualGrowthRate": 0.5,
+    "maxPerpetualGrowthRate": 1
   },
   {
     "industry": "IT/소프트웨어",
@@ -26,7 +30,11 @@
       "소프트웨어",
       "건강관리기술",
       "양방향미디어와서비스"
-    ]
+    ],
+    "minGrowthRate": 4,
+    "maxGrowthRate": 7,
+    "minPerpetualGrowthRate": 1.5,
+    "maxPerpetualGrowthRate": 2
   },
   {
     "industry": "바이오/제약",
@@ -43,7 +51,11 @@
       "제약",
       "건강관리업체및서비스",
       "건강관리장비와용품"
-    ]
+    ],
+    "minGrowthRate": 3,
+    "maxGrowthRate": 6,
+    "minPerpetualGrowthRate": 1.5,
+    "maxPerpetualGrowthRate": 2
   },
   {
     "industry": "반도체",
@@ -60,7 +72,11 @@
       "디스플레이장비및부품",
       "전자장비와기기",
       "전자제품"
-    ]
+    ],
+    "minGrowthRate": 3,
+    "maxGrowthRate": 5,
+    "minPerpetualGrowthRate": 1,
+    "maxPerpetualGrowthRate": 1.5
   },
   {
     "industry": "인터넷/플랫폼",
@@ -77,7 +93,11 @@
       "방송과엔터테인먼트",
       "출판",
       "광고"
-    ]
+    ],
+    "minGrowthRate": 4,
+    "maxGrowthRate": 6,
+    "minPerpetualGrowthRate": 1.5,
+    "maxPerpetualGrowthRate": 2
   },
   {
     "industry": "유통/소매",
@@ -96,7 +116,11 @@
       "판매업체",
       "섬유,의류,신발,호화품",
       "화장품"
-    ]
+    ],
+    "minGrowthRate": 2,
+    "maxGrowthRate": 4,
+    "minPerpetualGrowthRate": 0.5,
+    "maxPerpetualGrowthRate": 1
   },
   {
     "industry": "금융",
@@ -116,7 +140,11 @@
       "창업투자",
       "기타금융",
       "부동산"
-    ]
+    ],
+    "minGrowthRate": 1,
+    "maxGrowthRate": 3,
+    "minPerpetualGrowthRate": 0.5,
+    "maxPerpetualGrowthRate": 1
   },
   {
     "industry": "통신",
@@ -127,7 +155,11 @@
     "maxPEG": 0.7,
     "avgPEG": 0.55,
     "liabilityMultiplier": 1.4,
-    "subIndustries": ["무선통신서비스", "다각화된통신서비스", "핸드셋", "통신장비"]
+    "subIndustries": ["무선통신서비스", "다각화된통신서비스", "핸드셋", "통신장비"],
+    "minGrowthRate": 0.5,
+    "maxGrowthRate": 2,
+    "minPerpetualGrowthRate": 0.5,
+    "maxPerpetualGrowthRate": 1
   },
   {
     "industry": "유틸리티",
@@ -144,7 +176,11 @@
       "복합유틸리티",
       "에너지장비및서비스",
       "석유와가스"
-    ]
+    ],
+    "minGrowthRate": 0.5,
+    "maxGrowthRate": 2,
+    "minPerpetualGrowthRate": 0.5,
+    "maxPerpetualGrowthRate": 1
   },
   {
     "industry": "철강/조선",
@@ -155,7 +191,11 @@
     "maxPEG": 0.7,
     "avgPEG": 0.55,
     "liabilityMultiplier": 1.5,
-    "subIndustries": ["철강", "조선", "비철금속", "우주항공과국방"]
+    "subIndustries": ["철강", "조선", "비철금속", "우주항공과국방"],
+    "minGrowthRate": 1,
+    "maxGrowthRate": 3,
+    "minPerpetualGrowthRate": 0.5,
+    "maxPerpetualGrowthRate": 1
   },
   {
     "industry": "자동차",
@@ -166,7 +206,11 @@
     "maxPEG": 0.8,
     "avgPEG": 0.65,
     "liabilityMultiplier": 1.4,
-    "subIndustries": ["자동차", "자동차부품", "전기제품"]
+    "subIndustries": ["자동차", "자동차부품", "전기제품"],
+    "minGrowthRate": 1,
+    "maxGrowthRate": 3,
+    "minPerpetualGrowthRate": 0.5,
+    "maxPerpetualGrowthRate": 1
   },
   {
     "industry": "화학/소재",
@@ -177,7 +221,11 @@
     "maxPEG": 0.8,
     "avgPEG": 0.65,
     "liabilityMultiplier": 1.4,
-    "subIndustries": ["화학", "포장재", "종이와목재", "전기장비"]
+    "subIndustries": ["화학", "포장재", "종이와목재", "전기장비"],
+    "minGrowthRate": 2,
+    "maxGrowthRate": 4,
+    "minPerpetualGrowthRate": 0.5,
+    "maxPerpetualGrowthRate": 1
   },
   {
     "industry": "건설",
@@ -188,7 +236,11 @@
     "maxPEG": 0.7,
     "avgPEG": 0.55,
     "liabilityMultiplier": 1.5,
-    "subIndustries": ["건설", "건축제품", "건축자재", "기계", "운송인프라"]
+    "subIndustries": ["건설", "건축제품", "건축자재", "기계", "운송인프라"],
+    "minGrowthRate": 1,
+    "maxGrowthRate": 3,
+    "minPerpetualGrowthRate": 0.5,
+    "maxPerpetualGrowthRate": 1
   },
   {
     "industry": "식음료",
@@ -199,7 +251,11 @@
     "maxPEG": 0.9,
     "avgPEG": 0.75,
     "liabilityMultiplier": 1.3,
-    "subIndustries": ["식품", "음료", "담배"]
+    "subIndustries": ["식품", "음료", "담배"],
+    "minGrowthRate": 2,
+    "maxGrowthRate": 4,
+    "minPerpetualGrowthRate": 1,
+    "maxPerpetualGrowthRate": 1.5
   },
   {
     "industry": "생활소비재",
@@ -210,7 +266,11 @@
     "maxPEG": 0.8,
     "avgPEG": 0.65,
     "liabilityMultiplier": 1.4,
-    "subIndustries": ["가정용기기와용품", "가정용품", "가구", "레저용장비와제품"]
+    "subIndustries": ["가정용기기와용품", "가정용품", "가구", "레저용장비와제품"],
+    "minGrowthRate": 2,
+    "maxGrowthRate": 4,
+    "minPerpetualGrowthRate": 0.5,
+    "maxPerpetualGrowthRate": 1
   },
   {
     "industry": "운송/물류",
@@ -221,7 +281,11 @@
     "maxPEG": 0.7,
     "avgPEG": 0.55,
     "liabilityMultiplier": 1.5,
-    "subIndustries": ["도로와철도운송", "항공사", "해운사", "항공화물운송과물류"]
+    "subIndustries": ["도로와철도운송", "항공사", "해운사", "항공화물운송과물류"],
+    "minGrowthRate": 1,
+    "maxGrowthRate": 3,
+    "minPerpetualGrowthRate": 0.5,
+    "maxPerpetualGrowthRate": 1
   },
   {
     "industry": "기타서비스",
@@ -238,6 +302,10 @@
       "다각화된소비자서비스",
       "교육서비스",
       "복합기업"
-    ]
+    ],
+    "minGrowthRate": 2,
+    "maxGrowthRate": 4,
+    "minPerpetualGrowthRate": 0.5,
+    "maxPerpetualGrowthRate": 1
   }
 ]

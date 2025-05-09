@@ -130,108 +130,6 @@ interface IndustryData {
   subIndustries: string[];
 }
 
-// 기본 페이지네이션 유틸리티 함수
-export async function fetchAllDataWithPagination<T>(
-  tableName: string,
-  selectQuery: string = '*',
-  orderBy: string = 'stock_code',
-  additionalFilters?: (query: any) => any
-): Promise<T[]> {
-  const PAGE_SIZE = 1000;
-  let allData: T[] = [];
-  let page = 0;
-  let hasMoreData = true;
-
-  console.log(`Fetching all data from ${tableName} with pagination...`);
-
-  while (hasMoreData) {
-    const from = page * PAGE_SIZE;
-    const to = from + PAGE_SIZE - 1;
-
-    console.log(`Fetching page ${page + 1}: records ${from} to ${to}`);
-
-    let query = supabase
-      .from(tableName)
-      .select(selectQuery)
-      .range(from, to)
-      .order(orderBy, { ascending: true });
-
-    // 추가 필터 적용
-    if (additionalFilters) {
-      query = additionalFilters(query);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error(`Error fetching data from ${tableName}:`, error);
-      break;
-    }
-
-    if (data && data.length > 0) {
-      // 타입 단언(Type Assertion)을 사용하여 TypeScript 에러 해결
-      allData = [...allData, ...(data as T[])];
-      console.log(`Retrieved ${data.length} records. Total so far: ${allData.length}`);
-      page++;
-
-      if (data.length < PAGE_SIZE) {
-        hasMoreData = false;
-        console.log(`Last page reached with ${data.length} records`);
-      }
-    } else {
-      hasMoreData = false;
-      console.log('No more data available');
-    }
-  }
-
-  console.log(`Completed fetching data from ${tableName}. Total records: ${allData.length}`);
-  return allData;
-}
-
-// 배치 처리 유틸리티 함수
-async function fetchDataInBatches<T>(
-  tableName: string,
-  selectQuery: string,
-  stockCodes: string[]
-): Promise<T[]> {
-  const BATCH_SIZE = 1000;
-  let allData: T[] = [];
-
-  // stockCodes를 BATCH_SIZE 크기의 배치로 분할
-  const batches = [];
-  for (let i = 0; i < stockCodes.length; i += BATCH_SIZE) {
-    batches.push(stockCodes.slice(i, i + BATCH_SIZE));
-  }
-
-  console.log(
-    `Processing ${stockCodes.length} codes in ${batches.length} batches from ${tableName}`
-  );
-
-  // 각 배치별로 데이터 요청
-  for (let i = 0; i < batches.length; i++) {
-    const batch = batches[i];
-    console.log(`Processing batch ${i + 1}/${batches.length} with ${batch.length} codes`);
-
-    const { data, error } = await supabase
-      .from(tableName)
-      .select(selectQuery)
-      .in('stock_code', batch);
-
-    if (error) {
-      console.error(`Error fetching batch ${i + 1} from ${tableName}:`, error);
-      throw new Error(error.message);
-    }
-
-    if (data) {
-      // 타입 단언(Type Assertion)을 사용하여 TypeScript 에러 해결
-      allData = [...allData, ...(data as T[])];
-      console.log(`Added ${data.length} records from batch ${i + 1}. Total: ${allData.length}`);
-    }
-  }
-
-  return allData;
-}
-
 // DCF 모델 계산 함수
 function calculateDCF(
   startingFCF: number,
@@ -272,11 +170,17 @@ export async function fetchSrimStocks(): Promise<StockDataResult<SrimStock>> {
   try {
     console.log('=== S-RIM 기반 주식 데이터 가져오기 시작 ===');
 
-    // 1. stock_fairprice 테이블에서 기본 데이터 페이지네이션으로 가져오기
-    const fairpriceData = await fetchAllDataWithPagination<any>(
-      'stock_fairprice',
-      'stock_code, company_name, industry, subindustry, srimbase, srimdecline10pct, srimdecline20pct, latestroe'
-    );
+    // 1. stock_fairprice 테이블에서 기본 데이터 가져오기
+    const { data: fairpriceData, error: fairpriceError } = await supabase
+      .from('stock_fairprice')
+      .select(
+        'stock_code, company_name, industry, subindustry, srimbase, srimdecline10pct, srimdecline20pct, latestroe'
+      );
+
+    if (fairpriceError) {
+      console.error('적정가 데이터 가져오기 오류:', fairpriceError);
+      throw new Error(fairpriceError.message);
+    }
 
     if (!fairpriceData || fairpriceData.length === 0) {
       return emptyResult<SrimStock>('적정가 데이터를 찾을 수 없습니다.');
@@ -285,31 +189,46 @@ export async function fetchSrimStocks(): Promise<StockDataResult<SrimStock>> {
     const stockCodes = fairpriceData.map((item) => item.stock_code);
     console.log(`총 종목 수: ${stockCodes.length}`);
 
-    // 2. 현재가 데이터 배치로 가져오기
-    const priceData = await fetchDataInBatches<any>(
-      'stock_price',
-      'stock_code, current_price',
-      stockCodes
-    );
+    // 2. 현재가 데이터 가져오기
+    const { data: priceData, error: priceError } = await supabase
+      .from('stock_price')
+      .select('stock_code, current_price')
+      .in('stock_code', stockCodes);
 
-    // 3. 배당률 및 PER 데이터 배치로 가져오기
-    const dividendData = await fetchDataInBatches<any>(
-      'stock_current',
-      'stock_code, current_dividend, current_per',
-      stockCodes
-    );
+    if (priceError) {
+      console.error('현재가 데이터 가져오기 오류:', priceError);
+      throw new Error(priceError.message);
+    }
 
-    // 4. 연속 배당 확인과 영업이익 확인을 위한 데이터 배치로 가져오기
-    const rawData = await fetchDataInBatches<any>(
-      'stock_raw_data',
-      `stock_code, 
-      2022_dividend, 2023_dividend, 2024_dividend,
-      2022_operating_income, 2023_operating_income, 2024_operating_income`,
-      stockCodes
-    );
+    // 3. 배당률 및 PER 데이터 가져오기
+    const { data: dividendData, error: dividendError } = await supabase
+      .from('stock_current')
+      .select('stock_code, current_dividend, current_per')
+      .in('stock_code', stockCodes);
+
+    if (dividendError) {
+      console.error('배당률 데이터 가져오기 오류:', dividendError);
+      throw new Error(dividendError.message);
+    }
+
+    // 4. 연속 배당 확인과 영업이익 확인을 위한 데이터
+    const { data: rawData, error: rawDataError } = await supabase
+      .from('stock_raw_data')
+      .select(
+        `
+        stock_code, 
+        2022_dividend, 2023_dividend, 2024_dividend,
+        2022_operating_income, 2023_operating_income, 2024_operating_income
+      `
+      )
+      .in('stock_code', stockCodes);
+
+    if (rawDataError) {
+      console.error('재무 데이터 가져오기 오류:', rawDataError);
+      throw new Error(rawDataError.message);
+    }
 
     // 5. 데이터 맵 생성 및 연결
-    console.log('데이터 맵 생성 중...');
     const fairpriceMap = new Map(fairpriceData.map((item) => [item.stock_code, item]));
     const priceMap = new Map(
       priceData.map((item) => [item.stock_code, safeNumber(item.current_price)])
@@ -326,7 +245,6 @@ export async function fetchSrimStocks(): Promise<StockDataResult<SrimStock>> {
     const rawDataMap = new Map(rawData.map((item) => [item.stock_code, item]));
 
     // 6. S-RIM 기반 저평가 주식 필터링 (안전마진 30% 이상)
-    console.log('S-RIM 기반 저평가 주식 필터링 중...');
     const srimStocks: SrimStock[] = [];
     const MIN_MARGIN_OF_SAFETY = 0.3; // 30% 안전마진
 
@@ -353,6 +271,9 @@ export async function fetchSrimStocks(): Promise<StockDataResult<SrimStock>> {
       if (operatingIncome2024 < 0) negativeOperatingIncomeCount++;
 
       if (negativeOperatingIncomeCount >= 2) {
+        // console.log(
+        //   `종목 ${fairpriceItem.company_name} (${stockCode}) 영업이익 3년 중 ${negativeOperatingIncomeCount}년 음수로 제외`
+        // );
         continue;
       }
 
@@ -377,6 +298,14 @@ export async function fetchSrimStocks(): Promise<StockDataResult<SrimStock>> {
 
       // 30% 이상 저평가된 종목만 추가
       if (marginOfSafety >= MIN_MARGIN_OF_SAFETY) {
+        // console.log(
+        //   `종목 ${
+        //     fairpriceItem.company_name
+        //   } (${stockCode}) 추가: 현재가 ${currentPrice}, S-RIM 기본가치 ${srimBase.toFixed(
+        //     2
+        //   )}, 안전마진 ${(marginOfSafety * 100).toFixed(2)}%`
+        // );
+
         srimStocks.push({
           stock_code: stockCode,
           company_name: fairpriceItem.company_name,
@@ -396,7 +325,6 @@ export async function fetchSrimStocks(): Promise<StockDataResult<SrimStock>> {
     }
 
     // 7. 산업군과 하위 산업군 목록 생성
-    console.log('산업군 및 하위 산업군 목록 생성 중...');
     const uniqueIndustries = Array.from(new Set(srimStocks.map((stock) => stock.industry))).sort();
     const uniqueSubIndustries = Array.from(
       new Set(srimStocks.map((stock) => stock.subindustry))
@@ -418,16 +346,20 @@ export async function fetchSrimStocks(): Promise<StockDataResult<SrimStock>> {
   }
 }
 
-// fetchLynchStocks 함수 - 페이지네이션 적용
+// fetchLynchStocks 함수 구현
 export async function fetchLynchStocks(): Promise<StockDataResult<LynchStock>> {
   try {
     console.log('=== 피터 린치 PEG 기반 주식 데이터 가져오기 시작 ===');
 
-    // 1. stock_fairprice 테이블에서 기본 데이터 페이지네이션으로 가져오기
-    const fairpriceData = await fetchAllDataWithPagination<any>(
-      'stock_fairprice',
-      'stock_code, company_name, industry, subindustry, pegbased, growthrate, averageeps'
-    );
+    // 1. stock_fairprice 테이블에서 기본 데이터 가져오기
+    const { data: fairpriceData, error: fairpriceError } = await supabase
+      .from('stock_fairprice')
+      .select('stock_code, company_name, industry, subindustry, pegbased, growthrate, averageeps');
+
+    if (fairpriceError) {
+      console.error('적정가 데이터 가져오기 오류:', fairpriceError);
+      throw new Error(fairpriceError.message);
+    }
 
     if (!fairpriceData || fairpriceData.length === 0) {
       return emptyResult<LynchStock>('적정가 데이터를 찾을 수 없습니다.');
@@ -436,31 +368,46 @@ export async function fetchLynchStocks(): Promise<StockDataResult<LynchStock>> {
     const stockCodes = fairpriceData.map((item) => item.stock_code);
     console.log(`총 종목 수: ${stockCodes.length}`);
 
-    // 2. 현재가 데이터 배치로 가져오기
-    const priceData = await fetchDataInBatches<any>(
-      'stock_price',
-      'stock_code, current_price',
-      stockCodes
-    );
+    // 2. 현재가 데이터 가져오기
+    const { data: priceData, error: priceError } = await supabase
+      .from('stock_price')
+      .select('stock_code, current_price')
+      .in('stock_code', stockCodes);
 
-    // 3. 배당률 및 PER 데이터 배치로 가져오기
-    const dividendData = await fetchDataInBatches<any>(
-      'stock_current',
-      'stock_code, current_dividend, current_per',
-      stockCodes
-    );
+    if (priceError) {
+      console.error('현재가 데이터 가져오기 오류:', priceError);
+      throw new Error(priceError.message);
+    }
 
-    // 4. 연속 배당 확인과 영업이익 확인을 위한 데이터 배치로 가져오기
-    const rawData = await fetchDataInBatches<any>(
-      'stock_raw_data',
-      `stock_code, 
-      2022_dividend, 2023_dividend, 2024_dividend,
-      2022_operating_income, 2023_operating_income, 2024_operating_income`,
-      stockCodes
-    );
+    // 3. 배당률 및 PER 데이터 가져오기
+    const { data: dividendData, error: dividendError } = await supabase
+      .from('stock_current')
+      .select('stock_code, current_dividend, current_per')
+      .in('stock_code', stockCodes);
+
+    if (dividendError) {
+      console.error('배당률 데이터 가져오기 오류:', dividendError);
+      throw new Error(dividendError.message);
+    }
+
+    // 4. 연속 배당 확인과 영업이익 확인을 위한 데이터
+    const { data: rawData, error: rawDataError } = await supabase
+      .from('stock_raw_data')
+      .select(
+        `
+        stock_code, 
+        2022_dividend, 2023_dividend, 2024_dividend,
+        2022_operating_income, 2023_operating_income, 2024_operating_income
+      `
+      )
+      .in('stock_code', stockCodes);
+
+    if (rawDataError) {
+      console.error('재무 데이터 가져오기 오류:', rawDataError);
+      throw new Error(rawDataError.message);
+    }
 
     // 5. 데이터 맵 생성 및 연결
-    console.log('데이터 맵 생성 중...');
     const fairpriceMap = new Map(fairpriceData.map((item) => [item.stock_code, item]));
     const priceMap = new Map(
       priceData.map((item) => [item.stock_code, safeNumber(item.current_price)])
@@ -477,7 +424,6 @@ export async function fetchLynchStocks(): Promise<StockDataResult<LynchStock>> {
     const rawDataMap = new Map(rawData.map((item) => [item.stock_code, item]));
 
     // 6. PEG 기반 저평가 주식 필터링 (안전마진 30% 이상)
-    console.log('PEG 기반 저평가 주식 필터링 중...');
     const lynchStocks: LynchStock[] = [];
     const MIN_MARGIN_OF_SAFETY = 0.3; // 30% 안전마진
 
@@ -504,6 +450,9 @@ export async function fetchLynchStocks(): Promise<StockDataResult<LynchStock>> {
       if (operatingIncome2024 < 0) negativeOperatingIncomeCount++;
 
       if (negativeOperatingIncomeCount >= 2) {
+        // console.log(
+        //   `종목 ${fairpriceItem.company_name} (${stockCode}) 영업이익 3년 중 ${negativeOperatingIncomeCount}년 음수로 제외`
+        // );
         continue;
       }
 
@@ -526,6 +475,14 @@ export async function fetchLynchStocks(): Promise<StockDataResult<LynchStock>> {
 
       // 30% 이상 저평가된 종목만 추가
       if (marginOfSafety >= MIN_MARGIN_OF_SAFETY) {
+        // console.log(
+        //   `종목 ${
+        //     fairpriceItem.company_name
+        //   } (${stockCode}) 추가: 현재가 ${currentPrice}, PEG 적정가 ${pegPrice.toFixed(
+        //     2
+        //   )}, 안전마진 ${(marginOfSafety * 100).toFixed(2)}%`
+        // );
+
         lynchStocks.push({
           stock_code: stockCode,
           company_name: fairpriceItem.company_name,
@@ -544,7 +501,6 @@ export async function fetchLynchStocks(): Promise<StockDataResult<LynchStock>> {
     }
 
     // 7. 산업군과 하위 산업군 목록 생성
-    console.log('산업군 및 하위 산업군 목록 생성 중...');
     const uniqueIndustries = Array.from(new Set(lynchStocks.map((stock) => stock.industry))).sort();
     const uniqueSubIndustries = Array.from(
       new Set(lynchStocks.map((stock) => stock.subindustry))
@@ -566,7 +522,7 @@ export async function fetchLynchStocks(): Promise<StockDataResult<LynchStock>> {
   }
 }
 
-// fetchHowardStocks 함수 - 페이지네이션 적용
+// 하워드 막스 데이터 가져오기
 export async function fetchHowardStocks(): Promise<StockDataResult<HowardStock>> {
   try {
     console.log('=== 하워드 막스 내재가치 주식 데이터 가져오기 시작 ===');
@@ -576,11 +532,15 @@ export async function fetchHowardStocks(): Promise<StockDataResult<HowardStock>>
       (module) => module.default
     )) as IndustryData[];
 
-    // 2. 모든 주식 기본 정보 페이지네이션으로 가져오기
-    const stockData = await fetchAllDataWithPagination<any>(
-      'stock_checklist',
-      'stock_code, company_name, industry, subindustry'
-    );
+    // 2. 모든 주식 기본 정보 가져오기
+    const { data: stockData, error: stockError } = await supabase
+      .from('stock_checklist')
+      .select('stock_code, company_name, industry, subindustry');
+
+    if (stockError) {
+      console.error('주식 데이터 가져오기 오류:', stockError);
+      throw new Error(stockError.message);
+    }
 
     if (!stockData || stockData.length === 0) {
       return emptyResult<HowardStock>('주식 데이터를 찾을 수 없습니다.');
@@ -589,34 +549,49 @@ export async function fetchHowardStocks(): Promise<StockDataResult<HowardStock>>
     const stockCodes = stockData.map((item) => item.stock_code);
     console.log(`총 종목 수: ${stockCodes.length}`);
 
-    // 3. 현재가 데이터 배치로 가져오기
-    const priceData = await fetchDataInBatches<any>(
-      'stock_price',
-      'stock_code, current_price',
-      stockCodes
-    );
+    // 3. 현재가 데이터 가져오기
+    const { data: priceData, error: priceError } = await supabase
+      .from('stock_price')
+      .select('stock_code, current_price')
+      .in('stock_code', stockCodes);
 
-    // 4. 배당률 정보 배치로 가져오기
-    const dividendData = await fetchDataInBatches<any>(
-      'stock_current',
-      'stock_code, current_dividend',
-      stockCodes
-    );
+    if (priceError) {
+      console.error('현재가 데이터 가져오기 오류:', priceError);
+      throw new Error(priceError.message);
+    }
 
-    // 5. 재무 데이터 배치로 가져오기
-    const rawData = await fetchDataInBatches<any>(
-      'stock_raw_data',
-      `stock_code,
-      shares_outstanding,
-      2022_operating_cash_flow, 2022_capex, 2022_free_cash_flow, 2022_operating_income,
-      2023_operating_cash_flow, 2023_capex, 2023_free_cash_flow, 2023_operating_income,
-      2024_operating_cash_flow, 2024_capex, 2024_free_cash_flow, 2024_operating_income,
-      2022_dividend, 2023_dividend, 2024_dividend`,
-      stockCodes
-    );
+    // 4. 배당률 정보 가져오기
+    const { data: dividendData, error: dividendError } = await supabase
+      .from('stock_current')
+      .select('stock_code, current_dividend')
+      .in('stock_code', stockCodes);
+
+    if (dividendError) {
+      console.error('배당률 데이터 가져오기 오류:', dividendError);
+      throw new Error(dividendError.message);
+    }
+
+    // 5. 재무 데이터 가져오기 (FCF, 영업현금흐름, 자본지출, 발행주식수, 영업이익 등)
+    const { data: rawData, error: rawDataError } = await supabase
+      .from('stock_raw_data')
+      .select(
+        `
+        stock_code,
+        shares_outstanding,
+        2022_operating_cash_flow, 2022_capex, 2022_free_cash_flow, 2022_operating_income,
+        2023_operating_cash_flow, 2023_capex, 2023_free_cash_flow, 2023_operating_income,
+        2024_operating_cash_flow, 2024_capex, 2024_free_cash_flow, 2024_operating_income,
+        2022_dividend, 2023_dividend, 2024_dividend
+      `
+      )
+      .in('stock_code', stockCodes);
+
+    if (rawDataError) {
+      console.error('재무 데이터 가져오기 오류:', rawDataError);
+      throw new Error(rawDataError.message);
+    }
 
     // 6. 데이터 맵 생성
-    console.log('데이터 맵 생성 중...');
     const stockMap = new Map(stockData.map((item) => [item.stock_code, item]));
     const priceMap = new Map(
       priceData.map((item) => [item.stock_code, safeNumber(item.current_price)])
@@ -627,7 +602,6 @@ export async function fetchHowardStocks(): Promise<StockDataResult<HowardStock>>
     const rawDataMap = new Map(rawData.map((item) => [item.stock_code, item]));
 
     // 7. 하워드 막스 내재가치 계산 및 종목 필터링
-    console.log('하워드 막스 내재가치 계산 및 종목 필터링 중...');
     const howardStocks: HowardStock[] = [];
     const DISCOUNT_RATE = 0.08; // 요구사항대로 8% 고정
     const MIN_MARGIN_OF_SAFETY = 0.3; // 30% 안전마진
@@ -655,6 +629,9 @@ export async function fetchHowardStocks(): Promise<StockDataResult<HowardStock>>
       if (operatingIncome2024 < 0) negativeOperatingIncomeCount++;
 
       if (negativeOperatingIncomeCount >= 2) {
+        console.log(
+          `종목 ${stockCode} 영업이익 3년 중 ${negativeOperatingIncomeCount}년 음수로 제외`
+        );
         continue;
       }
 
@@ -669,6 +646,7 @@ export async function fetchHowardStocks(): Promise<StockDataResult<HowardStock>>
       }
 
       if (isNaN(sharesOutstanding) || sharesOutstanding <= 0) {
+        console.log(`종목 ${stockCode} 발행주식수 오류로 제외`);
         continue;
       }
 
@@ -699,6 +677,7 @@ export async function fetchHowardStocks(): Promise<StockDataResult<HowardStock>>
       // FCF 정규화 (중앙값 방식)
       const fcfValues = [fcf2022, fcf2023, fcf2024].filter((fcf) => fcf !== 0);
       if (fcfValues.length === 0) {
+        console.log(`종목 ${stockCode} FCF 데이터 없음으로 제외`);
         continue;
       }
 
@@ -767,6 +746,14 @@ export async function fetchHowardStocks(): Promise<StockDataResult<HowardStock>>
 
       // 조건 확인: 현재가 < 기본 시나리오 내재가치 & 안전마진 >= 30%
       if (currentPrice < baseIntrinsicValue && marginOfSafety >= MIN_MARGIN_OF_SAFETY) {
+        console.log(
+          `종목 ${
+            stockInfo.company_name
+          } (${stockCode}) 추가: 현재가 ${currentPrice}, 내재가치 ${baseIntrinsicValue.toFixed(
+            2
+          )}, 안전마진 ${(marginOfSafety * 100).toFixed(2)}%`
+        );
+
         howardStocks.push({
           stock_code: stockCode,
           company_name: stockInfo.company_name,
@@ -787,7 +774,6 @@ export async function fetchHowardStocks(): Promise<StockDataResult<HowardStock>>
     }
 
     // 8. 산업군과 하위 산업군 목록 생성
-    console.log('산업군 및 하위 산업군 목록 생성 중...');
     const uniqueIndustries = Array.from(
       new Set(howardStocks.map((stock) => stock.industry))
     ).sort();
@@ -817,12 +803,17 @@ export async function fetchEnhancedGrahamStocks(): Promise<StockDataResult<Enhan
     console.log('=== 향상된 그레이엄 가치주 데이터 가져오기 시작 ===');
 
     // 1. PER 조건에 맞는 종목 가져오기 (PER 0-10)
-    const perData = await fetchAllDataWithPagination<any>(
-      'stock_current',
-      'stock_code, current_per, current_dividend',
-      'stock_code',
-      (query) => query.gt('current_per', 0).lte('current_per', 10).not('current_per', 'is', null)
-    );
+    const { data: perData, error: perError } = await supabase
+      .from('stock_current')
+      .select('stock_code, current_per, current_dividend')
+      .gt('current_per', 0)
+      .lte('current_per', 10)
+      .not('current_per', 'is', null);
+
+    if (perError) {
+      console.error('PER 데이터 가져오기 오류:', perError);
+      throw new Error(perError.message);
+    }
 
     if (!perData || perData.length === 0) {
       console.log('PER 조건에 맞는 주식이 없습니다.');
@@ -832,49 +823,62 @@ export async function fetchEnhancedGrahamStocks(): Promise<StockDataResult<Enhan
     const perStockCodes = perData.map((item) => item.stock_code);
     console.log(`PER 조건 통과 종목 수: ${perStockCodes.length}`);
 
-    // 2. 부채비율 조건에 맞는 종목 배치로 가져오기 (부채비율 100% 미만)
-    const debtData = await fetchDataInBatches<any>(
-      'stock_checklist',
-      'stock_code, company_name, industry, subindustry, debtratio',
-      perStockCodes
-    );
+    // 2. 부채비율 조건에 맞는 종목 가져오기 (부채비율 100% 미만)
+    const { data: debtData, error: debtError } = await supabase
+      .from('stock_checklist')
+      .select('stock_code, company_name, industry, subindustry, debtratio')
+      .in('stock_code', perStockCodes)
+      .lt('debtratio', 100)
+      .not('debtratio', 'is', null);
 
-    // 부채비율 조건 필터링
-    const filteredDebtData = debtData.filter(
-      (item) => item.debtratio !== null && item.debtratio < 100
-    );
+    if (debtError) {
+      console.error('부채비율 데이터 가져오기 오류:', debtError);
+      throw new Error(debtError.message);
+    }
 
-    if (!filteredDebtData || filteredDebtData.length === 0) {
+    if (!debtData || debtData.length === 0) {
       console.log('부채비율 조건에 맞는 주식이 없습니다.');
       return emptyResult<EnhancedGrahamStock>('부채비율 조건에 맞는 주식을 찾을 수 없습니다.');
     }
 
-    const debtStockCodes = filteredDebtData.map((item) => item.stock_code);
+    const debtStockCodes = debtData.map((item) => item.stock_code);
     console.log(`부채비율 조건 통과 종목 수: ${debtStockCodes.length}`);
 
-    // 3. 현재가 데이터 배치로 가져오기
-    const priceData = await fetchDataInBatches<any>(
-      'stock_price',
-      'stock_code, current_price',
-      debtStockCodes
-    );
+    // 3. 현재가 데이터 가져오기
+    const { data: priceData, error: priceError } = await supabase
+      .from('stock_price')
+      .select('stock_code, current_price')
+      .in('stock_code', debtStockCodes);
+
+    if (priceError) {
+      console.error('현재가 데이터 가져오기 오류:', priceError);
+      throw new Error(priceError.message);
+    }
 
     if (!priceData || priceData.length === 0) {
       console.log('현재가 데이터가 없습니다.');
       return emptyResult<EnhancedGrahamStock>('현재가 데이터를 찾을 수 없습니다.');
     }
 
-    // 4. 재무 데이터 배치로 가져오기
-    const rawData = await fetchDataInBatches<any>(
-      'stock_raw_data',
-      `stock_code,
-      2022_eps, 2023_eps, 2024_eps,
-      2024_equity,
-      shares_outstanding,
-      2022_dividend, 2023_dividend, 2024_dividend,
-      2024_current_assets, 2024_current_liabilities, 2024_non_current_liabilities`,
-      debtStockCodes
-    );
+    // 4. 재무 데이터 가져오기 (EPS, 자본, 발행주식수, 재무상태표 데이터)
+    const { data: rawData, error: rawDataError } = await supabase
+      .from('stock_raw_data')
+      .select(
+        `
+        stock_code,
+        2022_eps, 2023_eps, 2024_eps,
+        2024_equity,
+        shares_outstanding,
+        2022_dividend, 2023_dividend, 2024_dividend,
+        2024_current_assets, 2024_current_liabilities, 2024_non_current_liabilities
+      `
+      )
+      .in('stock_code', debtStockCodes);
+
+    if (rawDataError) {
+      console.error('재무 데이터 가져오기 오류:', rawDataError);
+      throw new Error(rawDataError.message);
+    }
 
     if (!rawData || rawData.length === 0) {
       console.log('재무 데이터가 없습니다.');
@@ -882,7 +886,6 @@ export async function fetchEnhancedGrahamStocks(): Promise<StockDataResult<Enhan
     }
 
     // 5. 데이터 맵 생성
-    console.log('데이터 맵 생성 중...');
     const perMap = new Map(
       perData.map((item) => [
         item.stock_code,
@@ -894,7 +897,7 @@ export async function fetchEnhancedGrahamStocks(): Promise<StockDataResult<Enhan
     );
 
     const debtMap = new Map(
-      filteredDebtData.map((item) => [
+      debtData.map((item) => [
         item.stock_code,
         {
           company_name: item.company_name,
@@ -912,7 +915,6 @@ export async function fetchEnhancedGrahamStocks(): Promise<StockDataResult<Enhan
     const rawDataMap = new Map(rawData.map((item) => [item.stock_code, item]));
 
     // 6. 종목 필터링 및 그레이엄 가격 계산
-    console.log('종목 필터링 및 그레이엄 가격 계산 중...');
     const enhancedGrahamStocks: EnhancedGrahamStock[] = [];
 
     for (const stockCode of debtStockCodes) {
@@ -923,6 +925,7 @@ export async function fetchEnhancedGrahamStocks(): Promise<StockDataResult<Enhan
 
       // 필요한 모든 데이터가 있는지 확인
       if (!debtInfo || !perInfo || !currentPrice || !rawStockData) {
+        // console.log(`종목 ${stockCode} 데이터 누락으로 제외`);
         continue;
       }
 
@@ -946,6 +949,7 @@ export async function fetchEnhancedGrahamStocks(): Promise<StockDataResult<Enhan
       }
 
       if (isNaN(sharesOutstanding) || sharesOutstanding <= 0) {
+        // console.log(`종목 ${stockCode} 발행주식수 오류로 제외`);
         continue;
       }
 
@@ -990,6 +994,13 @@ export async function fetchEnhancedGrahamStocks(): Promise<StockDataResult<Enhan
 
       // 조건 확인: 현재가 < 수정 그레이엄 가격 (저평가 종목만 포함)
       if (currentPrice < modifiedGrahamPrice && discountRate > 0) {
+        // console.log(
+        //   `종목 ${
+        //     debtInfo.company_name
+        //   } (${stockCode}) 추가: 현재가 ${currentPrice}, 수정그레이엄가 ${modifiedGrahamPrice.toFixed(
+        //     2
+        //   )}, 저평가율 ${discountRate.toFixed(2)}%`
+        // );
         enhancedGrahamStocks.push({
           stock_code: stockCode,
           company_name: debtInfo.company_name,
@@ -1007,11 +1018,18 @@ export async function fetchEnhancedGrahamStocks(): Promise<StockDataResult<Enhan
           ncav_price: ncavPrice,
           modified_graham_price: modifiedGrahamPrice,
         });
+      } else {
+        // console.log(
+        //   `종목 ${
+        //     debtInfo.company_name
+        //   } (${stockCode}) 제외: 현재가 ${currentPrice}, 수정그레이엄가 ${modifiedGrahamPrice.toFixed(
+        //     2
+        //   )}, 저평가율 ${discountRate.toFixed(2)}%`
+        // );
       }
     }
 
     // 7. 산업군과 하위 산업군 목록 생성
-    console.log('산업군 및 하위 산업군 목록 생성 중...');
     const uniqueIndustries = Array.from(
       new Set(enhancedGrahamStocks.map((stock) => stock.industry))
     ).sort();
@@ -1039,87 +1057,93 @@ export async function fetchEnhancedGrahamStocks(): Promise<StockDataResult<Enhan
 // 고배당 가치주 데이터 가져오기 (Flavor Stocks)
 export async function fetchFlavorStocks(): Promise<StockDataResult<FlavorStock>> {
   try {
-    console.log('=== 고배당 가치주 데이터 가져오기 시작 ===');
+    // 1. 배당률 데이터 가져오기 (stock_current 테이블에서)
+    const { data: dividendData, error: dividendError } = await supabase
+      .from('stock_current')
+      .select('stock_code, current_dividend')
+      .not('current_dividend', 'is', null);
 
-    // 1. 배당률 데이터 페이지네이션으로 가져오기
-    const dividendData = await fetchAllDataWithPagination<any>(
-      'stock_current',
-      'stock_code, current_dividend',
-      'stock_code',
-      (query) => query.not('current_dividend', 'is', null)
-    );
+    if (dividendError) throw new Error(dividendError.message);
 
     if (!dividendData || dividendData.length === 0) {
       return emptyResult<FlavorStock>('배당 데이터를 찾을 수 없습니다.');
     }
 
-    // 배당률 5% 이상인 종목 코드만 필터링
-    const highDividendStocks = dividendData.filter((item) => item['current_dividend'] >= 5);
-    const stockCodes = highDividendStocks.map((item) => item.stock_code);
+    // 1-2. 자산 데이터 가져오기 (stock_raw_data 테이블에서)
+    const { data: assetsData, error: assetsError } = await supabase
+      .from('stock_raw_data')
+      .select('stock_code, 2024_assets')
+      .in(
+        'stock_code',
+        dividendData.map((item) => item.stock_code)
+      );
 
-    console.log(`배당률 5% 이상 종목 수: ${stockCodes.length}`);
+    if (assetsError) throw new Error(assetsError.message);
+
+    // 기본 필터링 조건(PER, PBR)에 맞는 종목 코드만 추출
+    const stockCodes = dividendData
+      .filter((item) => item['current_dividend'] >= 5) // 기본 최소 배당률 5%
+      .map((item) => item.stock_code);
 
     if (stockCodes.length === 0) {
       return emptyResult<FlavorStock>('배당률 조건에 맞는 주식을 찾을 수 없습니다.');
     }
 
-    // 2. 자산 데이터 배치로 가져오기
-    const assetsData = await fetchDataInBatches<any>(
-      'stock_raw_data',
-      'stock_code, 2024_assets',
-      stockCodes
-    );
+    // 2. PER, PBR 조건에 맞는 종목 가져오기
+    const { data: currentData, error: currentError } = await supabase
+      .from('stock_current')
+      .select('stock_code, current_per, current_pbr')
+      .in('stock_code', stockCodes)
+      .gt('current_per', 0)
+      .lte('current_per', 10)
+      .lte('current_pbr', 1)
+      .not('current_per', 'is', null)
+      .not('current_pbr', 'is', null);
 
-    // 3. PER, PBR 데이터 배치로 가져오기
-    const currentData = await fetchDataInBatches<any>(
-      'stock_current',
-      'stock_code, current_per, current_pbr',
-      stockCodes
-    );
+    if (currentError) throw new Error(currentError.message);
 
-    // PER, PBR 조건 필터링
-    const filteredCurrentData = currentData.filter(
-      (item) =>
-        item.current_per !== null &&
-        item.current_pbr !== null &&
-        item.current_per > 0 &&
-        item.current_per <= 10 &&
-        item.current_pbr <= 1
-    );
-
-    if (!filteredCurrentData || filteredCurrentData.length === 0) {
+    if (!currentData || currentData.length === 0) {
       return emptyResult<FlavorStock>('PER, PBR 조건에 맞는 주식을 찾을 수 없습니다.');
     }
 
-    // 필터링된 종목 코드
-    const filteredCodes = filteredCurrentData.map((item) => item.stock_code);
-    console.log(`PER, PBR 조건 통과 종목 수: ${filteredCodes.length}`);
+    // 조건을 만족하는 종목 코드
+    const filteredCodes = currentData.map((item) => item.stock_code);
 
-    // 4. 현재가 및 회사 정보 데이터 배치로 가져오기
-    const stockInfo = await fetchDataInBatches<any>(
-      'stock_price',
-      'stock_code, company_name, current_price',
-      filteredCodes
-    );
+    // 3. 현재가 및 회사 정보 데이터 가져오기
+    const { data: stockInfo, error: stockInfoError } = await supabase
+      .from('stock_price')
+      .select(
+        `
+        stock_code,
+        company_name,
+        current_price
+      `
+      )
+      .in('stock_code', filteredCodes);
 
-    // 5. 산업 정보 배치로 가져오기
-    const industryInfo = await fetchDataInBatches<any>(
-      'stock_checklist',
-      'stock_code, industry, subindustry',
-      filteredCodes
-    );
+    if (stockInfoError) throw new Error(stockInfoError.message);
 
-    // 6. 데이터 맵 생성
-    console.log('데이터 맵 생성 중...');
+    // 4. 산업 정보 가져오기
+    const { data: industryInfo, error: industryError } = await supabase
+      .from('stock_checklist')
+      .select(
+        `
+        stock_code,
+        industry,
+        subindustry
+      `
+      )
+      .in('stock_code', filteredCodes);
+
+    if (industryError) throw new Error(industryError.message);
+
+    // 5. 데이터 조인
     const perPbrMap = new Map(
-      filteredCurrentData.map((item) => [
-        item.stock_code,
-        { per: item.current_per, pbr: item.current_pbr },
-      ])
+      currentData.map((item) => [item.stock_code, { per: item.current_per, pbr: item.current_pbr }])
     );
 
     const assetsMap = new Map(
-      assetsData.map((item) => [item.stock_code, item['2024_assets'] || 0])
+      assetsData?.map((item) => [item.stock_code, item['2024_assets'] || 0]) || []
     );
 
     // 배당 데이터 맵 생성
@@ -1127,7 +1151,7 @@ export async function fetchFlavorStocks(): Promise<StockDataResult<FlavorStock>>
       dividendData.map((item) => [item.stock_code, item['current_dividend'] || 0])
     );
 
-    // 통합 맵 생성
+    // 기존 dividendAssetsMap 대신 두 맵을 사용하여 새로운 맵 생성
     const dividendAssetsMap = new Map(
       dividendData.map((item) => [
         item.stock_code,
@@ -1139,20 +1163,18 @@ export async function fetchFlavorStocks(): Promise<StockDataResult<FlavorStock>>
     );
 
     const industryMap = new Map(
-      industryInfo.map((item) => [
+      industryInfo?.map((item) => [
         item.stock_code,
         {
           industry: item.industry || '미분류',
           subindustry: item.subindustry || '미분류',
         },
-      ])
+      ]) || []
     );
 
-    // 7. 모든 조건을 만족하는 종목 데이터 구성
-    console.log('최종 데이터 구성 중...');
-    const flavorStocks: FlavorStock[] = stockInfo
-      .filter((item) => filteredCodes.includes(item.stock_code))
-      .map((item) => ({
+    // 모든 조건을 만족하는 종목 데이터 구성
+    const flavorStocks: FlavorStock[] =
+      stockInfo?.map((item) => ({
         stock_code: item.stock_code,
         company_name: item.company_name,
         industry: industryMap.get(item.stock_code)?.industry || '미분류',
@@ -1162,10 +1184,9 @@ export async function fetchFlavorStocks(): Promise<StockDataResult<FlavorStock>>
         current_price: item.current_price || 0,
         dividend_yield: dividendAssetsMap.get(item.stock_code)?.dividend || 0,
         assets: dividendAssetsMap.get(item.stock_code)?.assets || 0,
-      }));
+      })) || [];
 
-    // 8. 산업군과 하위 산업군 목록 생성
-    console.log('산업군 및 하위 산업군 목록 생성 중...');
+    // 산업군과 하위 산업군 목록 생성
     const uniqueIndustries = Array.from(
       new Set(flavorStocks.map((stock) => stock.industry))
     ).sort();
@@ -1173,8 +1194,6 @@ export async function fetchFlavorStocks(): Promise<StockDataResult<FlavorStock>>
     const uniqueSubIndustries = Array.from(
       new Set(flavorStocks.map((stock) => stock.subindustry))
     ).sort();
-
-    console.log(`최종 필터링 후 종목 수: ${flavorStocks.length}`);
 
     return {
       stocks: flavorStocks,
@@ -1190,29 +1209,136 @@ export async function fetchFlavorStocks(): Promise<StockDataResult<FlavorStock>>
   }
 }
 
+// 그레이엄 가치주 데이터 가져오기 (Graham Stocks)
+export async function fetchGrahamStocks(): Promise<StockDataResult<GrahamStock>> {
+  try {
+    // 1. PER 조건에 맞는 종목 먼저 가져오기
+    const { data: currentData, error: currentError } = await supabase
+      .from('stock_current')
+      .select('stock_code, current_per')
+      .gt('current_per', 0) // PER이 0보다 큰 경우 (0 초과)
+      .lte('current_per', 10) // PER이 10 이하
+      .not('current_per', 'is', null);
+
+    if (currentError) throw new Error(currentError.message);
+
+    if (!currentData || currentData.length === 0) {
+      return emptyResult<GrahamStock>('PER 조건에 맞는 주식을 찾을 수 없습니다.');
+    }
+
+    // PER 조건을 만족하는 종목 코드
+    const perStockCodes = currentData.map((item) => item.stock_code);
+
+    // 2. 부채비율 조건에 맞는 종목 가져오기
+    const { data: checklist, error: checklistError } = await supabase
+      .from('stock_checklist')
+      .select(
+        `
+        stock_code,
+        company_name,
+        industry,
+        subindustry,
+        debtratio
+      `
+      )
+      .in('stock_code', perStockCodes) // PER 조건을 만족하는 종목만 필터링
+      .lt('debtratio', 100)
+      .not('debtratio', 'is', null);
+
+    if (checklistError) throw new Error(checklistError.message);
+
+    if (!checklist || checklist.length === 0) {
+      return emptyResult<GrahamStock>('부채비율 조건에 맞는 주식을 찾을 수 없습니다.');
+    }
+
+    // 최종 조건을 만족하는 종목 코드
+    const filteredCodes = checklist.map((item) => item.stock_code);
+
+    // 3. 현재가 데이터 가져오기
+    const { data: priceData, error: priceError } = await supabase
+      .from('stock_price')
+      .select('stock_code, current_price')
+      .in('stock_code', filteredCodes);
+
+    if (priceError) throw new Error(priceError.message);
+
+    // 4. 배당률 데이터 가져오기
+    const { data: dividendAssetsData, error: dividendError } = await supabase
+      .from('stock_current')
+      .select('stock_code, current_dividend')
+      .in('stock_code', filteredCodes);
+
+    if (dividendError) throw new Error(dividendError.message);
+
+    // 5. 데이터 조인
+    const perMap = new Map(currentData.map((item) => [item.stock_code, item.current_per]));
+
+    const priceMap = new Map(priceData?.map((item) => [item.stock_code, item.current_price]) || []);
+
+    const dividendMap = new Map(
+      dividendAssetsData?.map((item) => [item.stock_code, item['current_dividend'] || 0]) || []
+    );
+
+    // 모든 조건을 만족하는 종목만 필터링
+    const filteredChecklist = checklist.filter((item) => filteredCodes.includes(item.stock_code));
+
+    if (filteredChecklist.length === 0) {
+      return emptyResult<GrahamStock>('조건에 맞는 주식을 찾을 수 없습니다.');
+    }
+
+    // 데이터 형식 변환
+    const grahamStocks: GrahamStock[] = filteredChecklist.map((item) => ({
+      stock_code: item.stock_code,
+      company_name: item.company_name,
+      industry: item.industry || '미분류',
+      subindustry: item.subindustry || '미분류',
+      current_per: perMap.get(item.stock_code) || 0,
+      debtratio: item.debtratio || 0,
+      current_price: priceMap.get(item.stock_code) || 0,
+      dividend_yield: dividendMap.get(item.stock_code) || 0,
+    }));
+
+    // 산업군과 하위 산업군 목록 생성
+    const uniqueIndustries = Array.from(
+      new Set(grahamStocks.map((stock) => stock.industry))
+    ).sort();
+
+    const uniqueSubIndustries = Array.from(
+      new Set(grahamStocks.map((stock) => stock.subindustry))
+    ).sort();
+
+    return {
+      stocks: grahamStocks,
+      industries: uniqueIndustries,
+      subIndustries: uniqueSubIndustries,
+      error: null,
+    };
+  } catch (err) {
+    console.error('데이터 가져오기 오류:', err);
+    return emptyResult<GrahamStock>(
+      err instanceof Error ? err.message : '데이터를 가져오는 중 오류가 발생했습니다.'
+    );
+  }
+}
+
 // 비즈니스 퀄리티 주식 데이터 가져오기
 export async function fetchQualityStocks(): Promise<StockDataResult<QualityStock>> {
   try {
-    console.log('=== 비즈니스 퀄리티 주식 데이터 가져오기 시작 ===');
+    // 1. stock_raw_data 테이블에서 ROE와 영업이익률 계산에 필요한 데이터 가져오기
+    const { data: rawData, error: rawDataError } = await supabase.from('stock_raw_data').select(`
+        stock_code, 
+        2022_net_income, 2023_net_income, 2024_net_income,
+        2022_equity, 2023_equity, 2024_equity,
+        2022_operating_income, 2023_operating_income, 2024_operating_income,
+        2022_revenue, 2023_revenue, 2024_revenue
+      `);
 
-    // 1. 재무 데이터 페이지네이션으로 가져오기
-    const rawData = await fetchAllDataWithPagination<any>(
-      'stock_raw_data',
-      `stock_code, 
-      2022_net_income, 2023_net_income, 2024_net_income,
-      2022_equity, 2023_equity, 2024_equity,
-      2022_operating_income, 2023_operating_income, 2024_operating_income,
-      2022_revenue, 2023_revenue, 2024_revenue`
-    );
-
+    if (rawDataError) throw new Error(rawDataError.message);
     if (!rawData || rawData.length === 0) {
       return emptyResult<QualityStock>('재무 데이터를 찾을 수 없습니다.');
     }
 
-    console.log(`재무 데이터 가져오기 완료: ${rawData.length}개 종목`);
-
-    // 2. 각 종목별로 ROE와 영업이익률 계산 및 필터링
-    console.log('ROE와 영업이익률 계산 및 필터링 중...');
+    // 2. 각 종목별로 ROE와 영업이익률 계산
     const qualityStocksMap = new Map();
 
     rawData.forEach((stock) => {
@@ -1257,72 +1383,79 @@ export async function fetchQualityStocks(): Promise<StockDataResult<QualityStock
 
     // 3. 조건을 만족하는 종목 코드
     const filteredCodes = Array.from(qualityStocksMap.keys());
-    console.log(`ROE, 영업이익률 조건 통과 종목 수: ${filteredCodes.length}`);
 
     if (filteredCodes.length === 0) {
       return emptyResult<QualityStock>('조건에 맞는 주식을 찾을 수 없습니다.');
     }
 
-    // 4. PER 데이터 배치로 가져오기 - 음수 PER 제외
-    const perData = await fetchDataInBatches<any>(
-      'stock_current',
-      'stock_code, current_per, current_dividend',
-      filteredCodes
-    );
+    // 4. PER 데이터 가져오기 - 음수 PER 제외
+    const { data: perData, error: perError } = await supabase
+      .from('stock_current')
+      .select('stock_code, current_per, current_dividend')
+      .in('stock_code', filteredCodes)
+      .gt('current_per', 0); // current_per > 0 조건 추가 (음수 PER 제외)
 
-    // PER 조건 필터링 (PER > 0)
-    const validPerData = perData.filter(
-      (item) => item.current_per !== null && item.current_per > 0
-    );
-    const perFilteredCodes = validPerData.map((item) => item.stock_code);
+    if (perError) throw new Error(perError.message);
 
-    console.log(`PER 조건 통과 종목 수: ${perFilteredCodes.length}`);
+    // PER 조건을 만족하는 종목 코드만 다시 필터링
+    const perFilteredCodes = perData?.map((item) => item.stock_code) || [];
 
     if (perFilteredCodes.length === 0) {
       return emptyResult<QualityStock>('PER 조건까지 만족하는 주식을 찾을 수 없습니다.');
     }
 
-    // 5. 현재가 및 회사 정보 배치로 가져오기
-    const stockInfo = await fetchDataInBatches<any>(
-      'stock_price',
-      'stock_code, company_name, current_price',
-      perFilteredCodes
-    );
+    // 5. 현재가 및 회사 정보 데이터 가져오기
+    const { data: stockInfo, error: stockInfoError } = await supabase
+      .from('stock_price')
+      .select(
+        `
+        stock_code,
+        company_name,
+        current_price
+      `
+      )
+      .in('stock_code', perFilteredCodes);
 
-    // 6. 산업 정보 배치로 가져오기
-    const industryInfo = await fetchDataInBatches<any>(
-      'stock_checklist',
-      'stock_code, industry, subindustry',
-      perFilteredCodes
-    );
+    if (stockInfoError) throw new Error(stockInfoError.message);
+
+    // 6. 산업 정보 가져오기
+    const { data: industryInfo, error: industryError } = await supabase
+      .from('stock_checklist')
+      .select(
+        `
+        stock_code,
+        industry,
+        subindustry
+      `
+      )
+      .in('stock_code', perFilteredCodes);
+
+    if (industryError) throw new Error(industryError.message);
 
     // 7. 데이터 맵 생성
-    console.log('데이터 맵 생성 중...');
     const perMap = new Map(
-      validPerData.map((item) => [
+      perData?.map((item) => [
         item.stock_code,
         {
           per: item.current_per || 0,
           dividend: item['current_dividend'] || 0,
         },
-      ])
+      ]) || []
     );
 
     const industryMap = new Map(
-      industryInfo.map((item) => [
+      industryInfo?.map((item) => [
         item.stock_code,
         {
           industry: item.industry || '미분류',
           subindustry: item.subindustry || '미분류',
         },
-      ])
+      ]) || []
     );
 
     // 8. 모든 조건을 만족하는 종목 데이터 구성
-    console.log('최종 데이터 구성 중...');
-    const QualityStocks: QualityStock[] = stockInfo
-      .filter((item) => perFilteredCodes.includes(item.stock_code))
-      .map((item) => {
+    const QualityStocks: QualityStock[] =
+      stockInfo?.map((item) => {
         const qualityData = qualityStocksMap.get(item.stock_code);
         const perData = perMap.get(item.stock_code);
 
@@ -1337,10 +1470,9 @@ export async function fetchQualityStocks(): Promise<StockDataResult<QualityStock
           avg_roe: qualityData?.avg_roe || 0,
           avg_operating_margin: qualityData?.avg_operating_margin || 0,
         };
-      });
+      }) || [];
 
     // 9. 산업군과 하위 산업군 목록 생성
-    console.log('산업군 및 하위 산업군 목록 생성 중...');
     const uniqueIndustries = Array.from(
       new Set(QualityStocks.map((stock) => stock.industry))
     ).sort();
@@ -1348,8 +1480,6 @@ export async function fetchQualityStocks(): Promise<StockDataResult<QualityStock
     const uniqueSubIndustries = Array.from(
       new Set(QualityStocks.map((stock) => stock.subindustry))
     ).sort();
-
-    console.log(`최종 필터링 후 종목 수: ${QualityStocks.length}`);
 
     // 10. 최종 결과 반환
     return {

@@ -371,3 +371,86 @@
   height: 100%;
   border-radius: 0.5rem;
 }
+
+/* 아코디언 애니메이션 */
+.accordion-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.accordion-content.open {
+  max-height: 500px;
+}
+
+.filter-container {
+  padding: 1rem;
+}
+
+.filter-section {
+  margin-bottom: 0.75rem;
+}
+
+.filter-label {
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.filter-select,
+.filter-input {
+  padding: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.filter-button {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.scrollable-hint {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(
+    90deg,
+    rgba(59, 130, 246, 0.1),
+    rgba(59, 130, 246, 0.5),
+    rgba(59, 130, 246, 0.1)
+  );
+  animation: scrollHint 2s infinite;
+}
+
+@keyframes scrollHint {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.table-head-cell {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.sticky-left {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+}
+
+.table-row-hover:hover .sticky-left {
+  background-color: rgb(249, 250, 251);
+}
+
+.sort-icon {
+  transition: transform 0.2s ease;
+}
+
+.table-row-hover:hover .sort-icon {
+  transform: scale(1.2);
+}

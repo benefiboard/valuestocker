@@ -28,58 +28,7 @@ export default function Home() {
             전략별 종목 리스트
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3  gap-6 sm:gap-8">
-            {/* 벤자민 그레이엄 전략 카드 */}
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
-              <div className="p-5 border-b border-gray-200">
-                <h3 className="text-xl font-bold text-gray-900 mb-1">벤자민 그레이엄 전략</h3>
-                <p className="text-sm text-gray-600">
-                  가치투자의 창시자가 벤자민 그레이엄이 제안한 안전한 투자 원칙
-                </p>
-              </div>
-
-              <div className="p-5">
-                <div className="mb-5">
-                  <ul className="space-y-4">
-                    <li className="flex items-start">
-                      <div className="border border-gray-300 p-1 rounded-full mr-3 mt-0.5">
-                        <CheckSquare className="h-4 w-4 text-gray-700" />
-                      </div>
-                      <div>
-                        <span className="text-sm font-medium">PER 10 이하</span>
-                        <p className="text-xs text-gray-500">수익성 대비 저평가된 기업</p>
-                      </div>
-                    </li>
-                    <li className="flex items-start">
-                      <div className="border border-gray-300 p-1 rounded-full mr-3 mt-0.5">
-                        <CheckSquare className="h-4 w-4 text-gray-700" />
-                      </div>
-                      <div>
-                        <span className="text-sm font-medium">부채비율 100% 미만</span>
-                        <p className="text-xs text-gray-500">재무적으로 안정적인 기업</p>
-                      </div>
-                    </li>
-                    <li className="flex items-start">
-                      <div className="border border-gray-300 p-1 rounded-full mr-3 mt-0.5">
-                        <CheckSquare className="h-4 w-4 text-gray-700" />
-                      </div>
-                      <div>
-                        <span className="text-sm font-medium">전통적이고 심플한 방법</span>
-                        <p className="text-xs text-gray-500">그레이엄의 기본 전략</p>
-                      </div>
-                    </li>
-                  </ul>
-                </div>
-
-                <Link href="/graham" className="block w-full">
-                  <button className="w-full bg-black hover:bg-gray-800 text-white px-5 py-3 rounded-xl font-medium transition-colors flex items-center justify-center">
-                    그레이엄 종목 보기
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </button>
-                </Link>
-              </div>
-            </div>
-
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
             {/* 고배당 가치주 전략 카드 */}
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
               <div className="p-5 border-b border-gray-200">
@@ -182,11 +131,13 @@ export default function Home() {
               </div>
             </div>
 
-            {/* 벤자민 그레이엄 지혜 카드 - 큰 화면에서만 표시 */}
-            {/* <div className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden lg:block hidden">
+            {/* S-RIM 전략 카드 */}
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
               <div className="p-5 border-b border-gray-200">
-                <h3 className="text-xl font-bold text-gray-900 mb-1">가치투자의 지혜</h3>
-                <p className="text-sm text-gray-600">벤자민 그레이엄의 투자 철학과 원칙</p>
+                <h3 className="text-xl font-bold text-gray-900 mb-1">S-RIM 내재가치 전략</h3>
+                <p className="text-sm text-gray-600">
+                  초과이익 모델을 활용한 기업의 본질적 가치 평가 방법론
+                </p>
               </div>
 
               <div className="p-5">
@@ -197,10 +148,8 @@ export default function Home() {
                         <CheckSquare className="h-4 w-4 text-gray-700" />
                       </div>
                       <div>
-                        <span className="text-sm font-medium">안전마진(Margin of Safety)</span>
-                        <p className="text-xs text-gray-500">
-                          적정가격보다 충분히 낮은 가격에 매수
-                        </p>
+                        <span className="text-sm font-medium">ROE 기반 평가</span>
+                        <p className="text-xs text-gray-500">초과이익의 현재가치와 순자산 평가</p>
                       </div>
                     </li>
                     <li className="flex items-start">
@@ -208,8 +157,8 @@ export default function Home() {
                         <CheckSquare className="h-4 w-4 text-gray-700" />
                       </div>
                       <div>
-                        <span className="text-sm font-medium">Low Risk & Medium Return</span>
-                        <p className="text-xs text-gray-500">낮은 위험으로 적절한 수익 추구</p>
+                        <span className="text-sm font-medium">최소 30% 안전마진</span>
+                        <p className="text-xs text-gray-500">내재가치 대비 충분한 할인율 적용</p>
                       </div>
                     </li>
                     <li className="flex items-start">
@@ -217,23 +166,176 @@ export default function Home() {
                         <CheckSquare className="h-4 w-4 text-gray-700" />
                       </div>
                       <div>
-                        <span className="text-sm font-medium">"시장은 투표기가 아닌 저울"</span>
+                        <span className="text-sm font-medium">장기 계속기업 가치</span>
                         <p className="text-xs text-gray-500">
-                          단기적 인기가 아닌 본질적 가치를 측정
+                          청산가치가 아닌 지속가능 가치에 중점
                         </p>
                       </div>
                     </li>
                   </ul>
                 </div>
 
-                <Link href="/graham-wisdom" className="block w-full">
+                <Link href="/s-rim" className="block w-full">
                   <button className="w-full bg-black hover:bg-gray-800 text-white px-5 py-3 rounded-xl font-medium transition-colors flex items-center justify-center">
-                    투자 지혜 더 보기
+                    S-RIM 종목 보기
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </button>
                 </Link>
               </div>
-            </div> */}
+            </div>
+
+            {/* 벤자민 그레이엄 전략 카드 */}
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
+              <div className="p-5 border-b border-gray-200">
+                <h3 className="text-xl font-bold text-gray-900 mb-1">벤자민 그레이엄 전략</h3>
+                <p className="text-sm text-gray-600">
+                  가치투자의 창시자가 벤자민 그레이엄이 제안한 안전한 투자 원칙
+                </p>
+              </div>
+
+              <div className="p-5">
+                <div className="mb-5">
+                  <ul className="space-y-4">
+                    <li className="flex items-start">
+                      <div className="border border-gray-300 p-1 rounded-full mr-3 mt-0.5">
+                        <CheckSquare className="h-4 w-4 text-gray-700" />
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium">PER 10 이하</span>
+                        <p className="text-xs text-gray-500">수익성 대비 저평가된 기업</p>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="border border-gray-300 p-1 rounded-full mr-3 mt-0.5">
+                        <CheckSquare className="h-4 w-4 text-gray-700" />
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium">부채비율 100% 미만</span>
+                        <p className="text-xs text-gray-500">재무적으로 안정적인 기업</p>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="border border-gray-300 p-1 rounded-full mr-3 mt-0.5">
+                        <CheckSquare className="h-4 w-4 text-gray-700" />
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium">전통적이고 심플한 방법</span>
+                        <p className="text-xs text-gray-500">그레이엄의 기본 전략</p>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+
+                <Link href="/graham" className="block w-full">
+                  <button className="w-full bg-black hover:bg-gray-800 text-white px-5 py-3 rounded-xl font-medium transition-colors flex items-center justify-center">
+                    그레이엄 종목 보기
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </button>
+                </Link>
+              </div>
+            </div>
+
+            {/* 하워드 막스 내재가치 전략 카드 */}
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
+              <div className="p-5 border-b border-gray-200">
+                <h3 className="text-xl font-bold text-gray-900 mb-1">하워드 막스 내재가치</h3>
+                <p className="text-sm text-gray-600">
+                  현금흐름 할인법과 안전마진을 중시하는 하워드 막스의 투자 원칙
+                </p>
+              </div>
+
+              <div className="p-5">
+                <div className="mb-5">
+                  <ul className="space-y-4">
+                    <li className="flex items-start">
+                      <div className="border border-gray-300 p-1 rounded-full mr-3 mt-0.5">
+                        <CheckSquare className="h-4 w-4 text-gray-700" />
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium">현금흐름 할인법(DCF)</span>
+                        <p className="text-xs text-gray-500">미래 현금흐름의 현재가치 평가</p>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="border border-gray-300 p-1 rounded-full mr-3 mt-0.5">
+                        <CheckSquare className="h-4 w-4 text-gray-700" />
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium">최소 30% 안전마진</span>
+                        <p className="text-xs text-gray-500">내재가치 대비 충분한 할인율 적용</p>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="border border-gray-300 p-1 rounded-full mr-3 mt-0.5">
+                        <CheckSquare className="h-4 w-4 text-gray-700" />
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium">시나리오 분석 접근법</span>
+                        <p className="text-xs text-gray-500">다양한 시나리오로 가치 범위 평가</p>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+
+                <Link href="/howard" className="block w-full">
+                  <button className="w-full bg-black hover:bg-gray-800 text-white px-5 py-3 rounded-xl font-medium transition-colors flex items-center justify-center">
+                    내재가치 종목 보기
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </button>
+                </Link>
+              </div>
+            </div>
+
+            {/* 피터 린치 PEG 전략 카드 */}
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
+              <div className="p-5 border-b border-gray-200">
+                <h3 className="text-xl font-bold text-gray-900 mb-1">피터 린치 PEG 전략</h3>
+                <p className="text-sm text-gray-600">
+                  성장률 대비 저평가된 기업을 발굴하는 성장 가치 투자 접근법
+                </p>
+              </div>
+
+              <div className="p-5">
+                <div className="mb-5">
+                  <ul className="space-y-4">
+                    <li className="flex items-start">
+                      <div className="border border-gray-300 p-1 rounded-full mr-3 mt-0.5">
+                        <CheckSquare className="h-4 w-4 text-gray-700" />
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium">PEG 비율 1.0 이하</span>
+                        <p className="text-xs text-gray-500">PER를 성장률로 나눈 값이 1.0 이하</p>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="border border-gray-300 p-1 rounded-full mr-3 mt-0.5">
+                        <CheckSquare className="h-4 w-4 text-gray-700" />
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium">높은 성장률 기업</span>
+                        <p className="text-xs text-gray-500">안정적인 이익 성장 추세 기업</p>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="border border-gray-300 p-1 rounded-full mr-3 mt-0.5">
+                        <CheckSquare className="h-4 w-4 text-gray-700" />
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium">최소 30% 안전마진</span>
+                        <p className="text-xs text-gray-500">적정가 대비 충분한 할인률 확보</p>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+
+                <Link href="/lynch" className="block w-full">
+                  <button className="w-full bg-black hover:bg-gray-800 text-white px-5 py-3 rounded-xl font-medium transition-colors flex items-center justify-center">
+                    PEG 종목 보기
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </button>
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -301,6 +403,15 @@ export default function Home() {
 
       <footer className="mt-12 text-center text-gray-500 text-xs sm:text-sm">
         <p>© 2025 ValueTargeter. All rights reserved.</p>
+        <p className="mt-2">
+          문의사항 및 제안:{' '}
+          <a
+            href="mailto:benefiboard@gmail.com"
+            className="underline hover:text-gray-700 transition-colors"
+          >
+            benefiboard@gmail.com
+          </a>
+        </p>
       </footer>
     </div>
   );
