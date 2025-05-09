@@ -3915,13 +3915,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '철강/조선',
     subIndustry: '비철금속',
   },
-  '258540': {
-    dartCode: '01109122',
-    companyName: '에스엘테라퓨틱스',
-    stockCode: '258540',
-    industry: '바이오/제약',
-    subIndustry: '생물공학',
-  },
+
   '258610': {
     dartCode: '00961507',
     companyName: '케일럼',
