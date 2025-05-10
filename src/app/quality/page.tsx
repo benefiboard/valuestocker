@@ -24,6 +24,8 @@ import {
   ChevronRight,
   ChevronDown,
   ChevronUp,
+  Check,
+  X,
 } from 'lucide-react';
 import { StockLinkButtons } from '../../components/StockLinkButtons';
 import { fetchQualityStocks } from '@/utils/stockDataService';
@@ -39,6 +41,7 @@ interface QualityStock {
   dividend_yield: number;
   avg_roe: number;
   avg_operating_margin: number;
+  consecutive_dividend: boolean; // 3년 연속 배당 여부 추가
 }
 
 // 정렬 타입 정의
@@ -50,7 +53,8 @@ type SortField =
   | 'industry'
   | 'subindustry'
   | 'current_price'
-  | 'dividend_yield';
+  | 'dividend_yield'
+  | 'consecutive_dividend'; // 정렬 필드에 연속 배당 추가
 type SortDirection = 'asc' | 'desc';
 type ViewMode = 'table' | 'mobileTable';
 
@@ -68,6 +72,7 @@ export default function QualityPage() {
   const [roeMaxFilter, setRoeMaxFilter] = useState<number | ''>('');
   const [marginMinFilter, setMarginMinFilter] = useState<number | ''>(15);
   const [marginMaxFilter, setMarginMaxFilter] = useState<number | ''>('');
+  const [consecutiveDividendFilter, setConsecutiveDividendFilter] = useState<boolean | null>(null); // 연속 배당 필터 추가
   const [industries, setIndustries] = useState<string[]>([]);
   const [subIndustries, setSubIndustries] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -155,6 +160,13 @@ export default function QualityPage() {
       filtered = filtered.filter((stock) => stock.avg_operating_margin <= marginMaxValue);
     }
 
+    // 연속 배당 필터 추가
+    if (consecutiveDividendFilter !== null) {
+      filtered = filtered.filter(
+        (stock) => stock.consecutive_dividend === consecutiveDividendFilter
+      );
+    }
+
     // 정렬 적용
     filtered.sort((a, b) => {
       const valueA = a[sortField];
@@ -165,6 +177,13 @@ export default function QualityPage() {
         return sortDirection === 'asc'
           ? valueA.localeCompare(valueB)
           : valueB.localeCompare(valueA);
+      }
+
+      // 불리언 정렬 (연속 배당 필드용)
+      if (typeof valueA === 'boolean' && typeof valueB === 'boolean') {
+        return sortDirection === 'asc'
+          ? Number(valueA) - Number(valueB)
+          : Number(valueB) - Number(valueA);
       }
 
       // 숫자 정렬
@@ -183,6 +202,7 @@ export default function QualityPage() {
     roeMaxFilter,
     marginMinFilter,
     marginMaxFilter,
+    consecutiveDividendFilter, // 의존성 배열에 추가
     sortField,
     sortDirection,
   ]);
@@ -237,6 +257,7 @@ export default function QualityPage() {
     setRoeMaxFilter('');
     setMarginMinFilter(15);
     setMarginMaxFilter('');
+    setConsecutiveDividendFilter(null); // 연속 배당 필터 초기화 추가
     setSortField('avg_roe');
     setSortDirection('desc');
   };
@@ -328,6 +349,10 @@ export default function QualityPage() {
                   <li>
                     <strong className="text-emerald-700">3년 평균 영업이익률 15% 이상</strong> -
                     매출 대비 높은 이익 마진
+                  </li>
+                  <li>
+                    <strong className="text-emerald-700">3년 연속 배당 여부 표시</strong> -
+                    2022-2024년 연속 배당금 지급 여부
                   </li>
                 </ul>
                 <p className="text-sm sm:text-base text-gray-700 mt-3">
@@ -478,6 +503,34 @@ export default function QualityPage() {
                     </div>
                   </div>
 
+                  {/* 연속 배당 필터 추가 */}
+                  <div className="filter-section">
+                    <label className="filter-label block font-medium text-gray-700">
+                      연속 배당 여부
+                    </label>
+                    <select
+                      value={
+                        consecutiveDividendFilter === null
+                          ? ''
+                          : consecutiveDividendFilter
+                          ? 'true'
+                          : 'false'
+                      }
+                      onChange={(e) => {
+                        if (e.target.value === '') {
+                          setConsecutiveDividendFilter(null);
+                        } else {
+                          setConsecutiveDividendFilter(e.target.value === 'true');
+                        }
+                      }}
+                      className="filter-select w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
+                    >
+                      <option value="">전체</option>
+                      <option value="true">O (3년 연속 배당)</option>
+                      <option value="false">X (연속 배당 아님)</option>
+                    </select>
+                  </div>
+
                   {/* 정렬 필드 */}
                   <div className="filter-section">
                     <label className="filter-label block font-medium text-gray-700">
@@ -494,6 +547,7 @@ export default function QualityPage() {
                         <option value="current_per">PER</option>
                         <option value="current_price">현재가</option>
                         <option value="dividend_yield">배당률</option>
+                        <option value="consecutive_dividend">연속 배당</option>
                         <option value="company_name">회사명</option>
                         <option value="industry">산업군</option>
                         <option value="subindustry">하위 산업군</option>
@@ -607,11 +661,11 @@ export default function QualityPage() {
                         <th
                           scope="col"
                           className="bg-gray-50 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
-                          onClick={() => toggleSort('current_per')}
+                          onClick={() => toggleSort('consecutive_dividend')}
                         >
                           <div className="flex items-center whitespace-nowrap">
-                            PER
-                            {renderSortIcon('current_per')}
+                            연속배당
+                            {renderSortIcon('consecutive_dividend')}
                           </div>
                         </th>
                         <th
@@ -645,10 +699,16 @@ export default function QualityPage() {
                               {stock.avg_operating_margin.toFixed(2)}%
                             </div>
                           </td>
-                          <td className="bg-gray-50 px-3 py-3 whitespace-nowrap">
-                            <div className="text-xs font-semibold text-gray-900">
-                              {stock.current_per.toFixed(2)}
-                            </div>
+                          <td className="bg-gray-50 px-3 py-3 whitespace-nowrap text-center">
+                            {stock.consecutive_dividend ? (
+                              <div className="inline-flex items-center justify-center bg-emerald-50 w-5 h-5 rounded-full">
+                                <Check size={12} className="text-emerald-600" />
+                              </div>
+                            ) : (
+                              <div className="inline-flex items-center justify-center bg-red-50 w-5 h-5 rounded-full">
+                                <X size={12} className="text-red-600" />
+                              </div>
+                            )}
                           </td>
                           <td className="bg-gray-50 px-3 py-3 text-right whitespace-nowrap">
                             <StockLinkButtons stockCode={stock.stock_code} style="mobileTable" />
@@ -729,6 +789,16 @@ export default function QualityPage() {
                         <th
                           scope="col"
                           className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
+                          onClick={() => toggleSort('consecutive_dividend')}
+                        >
+                          <div className="flex items-center">
+                            연속배당
+                            {renderSortIcon('consecutive_dividend')}
+                          </div>
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
                           onClick={() => toggleSort('current_price')}
                         >
                           <div className="flex items-center">
@@ -779,6 +849,17 @@ export default function QualityPage() {
                             <div className="text-sm font-semibold text-gray-900">
                               {stock.dividend_yield.toFixed(2)}%
                             </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-center">
+                            {stock.consecutive_dividend ? (
+                              <div className="inline-flex items-center justify-center bg-emerald-50 w-7 h-7 rounded-full">
+                                <Check size={16} className="text-emerald-600" />
+                              </div>
+                            ) : (
+                              <div className="inline-flex items-center justify-center bg-red-50 w-7 h-7 rounded-full">
+                                <X size={16} className="text-red-600" />
+                              </div>
+                            )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-900">

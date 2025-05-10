@@ -261,13 +261,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '화학/소재',
     subIndustry: '전기장비',
   },
-  '103660': {
-    dartCode: '00762377',
-    companyName: '씨앗',
-    stockCode: '103660',
-    industry: '화학/소재',
-    subIndustry: '화학',
-  },
+  
   '103840': {
     dartCode: '00486875',
     companyName: '우양',
@@ -562,13 +556,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '인터넷/플랫폼',
     subIndustry: '게임엔터테인먼트',
   },
-  '112190': {
-    dartCode: '00366517',
-    companyName: 'KC산업',
-    stockCode: '112190',
-    industry: '건설',
-    subIndustry: '건축자재',
-  },
+  
   '112610': {
     dartCode: '00670340',
     companyName: '씨에스윈드',
@@ -618,13 +606,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '반도체',
     subIndustry: '반도체와반도체장비',
   },
-  '114920': {
-    dartCode: '00414540',
-    companyName: '대주이엔티',
-    stockCode: '114920',
-    industry: '건설',
-    subIndustry: '기계',
-  },
+  
   '115160': {
     dartCode: '00787057',
     companyName: '휴맥스',
@@ -695,13 +677,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '통신',
     subIndustry: '핸드셋',
   },
-  '116100': {
-    dartCode: '00442631',
-    companyName: '태양기계',
-    stockCode: '116100',
-    industry: '자동차',
-    subIndustry: '자동차부품',
-  },
+  
   '117580': {
     dartCode: '00787376',
     companyName: '대성에너지',
@@ -793,13 +769,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '화학/소재',
     subIndustry: '화학',
   },
-  '121060': {
-    dartCode: '00445869',
-    companyName: '유니포인트',
-    stockCode: '121060',
-    industry: 'IT/소프트웨어',
-    subIndustry: 'IT서비스',
-  },
+  
   '121440': {
     dartCode: '00674498',
     companyName: '골프존뉴딘홀딩스',
@@ -1248,13 +1218,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: 'etc',
     subIndustry: 'etc',
   },
-  '136660': {
-    dartCode: '00816696',
-    companyName: '큐엠씨',
-    stockCode: '136660',
-    industry: '반도체',
-    subIndustry: '반도체와반도체장비',
-  },
+  
   '137400': {
     dartCode: '00612294',
     companyName: '피엔티',
@@ -1374,20 +1338,8 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '철강/조선',
     subIndustry: '철강',
   },
-  '140610': {
-    dartCode: '01018802',
-    companyName: '엔솔바이오사이언스',
-    stockCode: '140610',
-    industry: '바이오/제약',
-    subIndustry: '제약',
-  },
-  '140660': {
-    dartCode: '00663289',
-    companyName: '위월드',
-    stockCode: '140660',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
+  
   '140670': {
     dartCode: '00858124',
     companyName: '알에스오토메이션',
@@ -1556,20 +1508,8 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: 'IT/소프트웨어',
     subIndustry: '소프트웨어',
   },
-  '149010': {
-    dartCode: '00861100',
-    companyName: '아이케이세미콘',
-    stockCode: '149010',
-    industry: '반도체',
-    subIndustry: '반도체와반도체장비',
-  },
-  '149300': {
-    dartCode: '00578130',
-    companyName: '아퓨어스',
-    stockCode: '149300',
-    industry: '바이오/제약',
-    subIndustry: '생물공학',
-  },
+  
+  
   '149950': {
     dartCode: '00442048',
     companyName: '아바텍',
@@ -1738,13 +1678,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '유통/소매',
     subIndustry: '화장품',
   },
-  '162120': {
-    dartCode: '00886792',
-    companyName: '루켄테크놀러지스',
-    stockCode: '162120',
-    industry: '반도체',
-    subIndustry: '디스플레이장비및부품',
-  },
+  
   '163560': {
     dartCode: '00939687',
     companyName: '동일고무벨트',
@@ -1906,13 +1840,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '자동차',
     subIndustry: '전기제품',
   },
-  '178600': {
-    dartCode: '00910202',
-    companyName: '대동고려삼',
-    stockCode: '178600',
-    industry: '바이오/제약',
-    subIndustry: '제약',
-  },
+  
   '178780': {
     dartCode: '00923826',
     companyName: '일월지엠엘',
@@ -1941,13 +1869,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '바이오/제약',
     subIndustry: '제약',
   },
-  '179720': {
-    dartCode: '00978075',
-    companyName: '머니무브',
-    stockCode: '179720',
-    industry: '금융',
-    subIndustry: '기타금융',
-  },
+  
   '179900': {
     dartCode: '00961774',
     companyName: '유티아이',
@@ -1955,13 +1877,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '통신',
     subIndustry: '핸드셋',
   },
-  '180060': {
-    dartCode: '00874937',
-    companyName: '탑선',
-    stockCode: '180060',
-    industry: '유틸리티',
-    subIndustry: '에너지장비및서비스',
-  },
+  
   '180400': {
     dartCode: '00995993',
     companyName: 'DXVX',
@@ -2025,13 +1941,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: 'IT/소프트웨어',
     subIndustry: '소프트웨어',
   },
-  '185190': {
-    dartCode: '00830447',
-    companyName: '수프로',
-    stockCode: '185190',
-    industry: '화학/소재',
-    subIndustry: '종이와목재',
-  },
+  
   '185490': {
     dartCode: '00945457',
     companyName: '아이진',
@@ -2102,13 +2012,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: 'IT/소프트웨어',
     subIndustry: 'IT서비스',
   },
-  '189350': {
-    dartCode: '00965062',
-    companyName: '코셋',
-    stockCode: '189350',
-    industry: '통신',
-    subIndustry: '통신장비',
-  },
+  
   '189690': {
     dartCode: '00939942',
     companyName: '포시에스',
@@ -2158,13 +2062,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '바이오/제약',
     subIndustry: '생물공학',
   },
-  '191600': {
-    dartCode: '00611286',
-    companyName: '블루탑',
-    stockCode: '191600',
-    industry: '반도체',
-    subIndustry: '전자장비와기기',
-  },
+  
   '192080': {
     dartCode: '01010110',
     companyName: '더블유게임즈',
@@ -2333,20 +2231,8 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '자동차',
     subIndustry: '자동차부품',
   },
-  '199150': {
-    dartCode: '00553025',
-    companyName: '데이터스트림즈',
-    stockCode: '199150',
-    industry: 'IT/소프트웨어',
-    subIndustry: 'IT서비스',
-  },
-  '199290': {
-    dartCode: '00669450',
-    companyName: '바이오프로테크',
-    stockCode: '199290',
-    industry: '바이오/제약',
-    subIndustry: '건강관리장비와용품',
-  },
+  
+  
   '199800': {
     dartCode: '00547510',
     companyName: '툴젠',
@@ -2382,13 +2268,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '반도체',
     subIndustry: '반도체와반도체장비',
   },
-  '200580': {
-    dartCode: '01018617',
-    companyName: '메디쎄이',
-    stockCode: '200580',
-    industry: '바이오/제약',
-    subIndustry: '건강관리장비와용품',
-  },
+  
   '200670': {
     dartCode: '00614478',
     companyName: '휴메딕스',
@@ -2424,13 +2304,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '인터넷/플랫폼',
     subIndustry: '게임엔터테인먼트',
   },
-  '202960': {
-    dartCode: '00541862',
-    companyName: '판도라티비',
-    stockCode: '202960',
-    industry: 'IT/소프트웨어',
-    subIndustry: '양방향미디어와서비스',
-  },
+  
   '203400': {
     dartCode: '00977377',
     companyName: '에이비온',
@@ -2557,20 +2431,8 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '바이오/제약',
     subIndustry: '생물공학',
   },
-  '206950': {
-    dartCode: '00756163',
-    companyName: '볼빅',
-    stockCode: '206950',
-    industry: '생활소비재',
-    subIndustry: '레저용장비와제품',
-  },
-  '207490': {
-    dartCode: '00832700',
-    companyName: '에이펙스인텍',
-    stockCode: '207490',
-    industry: '반도체',
-    subIndustry: '디스플레이장비및부품',
-  },
+  
+  
   '207760': {
     dartCode: '01047840',
     companyName: '미스터블루',
@@ -2627,13 +2489,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: 'etc',
     subIndustry: 'etc',
   },
-  '208850': {
-    dartCode: '01116344',
-    companyName: '이비테크',
-    stockCode: '208850',
-    industry: '화학/소재',
-    subIndustry: '전기장비',
-  },
+  
   '208860': {
     dartCode: '01084364',
     companyName: '엔지스테크널러지',
@@ -2641,13 +2497,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: 'etc',
     subIndustry: 'etc',
   },
-  '208890': {
-    dartCode: '00876209',
-    companyName: '미래엔에듀파트너',
-    stockCode: '208890',
-    industry: '기타서비스',
-    subIndustry: '교육서비스',
-  },
+  
   '210120': {
     dartCode: '00550082',
     companyName: '캔버스엔',
@@ -2683,13 +2533,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '통신',
     subIndustry: '통신장비',
   },
-  '212310': {
-    dartCode: '01085442',
-    companyName: '오건에코텍',
-    stockCode: '212310',
-    industry: '바이오/제약',
-    subIndustry: '건강관리장비와용품',
-  },
+  
   '212560': {
     dartCode: '00876865',
     companyName: '네오오토',
@@ -2851,13 +2695,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '유통/소매',
     subIndustry: '섬유,의류,신발,호화품',
   },
-  '215570': {
-    dartCode: '01034730',
-    companyName: '크로넥스',
-    stockCode: '215570',
-    industry: '바이오/제약',
-    subIndustry: '생물공학',
-  },
+  
   '215600': {
     dartCode: '00919966',
     companyName: '신라젠',
@@ -2886,13 +2724,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '바이오/제약',
     subIndustry: '건강관리장비와용품',
   },
-  '216400': {
-    dartCode: '00537221',
-    companyName: '인바이츠바이오코아',
-    stockCode: '216400',
-    industry: '바이오/제약',
-    subIndustry: '생물공학',
-  },
+  
   '217190': {
     dartCode: '00666204',
     companyName: '제너셈',
@@ -2907,13 +2739,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '인터넷/플랫폼',
     subIndustry: '게임엔터테인먼트',
   },
-  '217320': {
-    dartCode: '00963000',
-    companyName: '썬테크',
-    stockCode: '217320',
-    industry: '화학/소재',
-    subIndustry: '전기장비',
-  },
+  
   '217330': {
     dartCode: '01046391',
     companyName: '싸이토젠',
@@ -2956,27 +2782,9 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '자동차',
     subIndustry: '전기제품',
   },
-  '217880': {
-    dartCode: '00976615',
-    companyName: '틸론',
-    stockCode: '217880',
-    industry: 'IT/소프트웨어',
-    subIndustry: 'IT서비스',
-  },
-  '217910': {
-    dartCode: '01139497',
-    companyName: '에스제이켐',
-    stockCode: '217910',
-    industry: '화학/소재',
-    subIndustry: '화학',
-  },
-  '217950': {
-    dartCode: '01066058',
-    companyName: '파마리서치바이오',
-    stockCode: '217950',
-    industry: '바이오/제약',
-    subIndustry: '제약',
-  },
+  
+  
+  
   '218150': {
     dartCode: '01071944',
     companyName: '미래생명자원',
@@ -3096,13 +2904,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '화학/소재',
     subIndustry: '화학',
   },
-  '222670': {
-    dartCode: '01063237',
-    companyName: '플럼라인생명과학',
-    stockCode: '222670',
-    industry: '바이오/제약',
-    subIndustry: '제약',
-  },
+  
   '222800': {
     dartCode: '01095722',
     companyName: '심텍',
@@ -3124,13 +2926,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '식음료',
     subIndustry: '식품',
   },
-  '223220': {
-    dartCode: '01060735',
-    companyName: '로지스몬',
-    stockCode: '223220',
-    industry: '운송/물류',
-    subIndustry: '항공화물운송과물류',
-  },
+  
   '223250': {
     dartCode: '00916826',
     companyName: '드림씨아이에스',
@@ -3159,20 +2955,8 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: 'IT/소프트웨어',
     subIndustry: '컴퓨터와주변기기',
   },
-  '224760': {
-    dartCode: '00929228',
-    companyName: '엔에스컴퍼니',
-    stockCode: '224760',
-    industry: '유틸리티',
-    subIndustry: '에너지장비및서비스',
-  },
-  '224810': {
-    dartCode: '00607797',
-    companyName: '엄지하우스',
-    stockCode: '224810',
-    industry: '건설',
-    subIndustry: '건설',
-  },
+  
+  
   '225190': {
     dartCode: '00992543',
     companyName: 'LK삼양',
@@ -3271,13 +3055,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '건설',
     subIndustry: '건설',
   },
-  '227420': {
-    dartCode: '01109690',
-    companyName: '도부',
-    stockCode: '227420',
-    industry: '유통/소매',
-    subIndustry: '섬유,의류,신발,호화품',
-  },
+  
   '227610': {
     dartCode: '01080687',
     companyName: '아우딘퓨쳐스',
@@ -3334,13 +3112,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '바이오/제약',
     subIndustry: '건강관리장비와용품',
   },
-  '229500': {
-    dartCode: '01065785',
-    companyName: '노브메타파마',
-    stockCode: '229500',
-    industry: '식음료',
-    subIndustry: '식품',
-  },
+  
   '229640': {
     dartCode: '01093007',
     companyName: 'LS에코에너지',
@@ -3376,13 +3148,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '반도체',
     subIndustry: '반도체와반도체장비',
   },
-  '232530': {
-    dartCode: '00925967',
-    companyName: '이엠티',
-    stockCode: '232530',
-    industry: '자동차',
-    subIndustry: '전기제품',
-  },
+  
   '232680': {
     dartCode: '00911229',
     companyName: '라온테크',
@@ -3397,27 +3163,9 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: 'IT/소프트웨어',
     subIndustry: 'IT서비스',
   },
-  '233250': {
-    dartCode: '01035942',
-    companyName: '메디안디노스틱',
-    stockCode: '233250',
-    industry: '바이오/제약',
-    subIndustry: '건강관리장비와용품',
-  },
-  '233990': {
-    dartCode: '01063556',
-    companyName: '질경이',
-    stockCode: '233990',
-    industry: '생활소비재',
-    subIndustry: '가정용품',
-  },
-  '234070': {
-    dartCode: '00614089',
-    companyName: '에이원알폼',
-    stockCode: '234070',
-    industry: '건설',
-    subIndustry: '건축자재',
-  },
+  
+  
+  
   '234080': {
     dartCode: '00225706',
     companyName: 'JW생명과학',
@@ -3467,13 +3215,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '바이오/제약',
     subIndustry: '제약',
   },
-  '236030': {
-    dartCode: '01085187',
-    companyName: '씨알푸드',
-    stockCode: '236030',
-    industry: '식음료',
-    subIndustry: '식품',
-  },
+  
   '236200': {
     dartCode: '01124653',
     companyName: '슈프리마',
@@ -3481,13 +3223,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '반도체',
     subIndustry: '전자장비와기기',
   },
-  '236340': {
-    dartCode: '01023822',
-    companyName: '메디젠휴먼케어',
-    stockCode: '236340',
-    industry: '바이오/제약',
-    subIndustry: '생명과학도구및서비스',
-  },
+  
   '237690': {
     dartCode: '00871833',
     companyName: '에스티팜',
@@ -3530,13 +3266,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '바이오/제약',
     subIndustry: '생명과학도구및서비스',
   },
-  '238170': {
-    dartCode: '01011872',
-    companyName: '엔에스엠',
-    stockCode: '238170',
-    industry: '화학/소재',
-    subIndustry: '포장재',
-  },
+  
   '238200': {
     dartCode: '01109070',
     companyName: '비피도',
@@ -3551,13 +3281,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '반도체',
     subIndustry: '디스플레이장비및부품',
   },
-  '238500': {
-    dartCode: '01118643',
-    companyName: '로보쓰리에이아이',
-    stockCode: '238500',
-    industry: '반도체',
-    subIndustry: '전자장비와기기',
-  },
+  
   '239340': {
     dartCode: '01128622',
     companyName: '이스트에이드',
@@ -3670,13 +3394,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '자동차',
     subIndustry: '전기제품',
   },
-  '243870': {
-    dartCode: '00565215',
-    companyName: '아이티센코어',
-    stockCode: '243870',
-    industry: 'IT/소프트웨어',
-    subIndustry: 'IT서비스',
-  },
+  
   '244460': {
     dartCode: '01070149',
     companyName: '올리패스',
@@ -3684,20 +3402,8 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '바이오/제약',
     subIndustry: '제약',
   },
-  '244880': {
-    dartCode: '01117422',
-    companyName: '나눔테크',
-    stockCode: '244880',
-    industry: '바이오/제약',
-    subIndustry: '건강관리장비와용품',
-  },
-  '245450': {
-    dartCode: '01116380',
-    companyName: '씨앤에스링크',
-    stockCode: '245450',
-    industry: '반도체',
-    subIndustry: '전자제품',
-  },
+  
+  
   '245620': {
     dartCode: '01182550',
     companyName: 'EDGC',
@@ -3768,13 +3474,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '유통/소매',
     subIndustry: '식품과기본식료품소매',
   },
-  '250030': {
-    dartCode: '01158632',
-    companyName: '진코스텍',
-    stockCode: '250030',
-    industry: '유통/소매',
-    subIndustry: '화장품',
-  },
+  
   '250060': {
     dartCode: '01165155',
     companyName: '모비스',
@@ -3796,13 +3496,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '인터넷/플랫폼',
     subIndustry: '게임엔터테인먼트',
   },
-  '251280': {
-    dartCode: '01115044',
-    companyName: '안지오랩',
-    stockCode: '251280',
-    industry: '바이오/제약',
-    subIndustry: '제약',
-  },
+  
   '251370': {
     dartCode: '00602172',
     companyName: '와이엠티',
@@ -3908,14 +3602,14 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '자동차',
     subIndustry: '전기제품',
   },
-  '258050': {
-    dartCode: '01246742',
-    companyName: '테크트랜스',
-    stockCode: '258050',
-    industry: '철강/조선',
-    subIndustry: '비철금속',
+  
+  '258540': {
+    dartCode: '01109122',
+    companyName: '에스엘테라퓨틱스',
+    stockCode: '258540',
+    industry: '바이오/제약',
+    subIndustry: '생물공학',
   },
-
   '258610': {
     dartCode: '00961507',
     companyName: '케일럼',
@@ -3951,13 +3645,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '바이오/제약',
     subIndustry: '제약',
   },
-  '260870': {
-    dartCode: '01188730',
-    companyName: 'SK시그넷',
-    stockCode: '260870',
-    industry: '화학/소재',
-    subIndustry: '전기장비',
-  },
+  
   '260930': {
     dartCode: '01144028',
     companyName: '씨티케이',
@@ -4112,27 +3800,9 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: 'etc',
     subIndustry: 'etc',
   },
-  '266170': {
-    dartCode: '00990396',
-    companyName: '뿌리깊은나무들',
-    stockCode: '266170',
-    industry: '인터넷/플랫폼',
-    subIndustry: '방송과엔터테인먼트',
-  },
-  '266470': {
-    dartCode: '01130885',
-    companyName: '바이오인프라생명과학',
-    stockCode: '266470',
-    industry: '바이오/제약',
-    subIndustry: '생명과학도구및서비스',
-  },
-  '266870': {
-    dartCode: '01190780',
-    companyName: '파워풀엑스',
-    stockCode: '266870',
-    industry: '유통/소매',
-    subIndustry: '화장품',
-  },
+  
+  
+  
   '267250': {
     dartCode: '01205709',
     companyName: 'HD현대',
@@ -4203,13 +3873,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '반도체',
     subIndustry: '전자장비와기기',
   },
-  '270210': {
-    dartCode: '01187458',
-    companyName: '에스알바이오텍',
-    stockCode: '270210',
-    industry: '유통/소매',
-    subIndustry: '화장품',
-  },
+  
   '270520': {
     dartCode: '01228515',
     companyName: '앱트뉴로사이언스',
@@ -4301,13 +3965,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: 'IT/소프트웨어',
     subIndustry: '소프트웨어',
   },
-  '276240': {
-    dartCode: '01119651',
-    companyName: '엘리비젼',
-    stockCode: '276240',
-    industry: '반도체',
-    subIndustry: '디스플레이장비및부품',
-  },
+  
   '277070': {
     dartCode: '00616962',
     companyName: '린드먼아시아',
@@ -4343,20 +4001,8 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '바이오/제약',
     subIndustry: '생명과학도구및서비스',
   },
-  '278990': {
-    dartCode: '01117246',
-    companyName: 'EMB',
-    stockCode: '278990',
-    industry: '유틸리티',
-    subIndustry: '에너지장비및서비스',
-  },
-  '279060': {
-    dartCode: '01353848',
-    companyName: '이노벡스',
-    stockCode: '279060',
-    industry: '자동차',
-    subIndustry: '전기제품',
-  },
+  
+  
   '279600': {
     dartCode: '01190124',
     companyName: '미디어젠',
@@ -4448,13 +4094,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: 'etc',
     subIndustry: 'etc',
   },
-  '288490': {
-    dartCode: '01267550',
-    companyName: '나라소프트',
-    stockCode: '288490',
-    industry: 'IT/소프트웨어',
-    subIndustry: '소프트웨어',
-  },
+  
   '288620': {
     dartCode: '01257872',
     companyName: '에스퓨얼셀',
@@ -4686,13 +4326,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '바이오/제약',
     subIndustry: '제약',
   },
-  '299480': {
-    dartCode: '01188749',
-    companyName: '지앤이헬스케어',
-    stockCode: '299480',
-    industry: '생활소비재',
-    subIndustry: '가정용품',
-  },
+  
   '299660': {
     dartCode: '01235296',
     companyName: '셀리드',
@@ -4742,13 +4376,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '바이오/제약',
     subIndustry: '건강관리장비와용품',
   },
-  '302920': {
-    dartCode: '00991225',
-    companyName: '더콘텐츠온',
-    stockCode: '302920',
-    industry: '인터넷/플랫폼',
-    subIndustry: '방송과엔터테인먼트',
-  },
+  
   '303030': {
     dartCode: '01318933',
     companyName: '지니틱스',
@@ -4854,13 +4482,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '자동차',
     subIndustry: '자동차부품',
   },
-  '308700': {
-    dartCode: '01016886',
-    companyName: '테크엔',
-    stockCode: '308700',
-    industry: '반도체',
-    subIndustry: '디스플레이장비및부품',
-  },
+  
   '309930': {
     dartCode: '01335453',
     companyName: '오하임앤컴퍼니',
@@ -4882,13 +4504,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '자동차',
     subIndustry: '자동차부품',
   },
-  '311060': {
-    dartCode: '01264234',
-    companyName: '엘에이티',
-    stockCode: '311060',
-    industry: '반도체',
-    subIndustry: '디스플레이장비및부품',
-  },
+  
   '311390': {
     dartCode: '01219155',
     companyName: '네오크레마',
@@ -4987,13 +4603,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '건설',
     subIndustry: '기계',
   },
-  '317860': {
-    dartCode: '01328170',
-    companyName: '노드메이슨',
-    stockCode: '317860',
-    industry: '유통/소매',
-    subIndustry: '화장품',
-  },
+  
   '317870': {
     dartCode: '00964595',
     companyName: '엔바이오니아',
@@ -5078,13 +4688,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '인터넷/플랫폼',
     subIndustry: '방송과엔터테인먼트',
   },
-  '322970': {
-    dartCode: '01293388',
-    companyName: '무진메디',
-    stockCode: '322970',
-    industry: '바이오/제약',
-    subIndustry: '생물공학',
-  },
+  
   '323230': {
     dartCode: '01384477',
     companyName: '엠에프엠코리아',
@@ -5120,13 +4724,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '철강/조선',
     subIndustry: '우주항공과국방',
   },
-  '327610': {
-    dartCode: '01336735',
-    companyName: '펨토바이오메드',
-    stockCode: '327610',
-    industry: '바이오/제약',
-    subIndustry: '건강관리장비와용품',
-  },
+  
   '328380': {
     dartCode: '01390399',
     companyName: '솔트웨어',
@@ -5162,13 +4760,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '인터넷/플랫폼',
     subIndustry: '게임엔터테인먼트',
   },
-  '331660': {
-    dartCode: '01363924',
-    companyName: '한국미라클피플사',
-    stockCode: '331660',
-    industry: '생활소비재',
-    subIndustry: '가정용품',
-  },
+  
   '331920': {
     dartCode: '01114586',
     companyName: '셀레믹스',
@@ -5225,13 +4817,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '바이오/제약',
     subIndustry: '건강관리장비와용품',
   },
-  '336040': {
-    dartCode: '01118139',
-    companyName: '타스컴',
-    stockCode: '336040',
-    industry: '바이오/제약',
-    subIndustry: '건강관리장비와용품',
-  },
+  
   '336060': {
     dartCode: '01408999',
     companyName: '웨이버스',
@@ -5260,13 +4846,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '바이오/제약',
     subIndustry: '건강관리장비와용품',
   },
-  '337840': {
-    dartCode: '01396931',
-    companyName: '유엑스엔',
-    stockCode: '337840',
-    industry: '바이오/제약',
-    subIndustry: '건강관리장비와용품',
-  },
+  
   '337930': {
     dartCode: '01391103',
     companyName: '브랜드엑스코퍼레이션',
@@ -5302,20 +4882,8 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '화학/소재',
     subIndustry: '포장재',
   },
-  '341310': {
-    dartCode: '01337017',
-    companyName: '이앤에치',
-    stockCode: '341310',
-    industry: '유통/소매',
-    subIndustry: '섬유,의류,신발,호화품',
-  },
-  '343090': {
-    dartCode: '01413371',
-    companyName: 'HLB사이언스',
-    stockCode: '343090',
-    industry: '바이오/제약',
-    subIndustry: '제약',
-  },
+  
+  
   '344820': {
     dartCode: '01428203',
     companyName: '케이씨씨글라스',
@@ -5666,13 +5234,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '인터넷/플랫폼',
     subIndustry: '방송과엔터테인먼트',
   },
-  '093510': {
-    dartCode: '00521433',
-    companyName: '엔지브이아이',
-    stockCode: '093510',
-    industry: '자동차',
-    subIndustry: '자동차부품',
-  },
+  
   '003670': {
     dartCode: '00155276',
     companyName: '포스코퓨처엠',
@@ -5883,13 +5445,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '식음료',
     subIndustry: '식품',
   },
-  '066830': {
-    dartCode: '00393618',
-    companyName: '제노텍',
-    stockCode: '066830',
-    industry: '바이오/제약',
-    subIndustry: '생물공학',
-  },
+  
   '026960': {
     dartCode: '00144395',
     companyName: '동서',
@@ -5974,13 +5530,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '운송/물류',
     subIndustry: '항공사',
   },
-  '092590': {
-    dartCode: '00578325',
-    companyName: '럭스피아',
-    stockCode: '092590',
-    industry: '반도체',
-    subIndustry: '디스플레이장비및부품',
-  },
+  
   '092870': {
     dartCode: '00611736',
     companyName: '엑시콘',
@@ -6037,13 +5587,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '바이오/제약',
     subIndustry: '생물공학',
   },
-  '086220': {
-    dartCode: '00523176',
-    companyName: '광동헬스바이오',
-    stockCode: '086220',
-    industry: '바이오/제약',
-    subIndustry: '제약',
-  },
+  
   '085620': {
     dartCode: '00112332',
     companyName: '미래에셋생명',
@@ -6065,13 +5609,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '반도체',
     subIndustry: '반도체와반도체장비',
   },
-  '076340': {
-    dartCode: '00321204',
-    companyName: '관악산업',
-    stockCode: '076340',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '060480': {
     dartCode: '00203847',
     companyName: '국일신동',
@@ -6226,13 +5764,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '인터넷/플랫폼',
     subIndustry: '광고',
   },
-  '086460': {
-    dartCode: '00548519',
-    companyName: '큐러블',
-    stockCode: '086460',
-    industry: '바이오/제약',
-    subIndustry: '생명과학도구및서비스',
-  },
+  
   '097800': {
     dartCode: '00536286',
     companyName: '윈팩',
@@ -15396,13 +14928,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '유틸리티',
     subIndustry: '에너지장비및서비스',
   },
-  '498390': {
-    dartCode: '01881800',
-    companyName: '한화플러스제5호스팩',
-    stockCode: '498390',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '480370': {
     dartCode: '01210677',
     companyName: '씨케이솔루션',
@@ -15550,13 +15076,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '인터넷/플랫폼',
     subIndustry: '인터넷과카탈로그소매',
   },
-  '493790': {
-    dartCode: '01872219',
-    companyName: '유안타제17호스팩',
-    stockCode: '493790',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '478560': {
     dartCode: '01718407',
     companyName: '블랙야크아이앤씨',
@@ -15564,13 +15084,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '유통/소매',
     subIndustry: '섬유,의류,신발,호화품',
   },
-  '332190': {
-    dartCode: '01860010',
-    companyName: '오션스바이오',
-    stockCode: '332190',
-    industry: '바이오/제약',
-    subIndustry: '건강관리장비와용품',
-  },
+  
   '432980': {
     dartCode: '01217795',
     companyName: '엠에프씨',
@@ -15599,34 +15113,10 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '유통/소매',
     subIndustry: '백화점과일반상점',
   },
-  '487360': {
-    dartCode: '01853214',
-    companyName: '신한제14호스팩',
-    stockCode: '487360',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '495810': {
-    dartCode: '01867749',
-    companyName: '유비씨',
-    stockCode: '495810',
-    industry: 'IT/소프트웨어',
-    subIndustry: '소프트웨어',
-  },
-  '368030': {
-    dartCode: '01467336',
-    companyName: '창대정밀',
-    stockCode: '368030',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '487720': {
-    dartCode: '01877126',
-    companyName: '키움제10호스팩',
-    stockCode: '487720',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
+  
+  
+  
   '398120': {
     dartCode: '01179866',
     companyName: '에스지헬스케어',
@@ -15669,27 +15159,9 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '바이오/제약',
     subIndustry: '제약',
   },
-  '495900': {
-    dartCode: '01872893',
-    companyName: '에이엠시지',
-    stockCode: '495900',
-    industry: '바이오/제약',
-    subIndustry: '건강관리장비와용품',
-  },
-  '492220': {
-    dartCode: '01866926',
-    companyName: 'KB제31호스팩',
-    stockCode: '492220',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '489480': {
-    dartCode: '01873272',
-    companyName: '키움제11호스팩',
-    stockCode: '489480',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
+  
+  
   '415640': {
     dartCode: '01880801',
     companyName: 'KB발해인프라',
@@ -15697,27 +15169,9 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '건설',
     subIndustry: '운송인프라',
   },
-  '489730': {
-    dartCode: '01857991',
-    companyName: '디비금융제13호스팩',
-    stockCode: '489730',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '489210': {
-    dartCode: '01866528',
-    companyName: '교보17호스팩',
-    stockCode: '489210',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '482690': {
-    dartCode: '01845534',
-    companyName: '대신밸런스제19호스팩',
-    stockCode: '482690',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
+  
+  
   '459100': {
     dartCode: '01445440',
     companyName: '위츠',
@@ -15746,13 +15200,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: 'IT/소프트웨어',
     subIndustry: '소프트웨어',
   },
-  '484130': {
-    dartCode: '01847550',
-    companyName: '하나34호스팩',
-    stockCode: '484130',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '475660': {
     dartCode: '01383779',
     companyName: '에스켐',
@@ -15767,13 +15215,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '자동차',
     subIndustry: '전기제품',
   },
-  '487830': {
-    dartCode: '01854408',
-    companyName: '신한제15호스팩',
-    stockCode: '487830',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '394800': {
     dartCode: '01506617',
     companyName: '쓰리빌리언',
@@ -15844,20 +15286,8 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '자동차',
     subIndustry: '전기제품',
   },
-  '488060': {
-    dartCode: '01854392',
-    companyName: '유진스팩11호',
-    stockCode: '488060',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '476710': {
-    dartCode: '01518506',
-    companyName: '타조엔터테인먼트',
-    stockCode: '476710',
-    industry: '인터넷/플랫폼',
-    subIndustry: '방송과엔터테인먼트',
-  },
+  
+  
   '466100': {
     dartCode: '01784914',
     companyName: '클로봇',
@@ -15935,13 +15365,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '철강/조선',
     subIndustry: '우주항공과국방',
   },
-  '486630': {
-    dartCode: '01851650',
-    companyName: 'KB제30호스팩',
-    stockCode: '486630',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '464500': {
     dartCode: '01706794',
     companyName: '아이언디바이스',
@@ -15949,13 +15373,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '반도체',
     subIndustry: '반도체와반도체장비',
   },
-  '482680': {
-    dartCode: '01841635',
-    companyName: '미래에셋비전스팩7호',
-    stockCode: '482680',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '469750': {
     dartCode: '01516766',
     companyName: '아이비젼웍스',
@@ -15984,13 +15402,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '인터넷/플랫폼',
     subIndustry: '방송과엔터테인먼트',
   },
-  '478780': {
-    dartCode: '01817610',
-    companyName: '대신밸런스제18호스팩',
-    stockCode: '478780',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '464280': {
     dartCode: '01232192',
     companyName: '티디에스팜',
@@ -16026,13 +15438,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: 'IT/소프트웨어',
     subIndustry: '소프트웨어',
   },
-  '482520': {
-    dartCode: '01845701',
-    companyName: '교보16호스팩',
-    stockCode: '482520',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '199480': {
     dartCode: '01138595',
     companyName: '뱅크웨어글로벌',
@@ -16068,20 +15474,8 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '화학/소재',
     subIndustry: '전기장비',
   },
-  '481890': {
-    dartCode: '01834194',
-    companyName: '엔에이치스팩31호',
-    stockCode: '481890',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '473950': {
-    dartCode: '01801822',
-    companyName: 'SK증권제13호스팩',
-    stockCode: '473950',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
+  
   '373110': {
     dartCode: '01492217',
     companyName: '엑셀세라퓨틱스',
@@ -16089,13 +15483,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '바이오/제약',
     subIndustry: '생물공학',
   },
-  '478110': {
-    dartCode: '01815764',
-    companyName: '이베스트스팩6호',
-    stockCode: '478110',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '462870': {
     dartCode: '01384787',
     companyName: '시프트업',
@@ -16131,13 +15519,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '철강/조선',
     subIndustry: '비철금속',
   },
-  '266350': {
-    dartCode: '01208821',
-    companyName: '팡스카이',
-    stockCode: '266350',
-    industry: '인터넷/플랫폼',
-    subIndustry: '게임엔터테인먼트',
-  },
+  
   '160190': {
     dartCode: '00650771',
     companyName: '하이젠알앤엠',
@@ -16145,13 +15527,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '건설',
     subIndustry: '기계',
   },
-  '479880': {
-    dartCode: '01818682',
-    companyName: '한국제15호스팩',
-    stockCode: '479880',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '464080': {
     dartCode: '01686427',
     companyName: '에스오에스랩',
@@ -16159,34 +15535,10 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '반도체',
     subIndustry: '전자장비와기기',
   },
-  '478440': {
-    dartCode: '01819867',
-    companyName: '미래에셋비전스팩6호',
-    stockCode: '478440',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '477340': {
-    dartCode: '01813377',
-    companyName: '에이치엠씨제7호스팩',
-    stockCode: '477340',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '478390': {
-    dartCode: '01816268',
-    companyName: 'KB제29호스팩',
-    stockCode: '478390',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '477470': {
-    dartCode: '01817249',
-    companyName: '미래에셋비전스팩5호',
-    stockCode: '477470',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
+  
+  
+  
   '458870': {
     dartCode: '01514227',
     companyName: '씨어스테크놀로지',
@@ -16195,13 +15547,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     subIndustry: '건강관리기술',
   },
 
-  '477760': {
-    dartCode: '01814589',
-    companyName: '디비금융스팩12호',
-    stockCode: '477760',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '462510': {
     dartCode: '01504211',
     companyName: '라메디텍',
@@ -16216,13 +15562,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '유틸리티',
     subIndustry: '전기유틸리티',
   },
-  '477380': {
-    dartCode: '01814233',
-    companyName: '미래에셋비전스팩4호',
-    stockCode: '477380',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '145170': {
     dartCode: '00305941',
     companyName: '노브랜드',
@@ -16230,13 +15570,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '유통/소매',
     subIndustry: '섬유,의류,신발,호화품',
   },
-  '476470': {
-    dartCode: '01810796',
-    companyName: 'KB제28호스팩',
-    stockCode: '476470',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '456010': {
     dartCode: '01373709',
     companyName: '아이씨티케이',
@@ -16251,13 +15585,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '철강/조선',
     subIndustry: '조선',
   },
-  '473000': {
-    dartCode: '01798722',
-    companyName: 'SK증권제12호스팩',
-    stockCode: '473000',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '126730': {
     dartCode: '00446901',
     companyName: '코칩',
@@ -16286,13 +15614,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '바이오/제약',
     subIndustry: '생물공학',
   },
-  '474490': {
-    dartCode: '01804476',
-    companyName: '유안타제16호스팩',
-    stockCode: '474490',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '412540': {
     dartCode: '00528791',
     companyName: '제일엠앤에스',
@@ -16307,27 +15629,9 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '유통/소매',
     subIndustry: '화장품',
   },
-  '475250': {
-    dartCode: '01807729',
-    companyName: '하나33호스팩',
-    stockCode: '475250',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '474930': {
-    dartCode: '01807747',
-    companyName: '신한제13호스팩',
-    stockCode: '474930',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '474660': {
-    dartCode: '01809569',
-    companyName: '신한제12호스팩',
-    stockCode: '474660',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
+  
+  
   '461030': {
     dartCode: '01497373',
     companyName: '아이엠비디엑스',
@@ -16342,13 +15646,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '유틸리티',
     subIndustry: '에너지장비및서비스',
   },
-  '475240': {
-    dartCode: '01807738',
-    companyName: '하나32호스팩',
-    stockCode: '475240',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '455900': {
     dartCode: '01592049',
     companyName: '엔젤로보틱스',
@@ -16377,41 +15675,11 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '건설',
     subIndustry: '기계',
   },
-  '473370': {
-    dartCode: '01800285',
-    companyName: '비엔케이제2호스팩',
-    stockCode: '473370',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '469900': {
-    dartCode: '01791561',
-    companyName: '하나31호스팩',
-    stockCode: '469900',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '472230': {
-    dartCode: '01797440',
-    companyName: 'SK증권제11호스팩',
-    stockCode: '472230',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '473050': {
-    dartCode: '01798980',
-    companyName: '유안타제15호스팩',
-    stockCode: '473050',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '468760': {
-    dartCode: '01787072',
-    companyName: '유진스팩10호',
-    stockCode: '468760',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
+  
+  
+  
+  
   '278470': {
     dartCode: '01190568',
     companyName: '에이피알',
@@ -16461,13 +15729,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '생활소비재',
     subIndustry: '가구',
   },
-  '472220': {
-    dartCode: '01796858',
-    companyName: '신영스팩10호',
-    stockCode: '472220',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '472850': {
     dartCode: '01806951',
     companyName: '폰드그룹',
@@ -16475,13 +15737,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '유통/소매',
     subIndustry: '섬유,의류,신발,호화품',
   },
-  '469480': {
-    dartCode: '01792791',
-    companyName: 'IBKS제24호스팩',
-    stockCode: '469480',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '199550': {
     dartCode: '01161432',
     companyName: '레이저옵텍',
@@ -16524,13 +15780,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '인터넷/플랫폼',
     subIndustry: '광고',
   },
-  '471050': {
-    dartCode: '01792825',
-    companyName: '대신밸런스제17호스팩',
-    stockCode: '471050',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '457550': {
     dartCode: '01030503',
     companyName: '우진엔텍',
@@ -16538,13 +15788,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '유틸리티',
     subIndustry: '에너지장비및서비스',
   },
-  '267080': {
-    dartCode: '01575361',
-    companyName: '세븐브로이맥주',
-    stockCode: '267080',
-    industry: '식음료',
-    subIndustry: '음료',
-  },
+  
   '452190': {
     dartCode: '00607496',
     companyName: '한빛레이저',
@@ -16559,20 +15803,8 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '화학/소재',
     subIndustry: '화학',
   },
-  '467930': {
-    dartCode: '01785700',
-    companyName: 'IBKS제23호스팩',
-    stockCode: '467930',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '469880': {
-    dartCode: '01791321',
-    companyName: '하나30호스팩',
-    stockCode: '469880',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
+  
   '109670': {
     dartCode: '00492706',
     companyName: '씨싸이트',
@@ -16601,13 +15833,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '자동차',
     subIndustry: '전기제품',
   },
-  '465320': {
-    dartCode: '01781847',
-    companyName: '교보15호스팩',
-    stockCode: '465320',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '338840': {
     dartCode: '01226234',
     companyName: '와이바이오로직스',
@@ -16615,13 +15841,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '바이오/제약',
     subIndustry: '생물공학',
   },
-  '468510': {
-    dartCode: '01786514',
-    companyName: '삼성스팩9호',
-    stockCode: '468510',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '355690': {
     dartCode: '01444380',
     companyName: '에이텀',
@@ -16629,13 +15849,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '반도체',
     subIndustry: '전자장비와기기',
   },
-  '466910': {
-    dartCode: '01785056',
-    companyName: '엔에이치스팩30호',
-    stockCode: '466910',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '453860': {
     dartCode: '01538528',
     companyName: '에이에스텍',
@@ -16699,13 +15913,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '금융',
     subIndustry: '창업투자',
   },
-  '296160': {
-    dartCode: '01156795',
-    companyName: '프로젠',
-    stockCode: '296160',
-    industry: '바이오/제약',
-    subIndustry: '제약',
-  },
+  
   '365330': {
     dartCode: '01135084',
     companyName: '에스와이스틸텍',
@@ -16720,13 +15928,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '반도체',
     subIndustry: '반도체와반도체장비',
   },
-  '464440': {
-    dartCode: '01775952',
-    companyName: '한국제13호스팩',
-    stockCode: '464440',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '446540': {
     dartCode: '00923516',
     companyName: '메가터치',
@@ -16762,13 +15964,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '통신',
     subIndustry: '핸드셋',
   },
-  '464680': {
-    dartCode: '01785551',
-    companyName: 'KB제27호스팩',
-    stockCode: '464680',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '188260': {
     dartCode: '01305869',
     companyName: '세니젠',
@@ -16797,13 +15993,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '반도체',
     subIndustry: '반도체와반도체장비',
   },
-  '351020': {
-    dartCode: '01547933',
-    companyName: '미쥬',
-    stockCode: '351020',
-    industry: '유통/소매',
-    subIndustry: '섬유,의류,신발,호화품',
-  },
+  
   '396470': {
     dartCode: '00866451',
     companyName: '워트',
@@ -16825,20 +16015,8 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '반도체',
     subIndustry: '반도체와반도체장비',
   },
-  '289170': {
-    dartCode: '01352575',
-    companyName: '바이오텐',
-    stockCode: '289170',
-    industry: '유통/소매',
-    subIndustry: '식품과기본식료품소매',
-  },
-  '462020': {
-    dartCode: '01767494',
-    companyName: '에이치엠씨제6호스팩',
-    stockCode: '462020',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
+  
   '451220': {
     dartCode: '01546101',
     companyName: '아이엠티',
@@ -16860,13 +16038,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '건설',
     subIndustry: '기계',
   },
-  '452980': {
-    dartCode: '01719105',
-    companyName: '신한제11호스팩',
-    stockCode: '452980',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '430690': {
     dartCode: '01602638',
     companyName: '한싹',
@@ -16909,13 +16081,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '운송/물류',
     subIndustry: '해운사',
   },
-  '452670': {
-    dartCode: '01717170',
-    companyName: '상상인제4호스팩',
-    stockCode: '452670',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '146060': {
     dartCode: '00495633',
     companyName: '율촌',
@@ -16923,27 +16089,9 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '자동차',
     subIndustry: '자동차부품',
   },
-  '455310': {
-    dartCode: '01725160',
-    companyName: '한화플러스제4호스팩',
-    stockCode: '455310',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '457630': {
-    dartCode: '01738483',
-    companyName: '대신밸런스제16호스팩',
-    stockCode: '457630',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '444920': {
-    dartCode: '01688346',
-    companyName: '유안타제11호스팩',
-    stockCode: '444920',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
+  
+  
   '355390': {
     dartCode: '01514005',
     companyName: '크라우드웍스',
@@ -16951,20 +16099,8 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: 'IT/소프트웨어',
     subIndustry: 'IT서비스',
   },
-  '457390': {
-    dartCode: '01751448',
-    companyName: '대신밸런스제15호스팩',
-    stockCode: '457390',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '458610': {
-    dartCode: '01761296',
-    companyName: '한국제12호스팩',
-    stockCode: '458610',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
+  
   '418250': {
     dartCode: '01579570',
     companyName: '시큐레터',
@@ -16986,13 +16122,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '철강/조선',
     subIndustry: '철강',
   },
-  '457940': {
-    dartCode: '01744703',
-    companyName: 'SK증권제10호스팩',
-    stockCode: '457940',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '448710': {
     dartCode: '00959210',
     companyName: '코츠테크놀로지',
@@ -17007,13 +16137,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '바이오/제약',
     subIndustry: '생명과학도구및서비스',
   },
-  '454750': {
-    dartCode: '01724338',
-    companyName: '하나28호스팩',
-    stockCode: '454750',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '440110': {
     dartCode: '01292291',
     companyName: '파두',
@@ -17035,13 +16159,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '반도체',
     subIndustry: '반도체와반도체장비',
   },
-  '446440': {
-    dartCode: '01281541',
-    companyName: '에피바이오텍',
-    stockCode: '446440',
-    industry: '바이오/제약',
-    subIndustry: '생물공학',
-  },
+  
   '462520': {
     dartCode: '01770203',
     companyName: '조선내화',
@@ -17056,13 +16174,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '반도체',
     subIndustry: '반도체와반도체장비',
   },
-  '450940': {
-    dartCode: '01706819',
-    companyName: '유안타제14호스팩',
-    stockCode: '450940',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '388870': {
     dartCode: '01495180',
     companyName: '파로스아이바이오',
@@ -17070,13 +16182,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '바이오/제약',
     subIndustry: '생물공학',
   },
-  '456700': {
-    dartCode: '00874797',
-    companyName: '길교이앤씨',
-    stockCode: '456700',
-    industry: '건설',
-    subIndustry: '건설',
-  },
+  
   '438700': {
     dartCode: '01605529',
     companyName: '버넥트',
@@ -17091,13 +16197,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '유통/소매',
     subIndustry: '화장품',
   },
-  '455910': {
-    dartCode: '01725577',
-    companyName: 'SK증권제9호스팩',
-    stockCode: '455910',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '432430': {
     dartCode: '01406265',
     companyName: '와이랩',
@@ -17112,13 +16212,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '통신',
     subIndustry: '통신장비',
   },
-  '456570': {
-    dartCode: '01579020',
-    companyName: '아이엠지티',
-    stockCode: '456570',
-    industry: '바이오/제약',
-    subIndustry: '건강관리장비와용품',
-  },
+  
   '378340': {
     dartCode: '01488320',
     companyName: '필에너지',
@@ -17126,20 +16220,8 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '자동차',
     subIndustry: '전기제품',
   },
-  '456440': {
-    dartCode: '01731453',
-    companyName: 'DB금융스팩11호',
-    stockCode: '456440',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '456490': {
-    dartCode: '01760640',
-    companyName: '교보14호스팩',
-    stockCode: '456490',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
+  
   '274400': {
     dartCode: '00965318',
     companyName: '이노시뮬레이션',
@@ -17161,41 +16243,11 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '기타서비스',
     subIndustry: '상업서비스와공급품',
   },
-  '454640': {
-    dartCode: '01724417',
-    companyName: '하나29호스팩',
-    stockCode: '454640',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '455250': {
-    dartCode: '01724709',
-    companyName: 'KB제25호스팩',
-    stockCode: '455250',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '451700': {
-    dartCode: '01712616',
-    companyName: '엔에이치스팩29호',
-    stockCode: '451700',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '450050': {
-    dartCode: '01705625',
-    companyName: '하이제8호스팩',
-    stockCode: '450050',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '296520': {
-    dartCode: '01229240',
-    companyName: '가이아코퍼레이션',
-    stockCode: '296520',
-    industry: '생활소비재',
-    subIndustry: '레저용장비와제품',
-  },
+  
+  
+  
+  
+  
   '460850': {
     dartCode: '01765256',
     companyName: '동국씨엠',
@@ -17280,20 +16332,8 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: 'IT/소프트웨어',
     subIndustry: '소프트웨어',
   },
-  '456190': {
-    dartCode: '01205514',
-    companyName: '큐라켐',
-    stockCode: '456190',
-    industry: '바이오/제약',
-    subIndustry: '생명과학도구및서비스',
-  },
-  '446840': {
-    dartCode: '01693922',
-    companyName: '키움제8호스팩',
-    stockCode: '446840',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
+  
   '417790': {
     dartCode: '01134216',
     companyName: '트루엔',
@@ -17301,13 +16341,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '반도체',
     subIndustry: '전자장비와기기',
   },
-  '012210': {
-    dartCode: '00125664',
-    companyName: '삼미금속',
-    stockCode: '012210',
-    industry: '건설',
-    subIndustry: '기계',
-  },
+  
   '304360': {
     dartCode: '01258020',
     companyName: '에스바이오메딕스',
@@ -17343,13 +16377,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '유통/소매',
     subIndustry: '화장품',
   },
-  '283100': {
-    dartCode: '01332137',
-    companyName: '노보믹스',
-    stockCode: '283100',
-    industry: '바이오/제약',
-    subIndustry: '건강관리장비와용품',
-  },
+  
   '448730': {
     dartCode: '01688896',
     companyName: '삼성FN리츠',
@@ -17364,27 +16392,9 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '식음료',
     subIndustry: '식품',
   },
-  '448830': {
-    dartCode: '01702424',
-    companyName: '미래에셋비전스팩3호',
-    stockCode: '448830',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '448760': {
-    dartCode: '01701328',
-    companyName: 'IBKS제22호스팩',
-    stockCode: '448760',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '448370': {
-    dartCode: '01700374',
-    companyName: '하나27호스팩',
-    stockCode: '448370',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
+  
+  
   '452260': {
     dartCode: '01722437',
     companyName: '한화갤러리아',
@@ -17413,13 +16423,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '금융',
     subIndustry: '부동산',
   },
-  '446150': {
-    dartCode: '01690235',
-    companyName: '유안타제12호스팩',
-    stockCode: '446150',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '356680': {
     dartCode: '01372782',
     companyName: '엑스게이트',
@@ -17427,13 +16431,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: 'IT/소프트웨어',
     subIndustry: '소프트웨어',
   },
-  '442900': {
-    dartCode: '01683387',
-    companyName: '미래에셋드림스팩1호',
-    stockCode: '442900',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '282720': {
     dartCode: '00872656',
     companyName: '금양그린파워',
@@ -17455,13 +16453,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '반도체',
     subIndustry: '반도체와반도체장비',
   },
-  '446750': {
-    dartCode: '01696275',
-    companyName: '하나26호스팩',
-    stockCode: '446750',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '417010': {
     dartCode: '01524118',
     companyName: '나노팀',
@@ -17476,27 +16468,9 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '바이오/제약',
     subIndustry: '생명과학도구및서비스',
   },
-  '448740': {
-    dartCode: '01700921',
-    companyName: '삼성스팩8호',
-    stockCode: '448740',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '449020': {
-    dartCode: '01701753',
-    companyName: '유안타제13호스팩',
-    stockCode: '449020',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '446190': {
-    dartCode: '01692321',
-    companyName: '미래에셋비전스팩2호',
-    stockCode: '446190',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
+  
+  
   '127980': {
     dartCode: '00527002',
     companyName: '화인써키트',
@@ -17560,20 +16534,8 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '반도체',
     subIndustry: '반도체와반도체장비',
   },
-  '289860': {
-    dartCode: '00945776',
-    companyName: '지슨',
-    stockCode: '289860',
-    industry: 'IT/소프트웨어',
-    subIndustry: '소프트웨어',
-  },
-  '052960': {
-    dartCode: '00302236',
-    companyName: '태양3C',
-    stockCode: '052960',
-    industry: '반도체',
-    subIndustry: '전자장비와기기',
-  },
+  
+  
   '425040': {
     dartCode: '01301252',
     companyName: '티이엠씨',
@@ -17588,27 +16550,9 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '통신',
     subIndustry: '통신장비',
   },
-  '447690': {
-    dartCode: '01680131',
-    companyName: '아이오바이오',
-    stockCode: '447690',
-    industry: '바이오/제약',
-    subIndustry: '건강관리장비와용품',
-  },
-  '346010': {
-    dartCode: '01309069',
-    companyName: '타이드',
-    stockCode: '346010',
-    industry: '통신',
-    subIndustry: '통신장비',
-  },
-  '445970': {
-    dartCode: '01689938',
-    companyName: '신영스팩9호',
-    stockCode: '445970',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
+  
+  
   '162300': {
     dartCode: '00958664',
     companyName: '신스틸',
@@ -17616,13 +16560,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '철강/조선',
     subIndustry: '철강',
   },
-  '388610': {
-    dartCode: '01221752',
-    companyName: '지에프씨생명과학',
-    stockCode: '388610',
-    industry: '바이오/제약',
-    subIndustry: '생물공학',
-  },
+  
   '377740': {
     dartCode: '00622787',
     companyName: '바이오노트',
@@ -17630,41 +16568,11 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '바이오/제약',
     subIndustry: '건강관리장비와용품',
   },
-  '445360': {
-    dartCode: '01689336',
-    companyName: '비엔케이제1호스팩',
-    stockCode: '445360',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '448780': {
-    dartCode: '01206717',
-    companyName: '마이크로엔엑스',
-    stockCode: '448780',
-    industry: '바이오/제약',
-    subIndustry: '건강관리장비와용품',
-  },
-  '390110': {
-    dartCode: '01507810',
-    companyName: '애니메디솔루션',
-    stockCode: '390110',
-    industry: '바이오/제약',
-    subIndustry: '건강관리장비와용품',
-  },
-  '442770': {
-    dartCode: '01682740',
-    companyName: 'IBKS제21호스팩',
-    stockCode: '442770',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '440820': {
-    dartCode: '01677429',
-    companyName: '엔에이치스팩27호',
-    stockCode: '440820',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
+  
+  
+  
+  
   '417180': {
     dartCode: '01584934',
     companyName: '핑거스토리',
@@ -17679,41 +16587,11 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '인터넷/플랫폼',
     subIndustry: '방송과엔터테인먼트',
   },
-  '442310': {
-    dartCode: '01696451',
-    companyName: '대신밸런스제14호스팩',
-    stockCode: '442310',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '439410': {
-    dartCode: '01675254',
-    companyName: '엔에이치스팩26호',
-    stockCode: '439410',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '442130': {
-    dartCode: '01678835',
-    companyName: '유진스팩9호',
-    stockCode: '442130',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '102950': {
-    dartCode: '00677334',
-    companyName: '아하',
-    stockCode: '102950',
-    industry: '반도체',
-    subIndustry: '디스플레이장비및부품',
-  },
-  '311960': {
-    dartCode: '01290132',
-    companyName: '에이아이더뉴트리진',
-    stockCode: '311960',
-    industry: 'IT/소프트웨어',
-    subIndustry: 'IT서비스',
-  },
+  
+  
+  
+  
+  
   '446070': {
     dartCode: '01702017',
     companyName: '유니드비티플러스',
@@ -17784,20 +16662,8 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '반도체',
     subIndustry: '반도체와반도체장비',
   },
-  '438580': {
-    dartCode: '01674468',
-    companyName: '엔에이치스팩25호',
-    stockCode: '438580',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '440790': {
-    dartCode: '01677678',
-    companyName: '교보13호스팩',
-    stockCode: '440790',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
+  
   '405100': {
     dartCode: '01033591',
     companyName: '큐알티',
@@ -17805,13 +16671,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '반도체',
     subIndustry: '반도체와반도체장비',
   },
-  '439730': {
-    dartCode: '01675421',
-    companyName: 'IBKS제20호스팩',
-    stockCode: '439730',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '417840': {
     dartCode: '01383229',
     companyName: '저스템',
@@ -17826,20 +16686,8 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: 'IT/소프트웨어',
     subIndustry: '소프트웨어',
   },
-  '439250': {
-    dartCode: '01675227',
-    companyName: '삼성스팩7호',
-    stockCode: '439250',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '434190': {
-    dartCode: '01020269',
-    companyName: '탈로스',
-    stockCode: '434190',
-    industry: '철강/조선',
-    subIndustry: '우주항공과국방',
-  },
+  
+  
   '405000': {
     dartCode: '01575839',
     companyName: '플라즈맵',
@@ -17847,13 +16695,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '바이오/제약',
     subIndustry: '건강관리장비와용품',
   },
-  '437780': {
-    dartCode: '01674538',
-    companyName: '엔에이치스팩24호',
-    stockCode: '437780',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '291810': {
     dartCode: '01524507',
     companyName: '핀텔',
@@ -17861,13 +16703,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: 'IT/소프트웨어',
     subIndustry: '소프트웨어',
   },
-  '435620': {
-    dartCode: '01669475',
-    companyName: '하나금융25호스팩',
-    stockCode: '435620',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '378800': {
     dartCode: '01387164',
     companyName: '샤페론',
@@ -17931,20 +16767,8 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '금융',
     subIndustry: '부동산',
   },
-  '435870': {
-    dartCode: '01671197',
-    companyName: 'SK증권제8호스팩',
-    stockCode: '435870',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
-  '435380': {
-    dartCode: '01670675',
-    companyName: '유안타제10호스팩',
-    stockCode: '435380',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
+  
   '393890': {
     dartCode: '01291317',
     companyName: '더블유씨피',
@@ -17959,13 +16783,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '바이오/제약',
     subIndustry: '제약',
   },
-  '413300': {
-    dartCode: '01583953',
-    companyName: '티엘엔지니어링',
-    stockCode: '413300',
-    industry: '반도체',
-    subIndustry: '반도체와반도체장비',
-  },
+  
   '394280': {
     dartCode: '01571107',
     companyName: '오픈엣지테크놀로지',
@@ -17973,13 +16791,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '반도체',
     subIndustry: '반도체와반도체장비',
   },
-  '430220': {
-    dartCode: '01656374',
-    companyName: '신영스팩8호',
-    stockCode: '430220',
-    industry: 'etc',
-    subIndustry: 'etc',
-  },
+  
   '129920': {
     dartCode: '00577335',
     companyName: '대성하이텍',
@@ -18036,13 +16848,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '바이오/제약',
     subIndustry: '제약',
   },
-  '341170': {
-    dartCode: '01185867',
-    companyName: '퓨쳐메디신',
-    stockCode: '341170',
-    industry: '바이오/제약',
-    subIndustry: '제약',
-  },
+  
   '424760': {
     dartCode: '01622331',
     companyName: '벨로크',
@@ -18057,13 +16863,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: 'IT/소프트웨어',
     subIndustry: '건강관리기술',
   },
-  '354390': {
-    dartCode: '00533809',
-    companyName: '바스칸바이오제약',
-    stockCode: '354390',
-    industry: '바이오/제약',
-    subIndustry: '제약',
-  },
+  
   '403870': {
     dartCode: '01288827',
     companyName: 'HPSP',
@@ -18120,13 +16920,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '화학/소재',
     subIndustry: '전기장비',
   },
-  '176590': {
-    dartCode: '00666329',
-    companyName: '코나솔',
-    stockCode: '176590',
-    industry: '철강/조선',
-    subIndustry: '철강',
-  },
+  
   '362320': {
     dartCode: '01534577',
     companyName: '청담글로벌',
@@ -18309,13 +17103,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '유통/소매',
     subIndustry: '판매업체',
   },
-  '169670': {
-    dartCode: '00610861',
-    companyName: '코스텍시스템',
-    stockCode: '169670',
-    industry: '반도체',
-    subIndustry: '반도체와반도체장비',
-  },
+  
   '353590': {
     dartCode: '01084294',
     companyName: '오토앤',
@@ -18323,20 +17111,8 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: 'etc',
     subIndustry: 'etc',
   },
-  '403360': {
-    dartCode: '01466832',
-    companyName: '라피치',
-    stockCode: '403360',
-    industry: 'IT/소프트웨어',
-    subIndustry: 'IT서비스',
-  },
-  '254160': {
-    dartCode: '01366824',
-    companyName: '제이엠멀티',
-    stockCode: '254160',
-    industry: '건설',
-    subIndustry: '건축자재',
-  },
+  
+  
   '404990': {
     dartCode: '01436558',
     companyName: '신한서부티엔디리츠',
@@ -18351,13 +17127,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '금융',
     subIndustry: '부동산',
   },
-  '402420': {
-    dartCode: '01507722',
-    companyName: '켈스',
-    stockCode: '402420',
-    industry: '바이오/제약',
-    subIndustry: '건강관리장비와용품',
-  },
+  
   '402340': {
     dartCode: '01596425',
     companyName: 'SK스퀘어',
@@ -18694,13 +17464,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '통신',
     subIndustry: '핸드셋',
   },
-  '318660': {
-    dartCode: '01345724',
-    companyName: '타임기술',
-    stockCode: '318660',
-    industry: '철강/조선',
-    subIndustry: '우주항공과국방',
-  },
+  
   '303530': {
     dartCode: '01264872',
     companyName: '이노뎁',
@@ -18708,13 +17472,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: 'IT/소프트웨어',
     subIndustry: 'IT서비스',
   },
-  '379390': {
-    dartCode: '01365384',
-    companyName: '이성씨엔아이',
-    stockCode: '379390',
-    industry: '유틸리티',
-    subIndustry: '에너지장비및서비스',
-  },
+  
   '187660': {
     dartCode: '01409022',
     companyName: '현대ADM',
@@ -19009,20 +17767,8 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: '반도체',
     subIndustry: '전자장비와기기',
   },
-  '257990': {
-    dartCode: '00425254',
-    companyName: '나우코스',
-    stockCode: '257990',
-    industry: '유통/소매',
-    subIndustry: '화장품',
-  },
-  '253610': {
-    dartCode: '01262023',
-    companyName: '루트락',
-    stockCode: '253610',
-    industry: '바이오/제약',
-    subIndustry: '건강관리장비와용품',
-  },
+  
+  
   '365550': {
     dartCode: '01437186',
     companyName: 'ESR켄달스퀘어리츠',
@@ -19205,13 +17951,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     industry: 'IT/소프트웨어',
     subIndustry: '소프트웨어',
   },
-  '122830': {
-    dartCode: '00337296',
-    companyName: '원포유',
-    stockCode: '122830',
-    industry: '통신',
-    subIndustry: '다각화된통신서비스',
-  },
+  
   '304840': {
     dartCode: '01118281',
     companyName: '피플바이오',
@@ -19323,8 +18063,7 @@ export const stockCodeMap: Record<string, CompanyInfo> = {
     stockCode: '332370',
     industry: 'IT/소프트웨어',
     subIndustry: '컴퓨터와주변기기',
-  },
-};
+  }};
 
 export const getDartCodeByStockCode = (stockCode: string): string | null => {
   return stockCodeMap[stockCode]?.dartCode || null;
