@@ -580,10 +580,10 @@ export default function EnhancedGrahamPage() {
 
         {/* 오류 메시지 - 세련된 알림 디자인 */}
         {error && !loading && (
-          <div className="bg-white p-5 sm:p-6 rounded-2xl shadow-md mb-6 border-l-4 border-red-500 transition-all duration-300 hover:shadow-lg animate-fadeIn">
+          <div className="bg-white p-5 sm:p-6 rounded-2xl shadow-md mb-6 border-l-4 border-gray-400 transition-all duration-300 hover:shadow-lg animate-fadeIn">
             <div className="flex items-start">
-              <div className="bg-red-50 p-2 rounded-full mr-3">
-                <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-red-500" />
+              <div className="bg-gray-100 p-2 rounded-full mr-3">
+                <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-gray-700" />
               </div>
               <div>
                 <p className="font-medium text-base sm:text-lg text-gray-800">오류</p>
@@ -704,24 +704,21 @@ export default function EnhancedGrahamPage() {
                             </div>
                           </td>
                           <td className="bg-gray-50 px-3 py-3 whitespace-nowrap">
-                            <div className="text-xs font-semibold text-blue-600">
+                            <div className="text-xs font-semibold text-gray-900">
                               {formatNumber(stock.modified_graham_price)}원
                             </div>
                           </td>
 
                           <td className="bg-gray-50 px-3 py-3 whitespace-nowrap">
-                            <div className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-1 py-0.5 rounded">
-                              <div>
-                                {stock.modified_graham_price > 0
-                                  ? (
-                                      ((stock.modified_graham_price - stock.current_price) /
-                                        stock.modified_graham_price) *
-                                      100
-                                    ).toFixed(1)
-                                  : 0}
-                                %
-                              </div>
-                              <div>저평가</div>
+                            <div className="text-xs font-semibold text-gray-900">
+                              {stock.modified_graham_price > 0
+                                ? (
+                                    ((stock.modified_graham_price - stock.current_price) /
+                                      stock.modified_graham_price) *
+                                    100
+                                  ).toFixed(1)
+                                : 0}
+                              %
                             </div>
                           </td>
                           <td className="bg-gray-50 px-3 py-3 whitespace-nowrap">
@@ -735,8 +732,8 @@ export default function EnhancedGrahamPage() {
                                 <Check size={12} className="text-emerald-600" />
                               </div>
                             ) : (
-                              <div className="inline-flex items-center justify-center bg-red-50 w-5 h-5 rounded-full">
-                                <X size={12} className="text-red-600" />
+                              <div className="inline-flex items-center justify-center bg-gray-100 w-5 h-5 rounded-full">
+                                <X size={12} className="text-gray-600" />
                               </div>
                             )}
                           </td>
@@ -875,44 +872,41 @@ export default function EnhancedGrahamPage() {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg inline-block">
+                            <div className="text-sm font-semibold text-gray-900">
                               {formatNumber(stock.modified_graham_price)}원
                             </div>
                           </td>
 
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-semibold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg inline-block">
+                            <div className="text-sm text-gray-900">
                               {formatNumber(stock.ncav_price)}원
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg inline-block text-center">
-                              <div>
-                                {stock.modified_graham_price > 0
-                                  ? (
-                                      ((stock.modified_graham_price - stock.current_price) /
-                                        stock.modified_graham_price) *
-                                      100
-                                    ).toFixed(1)
-                                  : 0}
-                                %
-                              </div>
-                              <div>저평가</div>
+                            <div className="text-sm text-gray-900">
+                              {stock.modified_graham_price > 0
+                                ? (
+                                    ((stock.modified_graham_price - stock.current_price) /
+                                      stock.modified_graham_price) *
+                                    100
+                                  ).toFixed(1)
+                                : 0}
+                              %
                             </div>
                           </td>
 
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-semibold text-gray-900">
+                            <div className="text-sm  text-gray-900">
                               {stock.current_per.toFixed(2)}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-semibold text-gray-900">
+                            <div className="text-sm  text-gray-900">
                               {stock.debtratio.toFixed(1)}%
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg inline-block">
+                            <div className="text-sm font-semibold text-gray-900">
                               {stock.dividend_yield > 0
                                 ? `${stock.dividend_yield.toFixed(2)}%`
                                 : '-'}
@@ -924,8 +918,8 @@ export default function EnhancedGrahamPage() {
                                 <Check size={16} className="text-emerald-600" />
                               </div>
                             ) : (
-                              <div className="inline-flex items-center justify-center bg-red-50 w-7 h-7 rounded-full">
-                                <X size={16} className="text-red-600" />
+                              <div className="inline-flex items-center justify-center bg-gray-200 w-7 h-7 rounded-full">
+                                <X size={16} className="text-gray-700" />
                               </div>
                             )}
                           </td>

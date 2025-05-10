@@ -148,8 +148,6 @@ export default function SrimPage() {
       filtered = filtered.filter((stock) => stock.dividend_yield <= dividendMaxFilter);
     }
 
-    // ROE 범위 필터 삭제
-
     // 연속 배당 필터
     if (consecutiveDividendFilter !== null) {
       filtered = filtered.filter(
@@ -271,9 +269,9 @@ export default function SrimPage() {
     if (sortField !== field) return null;
 
     return sortDirection === 'asc' ? (
-      <ArrowUp size={12} className="ml-1 text-blue-600 sort-icon" />
+      <ArrowUp size={12} className="ml-1 text-emerald-600 sort-icon" />
     ) : (
-      <ArrowDown size={12} className="ml-1 text-blue-600 sort-icon" />
+      <ArrowDown size={12} className="ml-1 text-emerald-600 sort-icon" />
     );
   };
 
@@ -289,8 +287,8 @@ export default function SrimPage() {
             <ArrowLeft size={20} className="sm:w-6 sm:h-6" />
           </Link>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center">
-            <div className="p-2 bg-blue-50 rounded-full mr-3">
-              <BarChart4 className="text-blue-600 w-5 h-5 sm:w-6 sm:h-6" />
+            <div className="p-2 bg-emerald-50 rounded-full mr-3">
+              <BarChart4 className="text-emerald-600 w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             S-RIM 기반 종목
           </h1>
@@ -306,8 +304,8 @@ export default function SrimPage() {
               onClick={() => setIsConditionExpanded(!isConditionExpanded)}
             >
               <div className="flex items-center">
-                <div className="p-2 bg-blue-50 rounded-full mr-3">
-                  <Info className="w-5 h-5 text-blue-600" />
+                <div className="p-2 bg-emerald-50 rounded-full mr-3">
+                  <Info className="w-5 h-5 text-emerald-600" />
                 </div>
                 <h2 className="text-base sm:text-lg font-semibold text-gray-800">
                   S-RIM 투자 원칙
@@ -333,31 +331,31 @@ export default function SrimPage() {
                 </p>
                 <ul className="list-disc pl-5 text-sm sm:text-base text-gray-700 space-y-2">
                   <li>
-                    <strong className="text-blue-700">S-RIM 모델</strong> - 미래 초과이익의
+                    <strong className="text-emerald-700">S-RIM 모델</strong> - 미래 초과이익의
                     현재가치와 순자산을 통해 기업의 내재가치 산정
                   </li>
                   <li>
-                    <strong className="text-blue-700">ROE 시나리오 분석</strong> - 기본 ROE 및 ROE
-                    감소 시나리오(10%, 20%)를 통한 안전성 확인
+                    <strong className="text-emerald-700">ROE 시나리오 분석</strong> - 기본 ROE 및
+                    ROE 감소 시나리오(10%, 20%)를 통한 안전성 확인
                   </li>
                   <li>
-                    <strong className="text-blue-700">적정 자본비용 적용</strong> - 업종별 특성에
+                    <strong className="text-emerald-700">적정 자본비용 적용</strong> - 업종별 특성에
                     맞는 자본비용 적용
                   </li>
                   <li>
-                    <strong className="text-blue-700">장기 투자 가치</strong> - 청산가치가 아닌
+                    <strong className="text-emerald-700">장기 투자 가치</strong> - 청산가치가 아닌
                     계속기업 가치에 기반한 평가로 장기 투자에 적합
                   </li>
                   <li>
-                    <strong className="text-blue-700">최소 30% 안전마진</strong> - 기본 S-RIM
+                    <strong className="text-emerald-700">최소 30% 안전마진</strong> - 기본 S-RIM
                     내재가치 대비 30% 이상 저평가된 종목만 표시
                   </li>
                   <li>
-                    <strong className="text-blue-700">영업이익 필터링</strong> - 최근 3년 중 2년
+                    <strong className="text-emerald-700">영업이익 필터링</strong> - 최근 3년 중 2년
                     이상 영업이익이 음수인 기업 제외
                   </li>
                   <li>
-                    <strong className="text-blue-700">연속 배당 여부 표시</strong> - 3년
+                    <strong className="text-emerald-700">연속 배당 여부 표시</strong> - 3년
                     연속(2022-2024) 배당금 지급 체크
                   </li>
                 </ul>
@@ -372,8 +370,8 @@ export default function SrimPage() {
               onClick={() => setIsFilterExpanded(!isFilterExpanded)}
             >
               <div className="flex items-center">
-                <div className="p-1.5 bg-blue-50 rounded-full mr-2">
-                  <Filter className="w-4 h-4 text-blue-600" />
+                <div className="p-1.5 bg-emerald-50 rounded-full mr-2">
+                  <Filter className="w-4 h-4 text-emerald-600" />
                 </div>
                 <h2 className="text-sm sm:text-base font-semibold text-gray-800">필터 및 정렬</h2>
               </div>
@@ -410,7 +408,7 @@ export default function SrimPage() {
                     <select
                       value={industryFilter}
                       onChange={(e) => setIndustryFilter(e.target.value)}
-                      className="filter-select w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                      className="filter-select w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                     >
                       <option value="">모든 산업군</option>
                       {industries.map((industry) => (
@@ -429,7 +427,7 @@ export default function SrimPage() {
                     <select
                       value={subIndustryFilter}
                       onChange={(e) => setSubIndustryFilter(e.target.value)}
-                      className="filter-select w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                      className="filter-select w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                       disabled={subIndustries.length === 0}
                     >
                       <option value="">모든 하위 산업군</option>
@@ -456,7 +454,7 @@ export default function SrimPage() {
                         placeholder="최소"
                         min="0"
                         step="1"
-                        className="filter-input w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                        className="filter-input w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                       />
                       <span className="self-center text-gray-400 text-sm">~</span>
                       <input
@@ -468,7 +466,7 @@ export default function SrimPage() {
                         placeholder="최대"
                         min="0"
                         step="1"
-                        className="filter-input w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                        className="filter-input w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                       />
                     </div>
                   </div>
@@ -487,7 +485,7 @@ export default function SrimPage() {
                         placeholder="최소"
                         min="0"
                         step="0.1"
-                        className="filter-input w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                        className="filter-input w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                       />
                       <span className="self-center text-gray-400 text-sm">~</span>
                       <input
@@ -499,7 +497,7 @@ export default function SrimPage() {
                         placeholder="최대"
                         min="0"
                         step="0.1"
-                        className="filter-input w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                        className="filter-input w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                       />
                     </div>
                   </div>
@@ -524,7 +522,7 @@ export default function SrimPage() {
                           setConsecutiveDividendFilter(e.target.value === 'true');
                         }
                       }}
-                      className="filter-select w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                      className="filter-select w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                     >
                       <option value="">전체</option>
                       <option value="true">O (3년 연속 배당)</option>
@@ -541,7 +539,7 @@ export default function SrimPage() {
                       <select
                         value={sortField}
                         onChange={(e) => setSortField(e.target.value as SortField)}
-                        className="filter-select flex-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                        className="filter-select flex-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                       >
                         <option value="margin_of_safety">안전마진</option>
                         <option value="srim_base">S-RIM 기본가치</option>
@@ -581,7 +579,7 @@ export default function SrimPage() {
           <div className="bg-white rounded-2xl p-8 shadow-md flex flex-col items-center justify-center mb-6 transition-all duration-300 border border-gray-100">
             <div className="relative w-16 h-16 mb-4">
               <div className="absolute inset-0 rounded-full border-4 border-gray-200"></div>
-              <div className="absolute inset-0 rounded-full border-4 border-t-blue-600 animate-spin"></div>
+              <div className="absolute inset-0 rounded-full border-4 border-t-emerald-600 animate-spin"></div>
             </div>
             <div className="text-center">
               <p className="text-lg text-gray-700 font-medium mb-2">데이터를 불러오는 중...</p>
@@ -592,10 +590,10 @@ export default function SrimPage() {
 
         {/* 오류 메시지 - 세련된 알림 디자인 */}
         {error && !loading && (
-          <div className="bg-white p-5 sm:p-6 rounded-2xl shadow-md mb-6 border-l-4 border-red-500 transition-all duration-300 hover:shadow-lg animate-fadeIn">
+          <div className="bg-white p-5 sm:p-6 rounded-2xl shadow-md mb-6 border-l-4 border-gray-400 transition-all duration-300 hover:shadow-lg animate-fadeIn">
             <div className="flex items-start">
-              <div className="bg-red-50 p-2 rounded-full mr-3">
-                <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-red-500" />
+              <div className="bg-gray-100 p-2 rounded-full mr-3">
+                <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-gray-700" />
               </div>
               <div>
                 <p className="font-medium text-base sm:text-lg text-gray-800">오류</p>
@@ -613,7 +611,7 @@ export default function SrimPage() {
                 <div className="flex justify-between items-center">
                   <h2 className="text-lg sm:text-xl font-semibold text-gray-800 flex items-center">
                     <span>S-RIM 기반 종목 리스트</span>
-                    <span className="ml-2 text-sm font-normal bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
+                    <span className="ml-2 text-sm font-normal bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">
                       총 {filteredStocks.length}개 종목
                     </span>
                   </h2>
@@ -671,6 +669,26 @@ export default function SrimPage() {
                         <th
                           scope="col"
                           className="bg-gray-50 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
+                          onClick={() => toggleSort('current_per')}
+                        >
+                          <div className="flex items-center whitespace-nowrap">
+                            PER
+                            {renderSortIcon('current_per')}
+                          </div>
+                        </th>
+                        <th
+                          scope="col"
+                          className="bg-gray-50 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
+                          onClick={() => toggleSort('dividend_yield')}
+                        >
+                          <div className="flex items-center whitespace-nowrap">
+                            배당률
+                            {renderSortIcon('dividend_yield')}
+                          </div>
+                        </th>
+                        <th
+                          scope="col"
+                          className="bg-gray-50 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
                           onClick={() => toggleSort('consecutive_dividend')}
                         >
                           <div className="flex items-center whitespace-nowrap">
@@ -705,24 +723,35 @@ export default function SrimPage() {
                             </div>
                           </td>
                           <td className="bg-gray-50 px-3 py-3 whitespace-nowrap">
-                            <div className="text-xs font-semibold text-blue-600">
+                            <div className="text-xs font-semibold text-gray-900">
                               {formatNumber(stock.srim_base)}원
                             </div>
                           </td>
                           <td className="bg-gray-50 px-3 py-3 whitespace-nowrap">
-                            <div className="text-xs font-semibold text-blue-600 bg-blue-50 px-1 py-0.5 rounded">
-                              <div>{stock.margin_of_safety.toFixed(1)}%</div>
-                              <div>안전마진</div>
+                            <div className="text-xs text-gray-900">
+                              {stock.margin_of_safety.toFixed(1)}%
+                            </div>
+                          </td>
+                          <td className="bg-gray-50 px-3 py-3 whitespace-nowrap">
+                            <div className="text-xs text-gray-900">
+                              {stock.current_per > 0 ? stock.current_per.toFixed(2) : '-'}
+                            </div>
+                          </td>
+                          <td className="bg-gray-50 px-3 py-3 whitespace-nowrap">
+                            <div className="text-xs font-semibold text-gray-900">
+                              {stock.dividend_yield > 0
+                                ? `${stock.dividend_yield.toFixed(2)}%`
+                                : '-'}
                             </div>
                           </td>
                           <td className="bg-gray-50 px-3 py-3 whitespace-nowrap text-center">
                             {stock.consecutive_dividend ? (
-                              <div className="inline-flex items-center justify-center bg-blue-50 w-5 h-5 rounded-full">
-                                <Check size={12} className="text-blue-600" />
+                              <div className="inline-flex items-center justify-center bg-emerald-50 w-5 h-5 rounded-full">
+                                <Check size={12} className="text-emerald-600" />
                               </div>
                             ) : (
-                              <div className="inline-flex items-center justify-center bg-red-50 w-5 h-5 rounded-full">
-                                <X size={12} className="text-red-600" />
+                              <div className="inline-flex items-center justify-center bg-gray-100 w-5 h-5 rounded-full">
+                                <X size={12} className="text-gray-600" />
                               </div>
                             )}
                           </td>
@@ -859,32 +888,32 @@ export default function SrimPage() {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg inline-block">
+                            <div className="text-sm font-semibold text-gray-900">
                               {formatNumber(stock.srim_base)}원
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-semibold text-gray-900">
+                            <div className="text-sm text-gray-900">
                               {formatNumber(stock.srim_decline_10pct)}원
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-semibold text-gray-900">
+                            <div className="text-sm text-gray-900">
                               {formatNumber(stock.srim_decline_20pct)}원
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg inline-block text-center">
+                            <div className="text-sm text-gray-900">
                               {stock.margin_of_safety.toFixed(1)}%
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-semibold text-gray-900">
+                            <div className="text-sm text-gray-900">
                               {stock.current_per > 0 ? stock.current_per.toFixed(2) : '-'}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg inline-block">
+                            <div className="text-sm font-semibold text-gray-900">
                               {stock.dividend_yield > 0
                                 ? `${stock.dividend_yield.toFixed(2)}%`
                                 : '-'}
@@ -892,12 +921,12 @@ export default function SrimPage() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">
                             {stock.consecutive_dividend ? (
-                              <div className="inline-flex items-center justify-center bg-blue-50 w-7 h-7 rounded-full">
-                                <Check size={16} className="text-blue-600" />
+                              <div className="inline-flex items-center justify-center bg-emerald-50 w-7 h-7 rounded-full">
+                                <Check size={16} className="text-emerald-600" />
                               </div>
                             ) : (
-                              <div className="inline-flex items-center justify-center bg-red-50 w-7 h-7 rounded-full">
-                                <X size={16} className="text-red-600" />
+                              <div className="inline-flex items-center justify-center bg-gray-200 w-7 h-7 rounded-full">
+                                <X size={16} className="text-gray-700" />
                               </div>
                             )}
                           </td>
@@ -984,7 +1013,7 @@ export default function SrimPage() {
                                 onClick={() => handlePageChange(pageNumber)}
                                 className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-colors duration-200 ${
                                   currentPage === pageNumber
-                                    ? 'z-10 bg-blue-50 border-blue-500 text-blue-600 hover:bg-blue-100'
+                                    ? 'z-10 bg-emerald-50 border-emerald-500 text-emerald-600 hover:bg-emerald-100'
                                     : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
                                 }`}
                               >
@@ -1058,7 +1087,7 @@ export default function SrimPage() {
                 </p>
                 <button
                   onClick={resetFilters}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors text-sm font-medium"
                 >
                   필터 초기화
                 </button>

@@ -1,3 +1,5 @@
+//src/app/howard/page.tsx
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -269,9 +271,9 @@ export default function HowardPage() {
     if (sortField !== field) return null;
 
     return sortDirection === 'asc' ? (
-      <ArrowUp size={12} className="ml-1 text-blue-600 sort-icon" />
+      <ArrowUp size={12} className="ml-1 text-emerald-600 sort-icon" />
     ) : (
-      <ArrowDown size={12} className="ml-1 text-blue-600 sort-icon" />
+      <ArrowDown size={12} className="ml-1 text-emerald-600 sort-icon" />
     );
   };
 
@@ -287,8 +289,8 @@ export default function HowardPage() {
             <ArrowLeft size={20} className="sm:w-6 sm:h-6" />
           </Link>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center">
-            <div className="p-2 bg-blue-50 rounded-full mr-3">
-              <BarChart4 className="text-blue-600 w-5 h-5 sm:w-6 sm:h-6" />
+            <div className="p-2 bg-emerald-50 rounded-full mr-3">
+              <BarChart4 className="text-emerald-600 w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             하워드 막스 내재가치 종목
           </h1>
@@ -304,8 +306,8 @@ export default function HowardPage() {
               onClick={() => setIsConditionExpanded(!isConditionExpanded)}
             >
               <div className="flex items-center">
-                <div className="p-2 bg-blue-50 rounded-full mr-3">
-                  <Info className="w-5 h-5 text-blue-600" />
+                <div className="p-2 bg-emerald-50 rounded-full mr-3">
+                  <Info className="w-5 h-5 text-emerald-600" />
                 </div>
                 <h2 className="text-base sm:text-lg font-semibold text-gray-800">
                   하워드 막스의 내재가치 원칙
@@ -331,31 +333,31 @@ export default function HowardPage() {
                 </p>
                 <ul className="list-disc pl-5 text-sm sm:text-base text-gray-700 space-y-2">
                   <li>
-                    <strong className="text-blue-700">현금흐름 할인법(DCF)</strong> - 미래
+                    <strong className="text-emerald-700">현금흐름 할인법(DCF)</strong> - 미래
                     현금흐름을 현재가치로 할인
                   </li>
                   <li>
-                    <strong className="text-blue-700">FCF 중앙값 사용</strong> - 3년치 FCF의
+                    <strong className="text-emerald-700">FCF 중앙값 사용</strong> - 3년치 FCF의
                     중앙값을 사용해 극단치 영향 최소화
                   </li>
                   <li>
-                    <strong className="text-blue-700">산업별 성장률 적용</strong> - 각 산업별 특성에
-                    맞는 성장률과 영구성장률 적용
+                    <strong className="text-emerald-700">산업별 성장률 적용</strong> - 각 산업별
+                    특성에 맞는 성장률과 영구성장률 적용
                   </li>
                   <li>
-                    <strong className="text-blue-700">시나리오 분석</strong> - 기본/보수 두 가지
+                    <strong className="text-emerald-700">시나리오 분석</strong> - 기본/보수 두 가지
                     시나리오로 내재가치 범위 제시
                   </li>
                   <li>
-                    <strong className="text-blue-700">8% 할인율 사용</strong> - 기본 시나리오는 8%,
-                    보수 12% 할인율 적용
+                    <strong className="text-emerald-700">8% 할인율 사용</strong> - 기본 시나리오는
+                    8%, 보수 12% 할인율 적용
                   </li>
                   <li>
-                    <strong className="text-blue-700">최소 30% 안전마진</strong> - 기본 시나리오
+                    <strong className="text-emerald-700">최소 30% 안전마진</strong> - 기본 시나리오
                     내재가치 대비 30% 이상 저평가된 종목만 표시
                   </li>
                   <li>
-                    <strong className="text-blue-700">연속 배당 여부 표시</strong> - 3년
+                    <strong className="text-emerald-700">연속 배당 여부 표시</strong> - 3년
                     연속(2022-2024) 배당금 지급 체크
                   </li>
                 </ul>
@@ -370,8 +372,8 @@ export default function HowardPage() {
               onClick={() => setIsFilterExpanded(!isFilterExpanded)}
             >
               <div className="flex items-center">
-                <div className="p-1.5 bg-blue-50 rounded-full mr-2">
-                  <Filter className="w-4 h-4 text-blue-600" />
+                <div className="p-1.5 bg-emerald-50 rounded-full mr-2">
+                  <Filter className="w-4 h-4 text-emerald-600" />
                 </div>
                 <h2 className="text-sm sm:text-base font-semibold text-gray-800">필터 및 정렬</h2>
               </div>
@@ -408,7 +410,7 @@ export default function HowardPage() {
                     <select
                       value={industryFilter}
                       onChange={(e) => setIndustryFilter(e.target.value)}
-                      className="filter-select w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                      className="filter-select w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                     >
                       <option value="">모든 산업군</option>
                       {industries.map((industry) => (
@@ -427,7 +429,7 @@ export default function HowardPage() {
                     <select
                       value={subIndustryFilter}
                       onChange={(e) => setSubIndustryFilter(e.target.value)}
-                      className="filter-select w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                      className="filter-select w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                       disabled={subIndustries.length === 0}
                     >
                       <option value="">모든 하위 산업군</option>
@@ -454,7 +456,7 @@ export default function HowardPage() {
                         placeholder="최소"
                         min="0"
                         step="1"
-                        className="filter-input w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                        className="filter-input w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                       />
                       <span className="self-center text-gray-400 text-sm">~</span>
                       <input
@@ -466,7 +468,7 @@ export default function HowardPage() {
                         placeholder="최대"
                         min="0"
                         step="1"
-                        className="filter-input w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                        className="filter-input w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                       />
                     </div>
                   </div>
@@ -486,7 +488,7 @@ export default function HowardPage() {
                         placeholder="최소"
                         min="0"
                         step="0.1"
-                        className="filter-input w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                        className="filter-input w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                       />
                       <span className="self-center text-gray-400 text-sm">~</span>
                       <input
@@ -498,7 +500,7 @@ export default function HowardPage() {
                         placeholder="최대"
                         min="0"
                         step="0.1"
-                        className="filter-input w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                        className="filter-input w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                       />
                     </div>
                   </div>
@@ -523,7 +525,7 @@ export default function HowardPage() {
                           setConsecutiveDividendFilter(e.target.value === 'true');
                         }
                       }}
-                      className="filter-select w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                      className="filter-select w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                     >
                       <option value="">전체</option>
                       <option value="true">O (3년 연속 배당)</option>
@@ -540,7 +542,7 @@ export default function HowardPage() {
                       <select
                         value={sortField}
                         onChange={(e) => setSortField(e.target.value as SortField)}
-                        className="filter-select flex-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                        className="filter-select flex-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                       >
                         <option value="margin_of_safety">안전마진</option>
                         <option value="current_price">현재가</option>
@@ -582,7 +584,7 @@ export default function HowardPage() {
           <div className="bg-white rounded-2xl p-8 shadow-md flex flex-col items-center justify-center mb-6 transition-all duration-300 border border-gray-100">
             <div className="relative w-16 h-16 mb-4">
               <div className="absolute inset-0 rounded-full border-4 border-gray-200"></div>
-              <div className="absolute inset-0 rounded-full border-4 border-t-blue-600 animate-spin"></div>
+              <div className="absolute inset-0 rounded-full border-4 border-t-emerald-600 animate-spin"></div>
             </div>
             <div className="text-center">
               <p className="text-lg text-gray-700 font-medium mb-2">데이터를 불러오는 중...</p>
@@ -593,10 +595,10 @@ export default function HowardPage() {
 
         {/* 오류 메시지 - 세련된 알림 디자인 */}
         {error && !loading && (
-          <div className="bg-white p-5 sm:p-6 rounded-2xl shadow-md mb-6 border-l-4 border-red-500 transition-all duration-300 hover:shadow-lg animate-fadeIn">
+          <div className="bg-white p-5 sm:p-6 rounded-2xl shadow-md mb-6 border-l-4 border-gray-400 transition-all duration-300 hover:shadow-lg animate-fadeIn">
             <div className="flex items-start">
-              <div className="bg-red-50 p-2 rounded-full mr-3">
-                <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-red-500" />
+              <div className="bg-gray-100 p-2 rounded-full mr-3">
+                <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-gray-700" />
               </div>
               <div>
                 <p className="font-medium text-base sm:text-lg text-gray-800">오류</p>
@@ -614,7 +616,7 @@ export default function HowardPage() {
                 <div className="flex justify-between items-center">
                   <h2 className="text-lg sm:text-xl font-semibold text-gray-800 flex items-center">
                     <span>하워드 막스 내재가치 리스트</span>
-                    <span className="ml-2 text-sm font-normal bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
+                    <span className="ml-2 text-sm font-normal bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">
                       총 {filteredStocks.length}개 종목
                     </span>
                   </h2>
@@ -717,15 +719,14 @@ export default function HowardPage() {
                             </div>
                           </td>
                           <td className="bg-gray-50 px-3 py-3 whitespace-nowrap">
-                            <div className="text-xs font-semibold text-blue-600">
+                            <div className="text-xs font-semibold text-gray-900">
                               {formatNumber(stock.base_intrinsic_value)}원
                             </div>
                           </td>
 
                           <td className="bg-gray-50 px-3 py-3 whitespace-nowrap">
-                            <div className="text-xs font-semibold text-blue-600 bg-blue-50 px-1 py-0.5 rounded">
-                              <div>{stock.margin_of_safety.toFixed(1)}%</div>
-                              <div>안전마진</div>
+                            <div className="text-xs text-gray-900">
+                              {stock.margin_of_safety.toFixed(1)}%
                             </div>
                           </td>
                           <td className="bg-gray-50 px-3 py-3 whitespace-nowrap">
@@ -737,12 +738,12 @@ export default function HowardPage() {
                           </td>
                           <td className="bg-gray-50 px-3 py-3 whitespace-nowrap text-center">
                             {stock.consecutive_dividend ? (
-                              <div className="inline-flex items-center justify-center bg-blue-50 w-5 h-5 rounded-full">
-                                <Check size={12} className="text-blue-600" />
+                              <div className="inline-flex items-center justify-center bg-emerald-50 w-5 h-5 rounded-full">
+                                <Check size={12} className="text-emerald-600" />
                               </div>
                             ) : (
-                              <div className="inline-flex items-center justify-center bg-red-50 w-5 h-5 rounded-full">
-                                <X size={12} className="text-red-600" />
+                              <div className="inline-flex items-center justify-center bg-gray-100 w-5 h-5 rounded-full">
+                                <X size={12} className="text-gray-600" />
                               </div>
                             )}
                           </td>
@@ -870,28 +871,28 @@ export default function HowardPage() {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg inline-block">
+                            <div className="text-sm font-semibold text-gray-900">
                               {formatNumber(stock.base_intrinsic_value)}원
                             </div>
                           </td>
 
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-semibold text-orange-600 bg-orange-50 px-2 py-1 rounded-lg inline-block">
+                            <div className="text-sm text-gray-900">
                               {formatNumber(stock.conservative_intrinsic_value)}원
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg inline-block text-center">
+                            <div className="text-sm text-gray-900">
                               {stock.margin_of_safety.toFixed(1)}%
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-semibold text-gray-900">
+                            <div className="text-sm text-gray-900">
                               {stock.fcf_per_share > 0 ? formatNumber(stock.fcf_per_share) : '-'}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg inline-block">
+                            <div className="text-sm font-semibold text-gray-900">
                               {stock.dividend_yield > 0
                                 ? `${stock.dividend_yield.toFixed(2)}%`
                                 : '-'}
@@ -899,12 +900,12 @@ export default function HowardPage() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">
                             {stock.consecutive_dividend ? (
-                              <div className="inline-flex items-center justify-center bg-blue-50 w-7 h-7 rounded-full">
-                                <Check size={16} className="text-blue-600" />
+                              <div className="inline-flex items-center justify-center bg-emerald-50 w-7 h-7 rounded-full">
+                                <Check size={16} className="text-emerald-600" />
                               </div>
                             ) : (
-                              <div className="inline-flex items-center justify-center bg-red-50 w-7 h-7 rounded-full">
-                                <X size={16} className="text-red-600" />
+                              <div className="inline-flex items-center justify-center bg-gray-200 w-7 h-7 rounded-full">
+                                <X size={16} className="text-gray-700" />
                               </div>
                             )}
                           </td>
@@ -918,7 +919,7 @@ export default function HowardPage() {
                 </div>
               )}
 
-              {/* 개선된 페이지네이션 */}
+              {/* 페이지네이션 */}
               {totalPages > 1 && (
                 <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 sm:px-6 flex items-center justify-between">
                   <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
@@ -991,7 +992,7 @@ export default function HowardPage() {
                                 onClick={() => handlePageChange(pageNumber)}
                                 className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-colors duration-200 ${
                                   currentPage === pageNumber
-                                    ? 'z-10 bg-blue-50 border-blue-500 text-blue-600 hover:bg-blue-100'
+                                    ? 'z-10 bg-emerald-50 border-emerald-500 text-emerald-600 hover:bg-emerald-100'
                                     : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
                                 }`}
                               >
@@ -1051,7 +1052,7 @@ export default function HowardPage() {
               )}
             </div>
 
-            {/* 개선된 데이터 없음 메시지 */}
+            {/* 데이터 없음 메시지 */}
             {filteredStocks.length === 0 && !loading && !error && (
               <div className="bg-white rounded-2xl p-8 shadow-md flex flex-col items-center justify-center animate-fadeIn">
                 <div className="p-4 bg-gray-100 rounded-full mb-4">
@@ -1065,7 +1066,7 @@ export default function HowardPage() {
                 </p>
                 <button
                   onClick={resetFilters}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors text-sm font-medium"
                 >
                   필터 초기화
                 </button>

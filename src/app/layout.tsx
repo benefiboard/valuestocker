@@ -4,7 +4,6 @@ import './globals.css';
 import { Analytics } from '@vercel/analytics/react';
 
 const notoSansKr = Noto_Sans_KR({
-  variable: '--font-noto-sans-kr',
   subsets: ['latin'],
   weight: ['400', '500', '700'],
 });
@@ -21,7 +20,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
-      <body className={`${notoSansKr.variable} font-noto-sans antialiased tracking-tighter`}>
+      <body className={`${notoSansKr.className} antialiased tracking-tighter`}>
         {children}
         <Analytics />
       </body>

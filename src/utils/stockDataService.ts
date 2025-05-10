@@ -1,6 +1,7 @@
 // src/utils/stockDataService.ts
 
 import { supabase } from '@/lib/supabaseClient';
+import { getAcceptableDebtStocks } from './stockDataCache';
 
 // 타입 정의
 export interface FlavorStock {
@@ -653,28 +654,15 @@ export async function fetchLynchStocks(): Promise<StockDataResult<LynchStock>> {
   try {
     console.log('=== 피터 린치 PEG 기반 주식 데이터 가져오기 시작 ===');
 
-    // 1. 먼저 stock_checklist 테이블에서 부채비율 기준에 맞는 종목만 필터링
-    console.log('부채비율 기준에 맞는 종목 필터링 중...');
-    const checklistData = await fetchAllDataWithPagination<any>(
-      'stock_checklist',
-      'stock_code, subindustry, debtratio'
-    );
+    // 부채비율 조건을 충족하는 종목 데이터 가져오기 (캐시된 JSON 사용)
+    const acceptableDebtStocks = await getAcceptableDebtStocks();
 
-    if (!checklistData || checklistData.length === 0) {
-      return emptyResult<LynchStock>('체크리스트 데이터를 찾을 수 없습니다.');
-    }
-
-    // 산업군별 부채비율 조건에 맞는 종목만 필터링
-    const validStockCodes = checklistData
-      .filter((item) => isDebtRatioAcceptable(item.subindustry, safeNumber(item.debtratio)))
-      .map((item) => item.stock_code);
-
-    console.log(`부채비율 조건을 충족하는 종목 수: ${validStockCodes.length}`);
-
-    // 부채비율 조건을 충족하는 종목이 없는 경우
-    if (validStockCodes.length === 0) {
+    if (!acceptableDebtStocks || acceptableDebtStocks.length === 0) {
       return emptyResult<LynchStock>('부채비율 조건을 충족하는 종목이 없습니다.');
     }
+
+    const validStockCodes = acceptableDebtStocks.map((item) => item.stock_code);
+    console.log(`부채비율 조건을 충족하는 종목 수: ${validStockCodes.length}`);
 
     // 2. 부채비율 조건을 충족하는 종목에 대해서만 stock_fairprice 테이블에서 필요한 데이터 조회
     const fairpriceData = await fetchDataInBatches<any>(
@@ -825,28 +813,15 @@ export async function fetchSrimStocks(): Promise<StockDataResult<SrimStock>> {
   try {
     console.log('=== S-RIM 기반 주식 데이터 가져오기 시작 ===');
 
-    // 1. 먼저 stock_checklist 테이블에서 부채비율 기준에 맞는 종목만 필터링
-    console.log('부채비율 기준에 맞는 종목 필터링 중...');
-    const checklistData = await fetchAllDataWithPagination<any>(
-      'stock_checklist',
-      'stock_code, subindustry, debtratio'
-    );
+    // 부채비율 조건을 충족하는 종목 데이터 가져오기 (캐시된 JSON 사용)
+    const acceptableDebtStocks = await getAcceptableDebtStocks();
 
-    if (!checklistData || checklistData.length === 0) {
-      return emptyResult<SrimStock>('체크리스트 데이터를 찾을 수 없습니다.');
-    }
-
-    // 산업군별 부채비율 조건에 맞는 종목만 필터링
-    const validStockCodes = checklistData
-      .filter((item) => isDebtRatioAcceptable(item.subindustry, safeNumber(item.debtratio)))
-      .map((item) => item.stock_code);
-
-    console.log(`부채비율 조건을 충족하는 종목 수: ${validStockCodes.length}`);
-
-    // 부채비율 조건을 충족하는 종목이 없는 경우
-    if (validStockCodes.length === 0) {
+    if (!acceptableDebtStocks || acceptableDebtStocks.length === 0) {
       return emptyResult<SrimStock>('부채비율 조건을 충족하는 종목이 없습니다.');
     }
+
+    const validStockCodes = acceptableDebtStocks.map((item) => item.stock_code);
+    console.log(`부채비율 조건을 충족하는 종목 수: ${validStockCodes.length}`);
 
     // 2. 부채비율 조건을 충족하는 종목에 대해서만 stock_fairprice 테이블에서 필요한 데이터 조회
     const fairpriceData = await fetchDataInBatches<any>(
@@ -996,6 +971,7 @@ export async function fetchSrimStocks(): Promise<StockDataResult<SrimStock>> {
 }
 
 // fetchHowardStocks 함수 - 페이지네이션 적용 (수정된 버전)
+
 export async function fetchHowardStocks(): Promise<StockDataResult<HowardStock>> {
   try {
     console.log('=== 하워드 막스 내재가치 주식 데이터 가져오기 시작 ===');
@@ -1005,31 +981,16 @@ export async function fetchHowardStocks(): Promise<StockDataResult<HowardStock>>
       (module) => module.default
     )) as IndustryData[];
 
-    // 2. stock_checklist 테이블에서 부채비율 조건에 맞는 종목만 필터링
-    console.log('부채비율 기준에 맞는 종목 필터링 중...');
-    const stockData = await fetchAllDataWithPagination<any>(
-      'stock_checklist',
-      'stock_code, company_name, industry, subindustry, debtratio'
-    );
+    // 2. 캐시된 JSON 파일에서 부채비율 조건을 충족하는 종목 데이터 가져오기
+    console.log('캐시된 부채비율 데이터 불러오는 중...');
+    const acceptableDebtStocks = await getAcceptableDebtStocks();
 
-    if (!stockData || stockData.length === 0) {
-      return emptyResult<HowardStock>('주식 데이터를 찾을 수 없습니다.');
-    }
-
-    // 산업군별 부채비율 조건에 맞는 종목만 필터링
-    const filteredStockData = stockData.filter((item) =>
-      isDebtRatioAcceptable(item.subindustry, safeNumber(item.debtratio))
-    );
-
-    const stockCodes = filteredStockData.map((item) => item.stock_code);
-    console.log(
-      `총 종목 수: ${stockData.length}, 부채비율 조건 충족 종목 수: ${stockCodes.length}`
-    );
-
-    // 부채비율 조건을 충족하는 종목이 없는 경우
-    if (stockCodes.length === 0) {
+    if (!acceptableDebtStocks || acceptableDebtStocks.length === 0) {
       return emptyResult<HowardStock>('부채비율 조건을 충족하는 종목이 없습니다.');
     }
+
+    const stockCodes = acceptableDebtStocks.map((item) => item.stock_code);
+    console.log(`부채비율 조건 충족 종목 수: ${stockCodes.length}`);
 
     // 3. 현재가 데이터 배치로 가져오기
     const priceData = await fetchDataInBatches<any>(
@@ -1057,9 +1018,22 @@ export async function fetchHowardStocks(): Promise<StockDataResult<HowardStock>>
       stockCodes
     );
 
-    // 6. 데이터 맵 생성
+    // 6. 데이터 맵 생성 - 캐시된 부채비율 데이터 활용
     console.log('데이터 맵 생성 중...');
-    const stockMap = new Map(filteredStockData.map((item) => [item.stock_code, item]));
+    // 캐시된 부채비율 데이터에서 맵 생성
+    const stockMap = new Map(
+      acceptableDebtStocks.map((item) => [
+        item.stock_code,
+        {
+          stock_code: item.stock_code,
+          company_name: item.company_name,
+          industry: item.industry,
+          subindustry: item.subindustry,
+          debtratio: item.debtratio,
+        },
+      ])
+    );
+
     const priceMap = new Map(
       priceData.map((item) => [item.stock_code, safeNumber(item.current_price)])
     );
