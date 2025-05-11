@@ -1,9 +1,9 @@
-'use client'; // 클라이언트 컴포넌트로 지정
+'use client';
 
-import { useState, useEffect } from 'react';
-import { usePathname } from 'next/navigation'; // 경로 확인을 위한 hook
+import { useState, useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { BarChart4, CheckSquare, ChevronDown } from 'lucide-react';
+import { ChevronDown, Menu, X } from 'lucide-react';
 
 // 타입 정의
 interface NavItem {
@@ -15,33 +15,48 @@ interface DropdownProps {
   title: string;
   items: NavItem[];
   isOpen: boolean;
-  setIsOpen: (isOpen: boolean) => void;
+  toggle: () => void;
+  closeMenu: () => void;
 }
 
-// 드롭다운 컴포넌트
-const Dropdown = ({ title, items, isOpen, setIsOpen }: DropdownProps) => {
+// 데스크탑용 드롭다운 컴포넌트 - 클릭 방식으로 수정
+const Dropdown = ({ title, items, isOpen, toggle, closeMenu }: DropdownProps) => {
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // 외부 클릭 시 드롭다운 닫기
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) && isOpen) {
+        closeMenu();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, closeMenu]);
+
   return (
-    <div className="relative">
+    <div className="relative" ref={dropdownRef}>
       <button
-        className="flex items-center text-gray-600 hover:text-emerald-700 transition-colors"
-        onClick={() => setIsOpen(!isOpen)}
-        onMouseEnter={() => setIsOpen(true)}
-        onMouseLeave={() => setIsOpen(false)}
+        className="flex items-center text-gray-600 hover:text-emerald-700 transition-colors py-2"
+        onClick={toggle}
+        aria-expanded={isOpen}
       >
         {title}
-        <ChevronDown className="ml-1 h-4 w-4" />
+        <ChevronDown
+          className={`ml-1 h-4 w-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+        />
       </button>
       {isOpen && (
-        <div
-          className="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50"
-          onMouseEnter={() => setIsOpen(true)}
-          onMouseLeave={() => setIsOpen(false)}
-        >
+        <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-lg shadow-lg py-2 z-50">
           {items.map((item: NavItem, index: number) => (
             <Link
               key={index}
               href={item.href}
               className="block px-4 py-2 text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
+              onClick={closeMenu}
             >
               {item.label}
             </Link>
@@ -57,10 +72,35 @@ const Navigation = () => {
   // 드롭다운 상태 관리
   const [strategyDropdown, setStrategyDropdown] = useState(false);
   const [toolsDropdown, setToolsDropdown] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // 현재 경로 확인
   const pathname = usePathname();
   const isHomePage = pathname === '/';
+
+  // 모든 드롭다운 닫기
+  const closeAllDropdowns = () => {
+    setStrategyDropdown(false);
+    setToolsDropdown(false);
+  };
+
+  // 전략 드롭다운 토글
+  const toggleStrategyDropdown = () => {
+    setToolsDropdown(false); // 다른 드롭다운 닫기
+    setStrategyDropdown(!strategyDropdown);
+  };
+
+  // 도구 드롭다운 토글
+  const toggleToolsDropdown = () => {
+    setStrategyDropdown(false); // 다른 드롭다운 닫기
+    setToolsDropdown(!toolsDropdown);
+  };
+
+  // 경로 변경 시 모든 메뉴 닫기
+  useEffect(() => {
+    setMobileMenuOpen(false);
+    closeAllDropdowns();
+  }, [pathname]);
 
   // 투자 전략 드롭다운 아이템
   const strategyItems: NavItem[] = [
@@ -79,48 +119,133 @@ const Navigation = () => {
   ];
 
   return (
-    <nav className="py-5 px-6 md:px-16 border-b border-gray-100 flex items-center justify-between sticky top-0 z-50 bg-white/90 backdrop-blur-md">
-      <div className="font-bold text-2xl text-emerald-700">ValueTargeter</div>
-      <div className="hidden md:flex items-center space-x-10">
-        <div
-          onMouseEnter={() => setStrategyDropdown(true)}
-          onMouseLeave={() => setStrategyDropdown(false)}
+    <>
+      <nav className="py-5 px-6 md:px-16 border-b border-gray-100 flex items-center justify-between sticky top-0 z-50 bg-white/90 backdrop-blur-md">
+        {/* 로고 - 클릭 시 홈으로 이동 */}
+        <Link
+          href="/"
+          className="font-bold text-2xl text-emerald-700 hover:text-emerald-800 transition-colors"
         >
+          ValueTargeter
+        </Link>
+
+        {/* 데스크탑 메뉴 */}
+        <div className="hidden md:flex items-center space-x-10">
           <Dropdown
             title="투자 전략"
             items={strategyItems}
             isOpen={strategyDropdown}
-            setIsOpen={setStrategyDropdown}
+            toggle={toggleStrategyDropdown}
+            closeMenu={closeAllDropdowns}
           />
-        </div>
-        <div
-          onMouseEnter={() => setToolsDropdown(true)}
-          onMouseLeave={() => setToolsDropdown(false)}
-        >
           <Dropdown
             title="분석 도구"
             items={toolsItems}
             isOpen={toolsDropdown}
-            setIsOpen={setToolsDropdown}
+            toggle={toggleToolsDropdown}
+            closeMenu={closeAllDropdowns}
           />
+          <Link
+            href="/checklist"
+            className="text-gray-600 hover:text-emerald-700 transition-colors py-2"
+          >
+            체크리스트
+          </Link>
+          <Link
+            href="/fairprice"
+            className="text-gray-600 hover:text-emerald-700 transition-colors py-2"
+          >
+            적정가 계산
+          </Link>
         </div>
-        <Link href="/checklist" className="text-gray-600 hover:text-emerald-700 transition-colors">
-          체크리스트
-        </Link>
-        <Link href="/fairprice" className="text-gray-600 hover:text-emerald-700 transition-colors">
-          적정가 계산
-        </Link>
-      </div>
 
-      {/* 시작하기 버튼 - 메인 페이지(/)에서만 표시 */}
-      {isHomePage && (
-        <Link href="/fairprice">
-          <button className="bg-emerald-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-emerald-700 transition-colors shadow-sm hover:shadow">
-            시작하기
+        {/* 모바일 햄버거 메뉴 버튼 */}
+        <div className="flex items-center md:hidden">
+          {/* 메인 페이지에서만 시작하기 버튼 표시 */}
+          {isHomePage && (
+            <Link href="/fairprice" className="mr-4">
+              <button className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors">
+                시작하기
+              </button>
+            </Link>
+          )}
+
+          {/* 햄버거 메뉴 아이콘 */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="text-gray-600 hover:text-emerald-700 transition-colors"
+            aria-label={mobileMenuOpen ? '메뉴 닫기' : '메뉴 열기'}
+          >
+            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
-        </Link>
+        </div>
+
+        {/* 데스크탑에서 메인 페이지일 때만 시작하기 버튼 표시 */}
+        {isHomePage && (
+          <div className="hidden md:block">
+            <Link href="/fairprice">
+              <button className="bg-emerald-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-emerald-700 transition-colors shadow-sm hover:shadow">
+                시작하기
+              </button>
+            </Link>
+          </div>
+        )}
+      </nav>
+
+      {/* 모바일 드롭다운 메뉴 - 네비게이션 바 아래에 표시 */}
+      {mobileMenuOpen && (
+        <div className="md:hidden bg-white border-b border-gray-200 shadow-md">
+          {/* 투자 전략 메뉴 그룹 */}
+          <div className="px-6 py-4 border-b border-gray-100">
+            <h3 className="font-medium text-gray-800 mb-3">투자 전략</h3>
+            <div className="space-y-3 pl-3">
+              {strategyItems.map((item, index) => (
+                <Link
+                  key={index}
+                  href={item.href}
+                  className="block text-gray-600 hover:text-emerald-700 py-1 transition-colors"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* 분석 도구 메뉴 그룹 */}
+          <div className="px-6 py-4 border-b border-gray-100">
+            <h3 className="font-medium text-gray-800 mb-3">분석 도구</h3>
+            <div className="grid grid-cols-1 gap-2 pl-3">
+              {toolsItems.map((item, index) => (
+                <Link
+                  key={index}
+                  href={item.href}
+                  className="block text-gray-600 hover:text-emerald-700 py-1 transition-colors"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* 기타 메뉴 항목 */}
+          <div className="px-6 py-4 flex flex-col space-y-3">
+            <Link
+              href="/checklist"
+              className="text-gray-800 hover:text-emerald-700 font-medium transition-colors"
+            >
+              체크리스트
+            </Link>
+
+            <Link
+              href="/fairprice"
+              className="text-gray-800 hover:text-emerald-700 font-medium transition-colors"
+            >
+              적정가 계산
+            </Link>
+          </div>
+        </div>
       )}
-    </nav>
+    </>
   );
 };
 
