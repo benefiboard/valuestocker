@@ -372,7 +372,7 @@ export default function EnhancedGrahamPage() {
                   </li>
                   <li>
                     <strong className="text-emerald-700">그레이엄 가격 계산</strong> - [(3년간 EPS
-                    평균 × 8) + 2024년 BPS ÷ 2] × 67%
+                    평균 × 8) + BPS ÷ 2] × 67%
                   </li>
                   <li>
                     <strong className="text-emerald-700">현재가 ≤ 그레이엄 가격</strong> -
@@ -383,8 +383,8 @@ export default function EnhancedGrahamPage() {
                     발행주식수 × 67%
                   </li>
                   <li>
-                    <strong className="text-emerald-700">연속 배당 여부 표시</strong> - 3년
-                    연속(2022-2024) 배당금 지급 체크
+                    <strong className="text-emerald-700">연속 배당 여부 표시</strong> - 3년 연속
+                    배당금 지급 체크
                   </li>
                 </ul>
               </div>

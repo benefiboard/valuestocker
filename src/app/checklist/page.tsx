@@ -28,6 +28,9 @@ import {
   Target,
   ExternalLink,
   X,
+  TrendingDown,
+  DollarSign,
+  Calculator,
 } from 'lucide-react';
 import {
   calculateChecklist,
@@ -44,6 +47,37 @@ interface HierarchicalCategory {
     [subCategory: string]: ScoredChecklistItem[];
   };
 }
+
+// 위험 플래그별 아이콘 및 설명 추가
+const getRiskFlagDetails = (flag: string) => {
+  const flagDetails = {
+    has_consecutive_operating_losses: {
+      icon: <TrendingDown className="w-4 h-4" />,
+      title: '연속 영업적자',
+      description: '2년 이상 연속으로 영업적자를 기록하고 있습니다.',
+      penalty: 2.0,
+    },
+    operating_to_net_income_discrepancy: {
+      icon: <DollarSign className="w-4 h-4" />,
+      title: '영업외수익 의존',
+      description: '영업이익은 적자이나 순이익이 큰 흑자로, 영업외수익에 의존하고 있습니다.',
+      penalty: 1.5,
+    },
+    operating_margin_critical: {
+      icon: <AlertCircle className="w-4 h-4" />,
+      title: '영업이익률 위험',
+      description: '평균 영업이익률이 음수로 수익성에 심각한 문제가 있습니다.',
+      penalty: 2.0,
+    },
+    insufficient_profitable_years: {
+      icon: <Calculator className="w-4 h-4" />,
+      title: '수익성 부족',
+      description: '최근 3년 중 2년 이상 영업흑자를 달성하지 못했습니다.',
+      penalty: 1.5,
+    },
+  };
+  return flagDetails[flag as keyof typeof flagDetails];
+};
 
 export default function ChecklistPage() {
   // URL 쿼리 파라미터 가져오기
@@ -690,6 +724,42 @@ export default function ChecklistPage() {
                 </div>
               )}
 
+              {/* 위험 요소 경고 섹션 추가 */}
+              {investmentRating.riskFlags &&
+                Object.entries(investmentRating.riskFlags).some(([_, value]) => value) && (
+                  <div className="bg-red-50 p-4 sm:p-5 rounded-xl mb-5 border border-red-100 transition-all duration-300 hover:shadow-md">
+                    <div className="flex items-start">
+                      <div className="p-2 bg-red-100 rounded-full mr-3 flex-shrink-0">
+                        <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-sm sm:text-base text-red-800 mb-3">
+                          위험 요소 감지
+                        </p>
+                        <div className="space-y-2">
+                          {Object.entries(investmentRating.riskFlags)
+                            .filter(([_, value]) => value)
+                            .map(([flag, _]) => {
+                              const details = getRiskFlagDetails(flag);
+                              return (
+                                <div key={flag} className="flex items-start">
+                                  <div className="mr-2 text-red-600">{details?.icon}</div>
+                                  <div>
+                                    <p className="text-sm font-medium text-red-800">
+                                      {details?.title}{' '}
+                                      <span className="text-red-600">(-{details?.penalty}점)</span>
+                                    </p>
+                                    <p className="text-xs text-red-700">{details?.description}</p>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
               {/* 구분선 */}
               <div className="w-full h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent mb-6"></div>
 
@@ -755,6 +825,31 @@ export default function ChecklistPage() {
                       </p>
                     </div>
                     {renderScoreBar(investmentRating.detailedItemsScore)}
+                  </div>
+
+                  {/* 점수 분해 표시 추가 */}
+                  <div className="bg-gray-50 p-4 sm:p-5 rounded-xl border border-gray-100">
+                    <h4 className="font-medium text-sm text-gray-700 mb-3">점수 구성</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>기본 점수</span>
+                        <span className="font-medium">{investmentRating.baseScore}점</span>
+                      </div>
+                      {investmentRating.riskPenalty > 0 && (
+                        <>
+                          <div className="border-t pt-2"></div>
+                          <div className="flex justify-between text-red-600">
+                            <span>위험 요소 차감</span>
+                            <span className="font-medium">-{investmentRating.riskPenalty}점</span>
+                          </div>
+                          <div className="border-t pt-2"></div>
+                          <div className="flex justify-between font-bold">
+                            <span>최종 점수</span>
+                            <span>{investmentRating.score}점</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
 
                   <div className="bg-amber-50 p-4 sm:p-5 rounded-xl border border-amber-100 transition-all duration-300 hover:shadow-md">

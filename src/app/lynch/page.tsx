@@ -383,8 +383,8 @@ export default function LynchPage() {
                     가격에서 높은 성장성을 가진 기업 선별
                   </li>
                   <li>
-                    <strong className="text-emerald-700">연속 배당 여부 표시</strong> - 3년
-                    연속(2022-2024) 배당금 지급 체크
+                    <strong className="text-emerald-700">연속 배당 여부 표시</strong> - 3년 연속
+                    배당금 지급 체크
                   </li>
                 </ul>
               </div>

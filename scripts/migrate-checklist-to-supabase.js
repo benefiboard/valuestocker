@@ -80,6 +80,12 @@ async function migrateData() {
 
       // EPS 지표
       currentyeareps: item.currentYearEps,
+
+      // 추가: 위험 플래그 4가지
+      has_consecutive_operating_losses: item.has_consecutive_operating_losses || false,
+      operating_to_net_income_discrepancy: item.operating_to_net_income_discrepancy || false,
+      operating_margin_critical: item.operating_margin_critical || false,
+      insufficient_profitable_years: item.insufficient_profitable_years || false,
     }));
 
     // 배치 크기 정의

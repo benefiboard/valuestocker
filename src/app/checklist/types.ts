@@ -1,4 +1,4 @@
-// src/app/fiarprice/types.ts
+// src/app/checklist/types.ts
 
 // 체크리스트 기본 항목 타입
 export interface ChecklistItem {
@@ -9,7 +9,7 @@ export interface ChecklistItem {
   actualValue: number | string | null;
   isPassed: boolean | null;
   formula: string;
-  importance: 1 | 2 | 3 | 4 | 5; // 변경: number에서 union type으로 수정
+  importance: 1 | 2 | 3 | 4 | 5;
 }
 
 // 점수가 추가된 체크리스트 항목 타입
@@ -25,13 +25,21 @@ export interface InvestmentRating {
   maxScore: number;
   percentage: number;
   grade: string;
-  //description: string;
   coreItemsScore: number;
   detailedItemsScore: number;
   hasCriticalFailure: boolean;
   coreItemsCount: number;
   coreItemsPassCount: number;
   isFinancialCompany: boolean;
+  // 추가: 위험 플래그 페널티 정보
+  riskPenalty: number;
+  baseScore: number;
+  riskFlags: {
+    has_consecutive_operating_losses: boolean;
+    operating_to_net_income_discrepancy: boolean;
+    operating_margin_critical: boolean;
+    insufficient_profitable_years: boolean;
+  };
 }
 
 // 재무 데이터 체크리스트 타입
@@ -68,10 +76,10 @@ export interface StockPrice {
   name: string;
   price: number;
   sharesOutstanding: number;
-  formattedDate?: string; // 추가: 날짜 포맷 필드
+  formattedDate?: string;
 }
 
-// JSON 체크리스트 데이터 타입 (선택적)
+// JSON 체크리스트 데이터 타입
 export interface JsonChecklistData {
   stock_code: string;
   dart_code: string;
@@ -104,6 +112,12 @@ export interface JsonChecklistData {
   currentYearPer: number;
   previousYearPer: number;
   twoYearsAgoPer: number;
+  currentYearEps: number;
+  // 추가: 위험 플래그 필드들
+  has_consecutive_operating_losses: boolean;
+  operating_to_net_income_discrepancy: boolean;
+  operating_margin_critical: boolean;
+  insufficient_profitable_years: boolean;
   // 연도별 데이터
   [key: string]: any;
 }

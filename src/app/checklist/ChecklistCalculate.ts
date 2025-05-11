@@ -42,19 +42,15 @@ export const getStockChecklistFromSupabase = async (
     industry: data.industry,
     subIndustry: data.subindustry,
 
-    // 수익성장률 관련 필드
+    // 기존 필드들...
     revenueGrowthRate: Number(data.revenuegrowthrate || 0),
     opIncomeGrowthRate: Number(data.opincomegrowthrate || 0),
     epsGrowthRate: Number(data.epsgrowthrate || 0),
     netIncomeGrowthRate: Number(data.netincomegrowthrate || 0),
     bpsGrowthRate: Number(data.bpsgrowthrate || 0),
     retainedEarningsGrowthRate: Number(data.retainedearningsgrowthrate || 0),
-
-    // 수익성 관련 필드
     avgOpMargin: Number(data.avgopmargin || 0),
     avgRoe: Number(data.avgroe || 0),
-
-    // 재무안정성 관련 필드
     debtRatio: Number(data.debtratio || 0),
     currentRatio: Number(data.currentratio || 0),
     interestCoverageRatio: Number(data.interestcoverageratio || 0),
@@ -62,8 +58,6 @@ export const getStockChecklistFromSupabase = async (
     cashCycleDays: Number(data.cashcycledays || 0),
     fcfRatio: Number(data.fcfratio || 0),
     grossProfitMargin: Number(data.grossprofitmargin || 0),
-
-    // 가치평가 관련 필드
     avgPer: Number(data.avgper || 0),
     maxPer: Number(data.maxper || 0),
     maxPerTimes04: Number(data.maxpertimes04 || 0),
@@ -74,6 +68,12 @@ export const getStockChecklistFromSupabase = async (
     previousYearPer: Number(data.previousyearper || 0),
     twoYearsAgoPer: Number(data.twoyearsagoper || 0),
     currentYearEps: Number(data.currentyeareps || 0),
+
+    // 추가: 위험 플래그 필드들
+    has_consecutive_operating_losses: data.has_consecutive_operating_losses || false,
+    operating_to_net_income_discrepancy: data.operating_to_net_income_discrepancy || false,
+    operating_margin_critical: data.operating_margin_critical || false,
+    insufficient_profitable_years: data.insufficient_profitable_years || false,
   };
 };
 
@@ -111,6 +111,14 @@ export const calculateChecklist = async (
   if (!stockData) {
     console.error(`체크리스트 데이터를 찾을 수 없습니다: ${stockCode}`);
     return [];
+  }
+
+  // window 객체에 임시 저장 (calculateInvestmentRating에서 사용하기 위함)
+  if (typeof window !== 'undefined') {
+    if (!(window as any).tempStockData) {
+      (window as any).tempStockData = {};
+    }
+    (window as any).tempStockData[stockCode] = stockData;
   }
 
   // 2. 주가 정보 가져오기
@@ -910,8 +918,8 @@ export const calculateInvestmentRating = (
 
   // 산업군별 핵심 지표 목록
   const coreItemTitles = isFinancialCompany
-    ? ['PER', 'EPS 성장률', '순이익 증가율'] // 금융회사용 핵심 지표 3개
-    : getCoreItemTitles(industry); // 다른 산업군용 핵심 지표
+    ? ['PER', 'EPS 성장률', '순이익 증가율']
+    : getCoreItemTitles(industry);
 
   if (checklistResults.length === 0) {
     return {
@@ -925,6 +933,14 @@ export const calculateInvestmentRating = (
       coreItemsCount: 0,
       coreItemsPassCount: 0,
       isFinancialCompany,
+      riskPenalty: 0,
+      baseScore: 0,
+      riskFlags: {
+        has_consecutive_operating_losses: false,
+        operating_to_net_income_discrepancy: false,
+        operating_margin_critical: false,
+        insufficient_profitable_years: false,
+      },
     };
   }
 
@@ -934,17 +950,42 @@ export const calculateInvestmentRating = (
 
   // 핵심 지표 점수 계산 (핵심 지표의 평균)
   const coreItemsTotalScore = coreItems.reduce((sum, item) => sum + item.score, 0);
-  const coreItemsMaxScore = coreItems.reduce((sum, item) => sum + item.maxScore, 0);
   const coreItemsScore = coreItemsTotalScore / coreItems.length;
 
   // 세부 지표 점수 계산
   const detailedItemsTotalScore = detailedItems.reduce((sum, item) => sum + item.score, 0);
-  const detailedItemsMaxScore = detailedItems.reduce((sum, item) => sum + item.maxScore, 0);
   const detailedItemsScore =
     detailedItems.length > 0 ? detailedItemsTotalScore / detailedItems.length : 0;
 
-  // 합산 점수 계산 (핵심 지표 70%, 세부 지표 30%)
-  const totalScore = coreItemsScore * 0.7 + detailedItemsScore * 0.3;
+  // 기본 점수 계산 (핵심 지표 70%, 세부 지표 30%)
+  const baseScore = coreItemsScore * 0.7 + detailedItemsScore * 0.3;
+
+  // Supabase에서 가져온 위험 플래그 데이터
+  const stockData = (window as any).tempStockData?.[stockCode!];
+  const riskFlags = {
+    has_consecutive_operating_losses: stockData?.has_consecutive_operating_losses || false,
+    operating_to_net_income_discrepancy: stockData?.operating_to_net_income_discrepancy || false,
+    operating_margin_critical: stockData?.operating_margin_critical || false,
+    insufficient_profitable_years: stockData?.insufficient_profitable_years || false,
+  };
+
+  // 위험 페널티 계산
+  let riskPenalty = 0;
+  if (riskFlags.has_consecutive_operating_losses) {
+    riskPenalty += 2.0; // 2년 연속 영업적자 페널티
+  }
+  if (riskFlags.operating_to_net_income_discrepancy) {
+    riskPenalty += 1.5; // 영업외수익 의존 페널티
+  }
+  if (riskFlags.operating_margin_critical) {
+    riskPenalty += 2.0; // 영업이익률 위험 페널티
+  }
+  if (riskFlags.insufficient_profitable_years) {
+    riskPenalty += 1.5; // 불충분한 수익성 페널티
+  }
+
+  // 최종 점수 계산 (페널티 적용, 최소 0점)
+  const totalScore = Math.max(0, baseScore - riskPenalty);
   const maxPossibleScore = 10; // 최대 점수는 10점
 
   // 미달인 핵심 지표 개수
@@ -958,7 +999,7 @@ export const calculateInvestmentRating = (
   // 핵심 지표 중 통과된 항목 수
   const coreItemsPassCount = coreItems.filter((item) => item.score >= 6).length;
 
-  // 등급 산정 (설명 없이 등급만 계산)
+  // 등급 산정
   let grade;
   const percentage = (totalScore / maxPossibleScore) * 100;
 
@@ -1001,6 +1042,9 @@ export const calculateInvestmentRating = (
     coreItemsCount: coreItems.length,
     coreItemsPassCount,
     isFinancialCompany,
+    riskPenalty: Math.round(riskPenalty * 10) / 10,
+    baseScore: Math.round(baseScore * 10) / 10,
+    riskFlags,
   };
 };
 

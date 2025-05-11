@@ -368,8 +368,8 @@ export default function HowardPage() {
                     내재가치 대비 30% 이상 저평가된 종목만 표시
                   </li>
                   <li>
-                    <strong className="text-emerald-700">연속 배당 여부 표시</strong> - 3년
-                    연속(2022-2024) 배당금 지급 체크
+                    <strong className="text-emerald-700">연속 배당 여부 표시</strong> - 3년 연속
+                    배당금 지급 체크
                   </li>
                 </ul>
               </div>

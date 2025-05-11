@@ -369,7 +369,7 @@ export default function SrimPage() {
                   </li>
                   <li>
                     <strong className="text-emerald-700">연속 배당 여부 표시</strong> - 3년
-                    연속(2022-2024) 배당금 지급 체크
+                    연속 배당금 지급 체크
                   </li>
                 </ul>
               </div>
