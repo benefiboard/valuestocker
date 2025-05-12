@@ -33,9 +33,21 @@ export interface EnhancedGrahamStock extends GrahamStock {
   consecutive_dividend: boolean; // 연속 배당 여부
   bps: number; // 주당 순자산가치 (Book Per Share)
   avg_eps: number; // 3년 평균 EPS
-  ncav: number; // 순유동자산가치 (Net Current Asset Value) 추가
-  ncav_price: number; // NCAV의 2/3 가격 (그레이엄의 NCAV 투자 기준) 추가
-  modified_graham_price: number; // 수정 그레이엄 가격 [(3년간 EPS 평균 × 8) + NCAV] ÷ 2 × 67% 추가
+  ncav: number; // 순유동자산가치 (Net Current Asset Value)
+  ncav_price: number; // NCAV의 2/3 가격
+  modified_graham_price: number; // 수정 그레이엄 가격
+  market_cap: number; // 시가총액 추가
+  revenue: number; // 매출액 추가
+  eps_growth_rate: number; // EPS 성장률 추가
+  current_pbr: number; // PBR 추가
+  meets_size_criteria: boolean; // 규모 기준 충족 여부
+  meets_debt_criteria: boolean; // 부채비율 기준 충족 여부
+  meets_dividend_criteria: boolean; // 배당 기준 충족 여부
+  meets_profit_criteria: boolean; // 수익성 기준 충족 여부
+  meets_growth_criteria: boolean; // 성장성 기준 충족 여부
+  meets_pbr_criteria: boolean; // PBR 기준 충족 여부
+  meets_per_criteria: boolean; // PER 기준 충족 여부
+  criteria_met_count: number; // 충족한 기준 개수
 }
 
 export interface QualityStock {
@@ -290,6 +302,286 @@ function calculateDCF(
 
   // 총 내재가치
   return presentValue + presentTerminalValue;
+}
+
+// 향상된 그레이엄 가치주 데이터 가져오기
+export async function fetchEnhancedGrahamStocks(): Promise<StockDataResult<EnhancedGrahamStock>> {
+  try {
+    console.log('=== 향상된 그레이엄 가치주 데이터 가져오기 시작 ===');
+
+    // 1. PER 조건에 맞는 종목 가져오기 (PER 0-15로 수정)
+    const perData = await fetchAllDataWithPagination<any>(
+      'stock_current',
+      'stock_code, current_per, current_dividend',
+      'stock_code',
+      (query) => query.gt('current_per', 0).lte('current_per', 15).not('current_per', 'is', null)
+    );
+
+    if (!perData || perData.length === 0) {
+      console.log('PER 조건에 맞는 주식이 없습니다.');
+      return emptyResult<EnhancedGrahamStock>('PER 조건에 맞는 주식을 찾을 수 없습니다.');
+    }
+
+    const perStockCodes = perData.map((item) => item.stock_code);
+    console.log(`PER 조건 통과 종목 수: ${perStockCodes.length}`);
+
+    // 2. 부채비율 조건에 맞는 종목 배치로 가져오기 (부채비율 100% 미만)
+    const debtData = await fetchDataInBatches<any>(
+      'stock_checklist',
+      'stock_code, company_name, industry, subindustry, debtratio',
+      perStockCodes
+    );
+
+    // 부채비율 조건 필터링 (산업별 차등 적용)
+    const filteredDebtData = debtData.filter(
+      (item) => item.debtratio !== null && isDebtRatioAcceptable(item.subindustry, item.debtratio)
+    );
+
+    if (!filteredDebtData || filteredDebtData.length === 0) {
+      console.log('부채비율 조건에 맞는 주식이 없습니다.');
+      return emptyResult<EnhancedGrahamStock>('부채비율 조건에 맞는 주식을 찾을 수 없습니다.');
+    }
+
+    const debtStockCodes = filteredDebtData.map((item) => item.stock_code);
+    console.log(`부채비율 조건 통과 종목 수: ${debtStockCodes.length}`);
+
+    // 3. 현재가 데이터 배치로 가져오기
+    const priceData = await fetchDataInBatches<any>(
+      'stock_price',
+      'stock_code, current_price',
+      debtStockCodes
+    );
+
+    if (!priceData || priceData.length === 0) {
+      console.log('현재가 데이터가 없습니다.');
+      return emptyResult<EnhancedGrahamStock>('현재가 데이터를 찾을 수 없습니다.');
+    }
+
+    // 4. 재무 데이터 배치로 가져오기 (추가 필드 포함)
+    const rawData = await fetchDataInBatches<any>(
+      'stock_raw_data',
+      `stock_code,
+      2022_eps, 2023_eps, 2024_eps,
+      2024_equity,
+      shares_outstanding,
+      2022_dividend, 2023_dividend, 2024_dividend,
+      2024_current_assets, 2024_current_liabilities, 2024_non_current_liabilities,
+      market_cap,
+      2024_revenue,
+      2022_net_income, 2023_net_income, 2024_net_income`,
+      debtStockCodes
+    );
+
+    if (!rawData || rawData.length === 0) {
+      console.log('재무 데이터가 없습니다.');
+      return emptyResult<EnhancedGrahamStock>('재무 데이터를 찾을 수 없습니다.');
+    }
+
+    // 5. 데이터 맵 생성
+    console.log('데이터 맵 생성 중...');
+    const perMap = new Map(
+      perData.map((item) => [
+        item.stock_code,
+        {
+          per: safeNumber(item.current_per),
+          dividend: safeNumber(item.current_dividend),
+        },
+      ])
+    );
+
+    const debtMap = new Map(
+      filteredDebtData.map((item) => [
+        item.stock_code,
+        {
+          company_name: item.company_name,
+          industry: item.industry || '미분류',
+          subindustry: item.subindustry || '미분류',
+          debtratio: safeNumber(item.debtratio),
+        },
+      ])
+    );
+
+    const priceMap = new Map(
+      priceData.map((item) => [item.stock_code, safeNumber(item.current_price)])
+    );
+
+    const rawDataMap = new Map(rawData.map((item) => [item.stock_code, item]));
+
+    // 6. 종목 필터링 및 그레이엄 가격 계산
+    console.log('종목 필터링 및 그레이엄 가격 계산 중...');
+    const enhancedGrahamStocks: EnhancedGrahamStock[] = [];
+
+    for (const stockCode of debtStockCodes) {
+      const debtInfo = debtMap.get(stockCode);
+      const perInfo = perMap.get(stockCode);
+      const currentPrice = priceMap.get(stockCode);
+      const rawStockData = rawDataMap.get(stockCode);
+
+      // 필요한 모든 데이터가 있는지 확인
+      if (!debtInfo || !perInfo || !currentPrice || !rawStockData) {
+        continue;
+      }
+
+      // EPS 데이터 추출 및 평균 계산
+      const eps2022 = safeNumber(rawStockData['2022_eps']);
+      const eps2023 = safeNumber(rawStockData['2023_eps']);
+      const eps2024 = safeNumber(rawStockData['2024_eps']);
+
+      const epsData = [eps2022, eps2023, eps2024].filter((eps) => eps > 0);
+      const avgEps =
+        epsData.length > 0 ? epsData.reduce((sum, eps) => sum + eps, 0) / epsData.length : 0;
+
+      // 주식수 계산
+      let sharesOutstanding = 0;
+      if (rawStockData['shares_outstanding']) {
+        if (typeof rawStockData['shares_outstanding'] === 'string') {
+          sharesOutstanding = Number(rawStockData['shares_outstanding'].replace(/,/g, ''));
+        } else {
+          sharesOutstanding = Number(rawStockData['shares_outstanding']);
+        }
+      }
+
+      if (isNaN(sharesOutstanding) || sharesOutstanding <= 0) {
+        continue;
+      }
+
+      // BPS 계산 (주당 순자산가치)
+      const equity = safeNumber(rawStockData['2024_equity']);
+      const bps = equity / sharesOutstanding;
+
+      // 기존 그레이엄 가격 계산
+      const grahamPrice = ((avgEps * 8 + bps) / 2) * 0.67;
+
+      // NCAV 계산
+      const currentAssets = safeNumber(rawStockData['2024_current_assets']);
+      const currentLiabilities = safeNumber(rawStockData['2024_current_liabilities']);
+      const nonCurrentLiabilities = safeNumber(rawStockData['2024_non_current_liabilities']);
+
+      // 회사 전체 NCAV 계산
+      const totalNCAV = currentAssets - (currentLiabilities + nonCurrentLiabilities);
+
+      // 주당 NCAV 계산
+      const ncavPerShare = totalNCAV / sharesOutstanding;
+      const nonNegativeNcav = ncavPerShare > 0 ? ncavPerShare : 0;
+      const ncavPrice = nonNegativeNcav * (2 / 3);
+
+      // 수정 그레이엄 가격 계산
+      const modifiedGrahamPrice = ((avgEps * 8 + nonNegativeNcav) / 2) * 0.67;
+
+      // 추가 지표 계산
+      const marketCap = safeNumber(rawStockData['market_cap']);
+      const revenue = safeNumber(rawStockData['2024_revenue']);
+
+      // EPS 성장률 계산 (3년간)
+      let epsGrowthRate = 0;
+      if (eps2022 > 0 && eps2024 > 0) {
+        epsGrowthRate = ((eps2024 - eps2022) / eps2022) * 100;
+      }
+
+      // PBR 계산
+      const currentPbr = bps > 0 ? currentPrice / bps : 0;
+
+      // 수익성 확인 (3년간 적자 없음)
+      const netIncome2022 = safeNumber(rawStockData['2022_net_income']);
+      const netIncome2023 = safeNumber(rawStockData['2023_net_income']);
+      const netIncome2024 = safeNumber(rawStockData['2024_net_income']);
+      const hasProfitForAllYears = netIncome2022 > 0 && netIncome2023 > 0 && netIncome2024 > 0;
+
+      // 연속 배당 확인
+      const consecutiveDividend =
+        safeNumber(rawStockData['2022_dividend']) > 0 &&
+        safeNumber(rawStockData['2023_dividend']) > 0 &&
+        safeNumber(rawStockData['2024_dividend']) > 0;
+
+      // 7가지 기준 체크
+      const meetsSizeCriteria = marketCap >= 50000000000 && revenue >= 50000000000; // 500억 이상
+      const meetsDebtCriteria = isDebtRatioAcceptable(debtInfo.subindustry, debtInfo.debtratio);
+      const meetsDividendCriteria = consecutiveDividend;
+      const meetsProfitCriteria = hasProfitForAllYears;
+      const meetsGrowthCriteria = epsGrowthRate >= 20;
+      const meetsPbrCriteria =
+        debtInfo.subindustry === '은행' ||
+        debtInfo.subindustry === '손해보험' ||
+        debtInfo.subindustry === '생명보험'
+          ? currentPbr <= 1.0 && currentPbr > 0
+          : currentPbr <= 1.5 && currentPbr > 0;
+      const meetsPerCriteria = perInfo.per <= 15 && perInfo.per > 0;
+
+      // 충족한 기준 개수 계산
+      const criteriaMetCount = [
+        meetsSizeCriteria,
+        meetsDebtCriteria,
+        meetsDividendCriteria,
+        meetsProfitCriteria,
+        meetsGrowthCriteria,
+        meetsPbrCriteria,
+        meetsPerCriteria,
+      ].filter(Boolean).length;
+
+      // 저평가율 계산 (수정 그레이엄 가격 기준)
+      const discountRate =
+        modifiedGrahamPrice > 0
+          ? ((modifiedGrahamPrice - currentPrice) / modifiedGrahamPrice) * 100
+          : 0;
+
+      // 모든 기준 중 최소 6개 이상 충족하고, 현재가 < 수정 그레이엄 가격인 종목만 포함
+      if (criteriaMetCount >= 6 && currentPrice < modifiedGrahamPrice && discountRate > 0) {
+        enhancedGrahamStocks.push({
+          stock_code: stockCode,
+          company_name: debtInfo.company_name,
+          industry: debtInfo.industry,
+          subindustry: debtInfo.subindustry,
+          current_per: perInfo.per,
+          debtratio: debtInfo.debtratio,
+          current_price: currentPrice,
+          dividend_yield: perInfo.dividend,
+          graham_price: grahamPrice,
+          consecutive_dividend: consecutiveDividend,
+          bps: bps,
+          avg_eps: avgEps,
+          ncav: ncavPerShare,
+          ncav_price: ncavPrice,
+          modified_graham_price: modifiedGrahamPrice,
+          market_cap: marketCap,
+          revenue: revenue,
+          eps_growth_rate: epsGrowthRate,
+          current_pbr: currentPbr,
+          meets_size_criteria: meetsSizeCriteria,
+          meets_debt_criteria: meetsDebtCriteria,
+          meets_dividend_criteria: meetsDividendCriteria,
+          meets_profit_criteria: meetsProfitCriteria,
+          meets_growth_criteria: meetsGrowthCriteria,
+          meets_pbr_criteria: meetsPbrCriteria,
+          meets_per_criteria: meetsPerCriteria,
+          criteria_met_count: criteriaMetCount,
+        });
+      }
+    }
+
+    // 7. 산업군과 하위 산업군 목록 생성
+    console.log('산업군 및 하위 산업군 목록 생성 중...');
+    const uniqueIndustries = Array.from(
+      new Set(enhancedGrahamStocks.map((stock) => stock.industry))
+    ).sort();
+
+    const uniqueSubIndustries = Array.from(
+      new Set(enhancedGrahamStocks.map((stock) => stock.subindustry))
+    ).sort();
+
+    console.log(`최종 필터링 후 종목 수: ${enhancedGrahamStocks.length}`);
+
+    return {
+      stocks: enhancedGrahamStocks,
+      industries: uniqueIndustries,
+      subIndustries: uniqueSubIndustries,
+      error: null,
+    };
+  } catch (err) {
+    console.error('데이터 가져오기 오류:', err);
+    return emptyResult<EnhancedGrahamStock>(
+      err instanceof Error ? err.message : '데이터를 가져오는 중 오류가 발생했습니다.'
+    );
+  }
 }
 
 // 고배당 가치주 데이터 가져오기 (Flavor Stocks)
@@ -971,7 +1263,6 @@ export async function fetchSrimStocks(): Promise<StockDataResult<SrimStock>> {
 }
 
 // fetchHowardStocks 함수 - 페이지네이션 적용 (수정된 버전)
-
 export async function fetchHowardStocks(): Promise<StockDataResult<HowardStock>> {
   try {
     console.log('=== 하워드 막스 내재가치 주식 데이터 가져오기 시작 ===');
@@ -1222,231 +1513,6 @@ export async function fetchHowardStocks(): Promise<StockDataResult<HowardStock>>
   } catch (err) {
     console.error('데이터 가져오기 오류:', err);
     return emptyResult<HowardStock>(
-      err instanceof Error ? err.message : '데이터를 가져오는 중 오류가 발생했습니다.'
-    );
-  }
-}
-
-// 향상된 그레이엄 가치주 데이터 가져오기
-export async function fetchEnhancedGrahamStocks(): Promise<StockDataResult<EnhancedGrahamStock>> {
-  try {
-    console.log('=== 향상된 그레이엄 가치주 데이터 가져오기 시작 ===');
-
-    // 1. PER 조건에 맞는 종목 가져오기 (PER 0-10)
-    const perData = await fetchAllDataWithPagination<any>(
-      'stock_current',
-      'stock_code, current_per, current_dividend',
-      'stock_code',
-      (query) => query.gt('current_per', 0).lte('current_per', 10).not('current_per', 'is', null)
-    );
-
-    if (!perData || perData.length === 0) {
-      console.log('PER 조건에 맞는 주식이 없습니다.');
-      return emptyResult<EnhancedGrahamStock>('PER 조건에 맞는 주식을 찾을 수 없습니다.');
-    }
-
-    const perStockCodes = perData.map((item) => item.stock_code);
-    console.log(`PER 조건 통과 종목 수: ${perStockCodes.length}`);
-
-    // 2. 부채비율 조건에 맞는 종목 배치로 가져오기 (부채비율 100% 미만)
-    const debtData = await fetchDataInBatches<any>(
-      'stock_checklist',
-      'stock_code, company_name, industry, subindustry, debtratio',
-      perStockCodes
-    );
-
-    // 부채비율 조건 필터링
-    const filteredDebtData = debtData.filter(
-      (item) => item.debtratio !== null && item.debtratio < 100
-    );
-
-    if (!filteredDebtData || filteredDebtData.length === 0) {
-      console.log('부채비율 조건에 맞는 주식이 없습니다.');
-      return emptyResult<EnhancedGrahamStock>('부채비율 조건에 맞는 주식을 찾을 수 없습니다.');
-    }
-
-    const debtStockCodes = filteredDebtData.map((item) => item.stock_code);
-    console.log(`부채비율 조건 통과 종목 수: ${debtStockCodes.length}`);
-
-    // 3. 현재가 데이터 배치로 가져오기
-    const priceData = await fetchDataInBatches<any>(
-      'stock_price',
-      'stock_code, current_price',
-      debtStockCodes
-    );
-
-    if (!priceData || priceData.length === 0) {
-      console.log('현재가 데이터가 없습니다.');
-      return emptyResult<EnhancedGrahamStock>('현재가 데이터를 찾을 수 없습니다.');
-    }
-
-    // 4. 재무 데이터 배치로 가져오기
-    const rawData = await fetchDataInBatches<any>(
-      'stock_raw_data',
-      `stock_code,
-      2022_eps, 2023_eps, 2024_eps,
-      2024_equity,
-      shares_outstanding,
-      2022_dividend, 2023_dividend, 2024_dividend,
-      2024_current_assets, 2024_current_liabilities, 2024_non_current_liabilities`,
-      debtStockCodes
-    );
-
-    if (!rawData || rawData.length === 0) {
-      console.log('재무 데이터가 없습니다.');
-      return emptyResult<EnhancedGrahamStock>('재무 데이터를 찾을 수 없습니다.');
-    }
-
-    // 5. 데이터 맵 생성
-    console.log('데이터 맵 생성 중...');
-    const perMap = new Map(
-      perData.map((item) => [
-        item.stock_code,
-        {
-          per: safeNumber(item.current_per),
-          dividend: safeNumber(item.current_dividend),
-        },
-      ])
-    );
-
-    const debtMap = new Map(
-      filteredDebtData.map((item) => [
-        item.stock_code,
-        {
-          company_name: item.company_name,
-          industry: item.industry || '미분류',
-          subindustry: item.subindustry || '미분류',
-          debtratio: safeNumber(item.debtratio),
-        },
-      ])
-    );
-
-    const priceMap = new Map(
-      priceData.map((item) => [item.stock_code, safeNumber(item.current_price)])
-    );
-
-    const rawDataMap = new Map(rawData.map((item) => [item.stock_code, item]));
-
-    // 6. 종목 필터링 및 그레이엄 가격 계산
-    console.log('종목 필터링 및 그레이엄 가격 계산 중...');
-    const enhancedGrahamStocks: EnhancedGrahamStock[] = [];
-
-    for (const stockCode of debtStockCodes) {
-      const debtInfo = debtMap.get(stockCode);
-      const perInfo = perMap.get(stockCode);
-      const currentPrice = priceMap.get(stockCode);
-      const rawStockData = rawDataMap.get(stockCode);
-
-      // 필요한 모든 데이터가 있는지 확인
-      if (!debtInfo || !perInfo || !currentPrice || !rawStockData) {
-        continue;
-      }
-
-      // EPS 데이터 추출 및 평균 계산
-      const eps2022 = safeNumber(rawStockData['2022_eps']);
-      const eps2023 = safeNumber(rawStockData['2023_eps']);
-      const eps2024 = safeNumber(rawStockData['2024_eps']);
-
-      const epsData = [eps2022, eps2023, eps2024].filter((eps) => eps > 0);
-      const avgEps =
-        epsData.length > 0 ? epsData.reduce((sum, eps) => sum + eps, 0) / epsData.length : 0;
-
-      // 주식수 계산
-      let sharesOutstanding = 0;
-      if (rawStockData['shares_outstanding']) {
-        if (typeof rawStockData['shares_outstanding'] === 'string') {
-          sharesOutstanding = Number(rawStockData['shares_outstanding'].replace(/,/g, ''));
-        } else {
-          sharesOutstanding = Number(rawStockData['shares_outstanding']);
-        }
-      }
-
-      if (isNaN(sharesOutstanding) || sharesOutstanding <= 0) {
-        continue;
-      }
-
-      // BPS 계산 (주당 순자산가치)
-      const equity = safeNumber(rawStockData['2024_equity']);
-      const bps = equity / sharesOutstanding;
-
-      // 기존 그레이엄 가격 계산: [(3년간 eps 평균 * 8) + 2024년 bps} / 2] * 67%
-      const grahamPrice = ((avgEps * 8 + bps) / 2) * 0.67;
-
-      // NCAV 계산
-      const currentAssets = safeNumber(rawStockData['2024_current_assets']);
-      const currentLiabilities = safeNumber(rawStockData['2024_current_liabilities']);
-      const nonCurrentLiabilities = safeNumber(rawStockData['2024_non_current_liabilities']);
-
-      // 회사 전체 NCAV 계산
-      const totalNCAV = currentAssets - (currentLiabilities + nonCurrentLiabilities);
-
-      // 주당 NCAV 계산
-      const ncavPerShare = totalNCAV / sharesOutstanding;
-
-      // NCAV가 음수인 경우 0으로 처리
-      const nonNegativeNcav = ncavPerShare > 0 ? ncavPerShare : 0;
-
-      // NCAV의 2/3 가격 (그레이엄의 투자 기준)
-      const ncavPrice = nonNegativeNcav * (2 / 3);
-
-      // 수정 그레이엄 가격 계산: [(3년간 EPS 평균 × 8) + NCAV] ÷ 2 × 67%
-      const modifiedGrahamPrice = ((avgEps * 8 + nonNegativeNcav) / 2) * 0.67;
-
-      // 저평가율 계산 (그레이엄 가격 기준)
-      const discountRate =
-        modifiedGrahamPrice > 0
-          ? ((modifiedGrahamPrice - currentPrice) / modifiedGrahamPrice) * 100
-          : 0;
-
-      // 연속 배당 확인
-      const consecutiveDividend =
-        safeNumber(rawStockData['2022_dividend']) > 0 &&
-        safeNumber(rawStockData['2023_dividend']) > 0 &&
-        safeNumber(rawStockData['2024_dividend']) > 0;
-
-      // 조건 확인: 현재가 < 수정 그레이엄 가격 (저평가 종목만 포함)
-      if (currentPrice < modifiedGrahamPrice && discountRate > 0) {
-        enhancedGrahamStocks.push({
-          stock_code: stockCode,
-          company_name: debtInfo.company_name,
-          industry: debtInfo.industry,
-          subindustry: debtInfo.subindustry,
-          current_per: perInfo.per,
-          debtratio: debtInfo.debtratio,
-          current_price: currentPrice,
-          dividend_yield: perInfo.dividend,
-          graham_price: grahamPrice,
-          consecutive_dividend: consecutiveDividend,
-          bps: bps,
-          avg_eps: avgEps,
-          ncav: ncavPerShare,
-          ncav_price: ncavPrice,
-          modified_graham_price: modifiedGrahamPrice,
-        });
-      }
-    }
-
-    // 7. 산업군과 하위 산업군 목록 생성
-    console.log('산업군 및 하위 산업군 목록 생성 중...');
-    const uniqueIndustries = Array.from(
-      new Set(enhancedGrahamStocks.map((stock) => stock.industry))
-    ).sort();
-
-    const uniqueSubIndustries = Array.from(
-      new Set(enhancedGrahamStocks.map((stock) => stock.subindustry))
-    ).sort();
-
-    console.log(`최종 필터링 후 종목 수: ${enhancedGrahamStocks.length}`);
-
-    return {
-      stocks: enhancedGrahamStocks,
-      industries: uniqueIndustries,
-      subIndustries: uniqueSubIndustries,
-      error: null,
-    };
-  } catch (err) {
-    console.error('데이터 가져오기 오류:', err);
-    return emptyResult<EnhancedGrahamStock>(
       err instanceof Error ? err.message : '데이터를 가져오는 중 오류가 발생했습니다.'
     );
   }

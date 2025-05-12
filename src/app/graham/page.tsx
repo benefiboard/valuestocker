@@ -1,5 +1,3 @@
-//src/app/graham/page.tsx
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -27,6 +25,7 @@ import {
   ChevronUp,
   Check,
   X,
+  TrendingUp,
 } from 'lucide-react';
 import { StockLinkButtons } from '../../components/StockLinkButtons';
 
@@ -44,7 +43,12 @@ type SortField =
   | 'discount_rate'
   | 'consecutive_dividend'
   | 'ncav'
-  | 'ncav_price'; // NCAV 관련 정렬 필드 추가
+  | 'ncav_price'
+  | 'market_cap'
+  | 'revenue'
+  | 'eps_growth_rate'
+  | 'current_pbr'
+  | 'criteria_met_count';
 
 type SortDirection = 'asc' | 'desc';
 type ViewMode = 'card' | 'table' | 'mobileTable';
@@ -55,13 +59,14 @@ export default function EnhancedGrahamPage() {
   const [filteredStocks, setFilteredStocks] = useState<EnhancedGrahamStock[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
-  const [sortField, setSortField] = useState<SortField>('current_per');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [sortField, setSortField] = useState<SortField>('discount_rate');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [industryFilter, setIndustryFilter] = useState<string>('');
   const [subIndustryFilter, setSubIndustryFilter] = useState<string>('');
   const [dividendMinFilter, setDividendMinFilter] = useState<number | ''>('');
   const [dividendMaxFilter, setDividendMaxFilter] = useState<number | ''>('');
   const [consecutiveDividendFilter, setConsecutiveDividendFilter] = useState<boolean | null>(null);
+  const [minCriteriaFilter, setMinCriteriaFilter] = useState<number>(6);
   const [industries, setIndustries] = useState<string[]>([]);
   const [subIndustries, setSubIndustries] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -91,21 +96,6 @@ export default function EnhancedGrahamPage() {
         setFilteredStocks([]);
       } else {
         console.log(`가져온 종목 수: ${result.stocks.length}`);
-        // 디버그: 가져온 종목들의 저평가율 확인
-        result.stocks.forEach((stock) => {
-          const discountRate =
-            ((stock.modified_graham_price - stock.current_price) / stock.modified_graham_price) *
-            100;
-          // console.log(
-          //   `${stock.company_name}: 현재가 ${stock.current_price}, 수정그레이엄가 ${
-          //     stock.modified_graham_price
-          //   }, 저평가율 ${discountRate.toFixed(2)}%`
-          // );
-          if (stock.current_price > stock.modified_graham_price) {
-            console.warn(`경고: ${stock.company_name}은 고평가 종목입니다!`);
-          }
-        });
-
         setStocks(result.stocks);
         setFilteredStocks(result.stocks);
         setIndustries(result.industries);
@@ -168,6 +158,9 @@ export default function EnhancedGrahamPage() {
       );
     }
 
+    // 최소 충족 기준 개수 필터
+    filtered = filtered.filter((stock) => stock.criteria_met_count >= minCriteriaFilter);
+
     // 정렬 적용
     filtered.sort((a, b) => {
       // 저평가율 정렬 특별 처리
@@ -221,6 +214,7 @@ export default function EnhancedGrahamPage() {
     dividendMinFilter,
     dividendMaxFilter,
     consecutiveDividendFilter,
+    minCriteriaFilter,
     sortField,
     sortDirection,
   ]);
@@ -274,8 +268,9 @@ export default function EnhancedGrahamPage() {
     setDividendMinFilter('');
     setDividendMaxFilter('');
     setConsecutiveDividendFilter(null);
-    setSortField('current_per');
-    setSortDirection('asc');
+    setMinCriteriaFilter(5);
+    setSortField('discount_rate');
+    setSortDirection('desc');
   };
 
   // 페이지네이션 계산
@@ -300,6 +295,15 @@ export default function EnhancedGrahamPage() {
       <ArrowUp size={12} className="ml-1 text-emerald-600 sort-icon" />
     ) : (
       <ArrowDown size={12} className="ml-1 text-emerald-600 sort-icon" />
+    );
+  };
+
+  // 기준 충족 아이콘 렌더링 함수
+  const renderCriteriaIcon = (meets: boolean) => {
+    return meets ? (
+      <Check size={14} className="text-emerald-600" />
+    ) : (
+      <X size={14} className="text-red-600" />
     );
   };
 
@@ -336,7 +340,7 @@ export default function EnhancedGrahamPage() {
                   <Info className="w-5 h-5 text-emerald-600" />
                 </div>
                 <h2 className="text-base sm:text-lg font-semibold text-gray-800">
-                  그레이엄 가치투자 원칙
+                  수정된 그레이엄 가치투자 원칙 (7가지 기준)
                 </h2>
               </div>
               <div
@@ -359,34 +363,40 @@ export default function EnhancedGrahamPage() {
             >
               <div className="p-4 sm:p-5 pt-0 border-t border-gray-100">
                 <p className="text-sm sm:text-base text-gray-700 mb-3">
-                  벤자민 그레이엄의 가치투자 원칙에 따른 종목 리스트입니다:
+                  한국 시장에 맞게 수정된 그레이엄 가치투자 7가지 기준:
                 </p>
                 <ul className="list-disc pl-5 text-sm sm:text-base text-gray-700 space-y-2">
                   <li>
-                    <strong className="text-emerald-700">PER 10 미만</strong> - 수익성 대비 저평가된
-                    기업
+                    <strong className="text-emerald-700">적정한 회사 규모</strong> - 시가총액 500억
+                    이상, 연매출 500억 이상
                   </li>
                   <li>
-                    <strong className="text-emerald-700">부채비율 100% 미만</strong> - 재무적으로
-                    안정적인 기업
+                    <strong className="text-emerald-700">건실한 재무 상태</strong> - 부채비율 100%
+                    미만 (금융업종별 차등)
                   </li>
                   <li>
-                    <strong className="text-emerald-700">그레이엄 가격 계산</strong> - [(3년간 EPS
-                    평균 × 8) + BPS ÷ 2] × 67%
+                    <strong className="text-emerald-700">최소 3년간 지속적 배당</strong> - 3년 연속
+                    배당금 지급
                   </li>
                   <li>
-                    <strong className="text-emerald-700">현재가 ≤ 그레이엄 가격</strong> -
-                    그레이엄의 가격 원칙에 따른 고평가 여부
+                    <strong className="text-emerald-700">최근 3년간 적자가 없을 것</strong> - 순이익
+                    지속
                   </li>
                   <li>
-                    <strong className="text-emerald-700">NCAV 가격</strong> - (유동자산 - 총부채) ÷
-                    발행주식수 × 67%
+                    <strong className="text-emerald-700">최소 3년간 EPS 20% 이상 성장</strong> -
+                    성장성
                   </li>
                   <li>
-                    <strong className="text-emerald-700">연속 배당 여부 표시</strong> - 3년 연속
-                    배당금 지급 체크
+                    <strong className="text-emerald-700">PBR 1.5배 이하</strong> - 자산가치 대비
+                    저평가 (금융주 1.0배)
+                  </li>
+                  <li>
+                    <strong className="text-emerald-700">PER 15배 이하</strong> - 수익성 대비 저평가
                   </li>
                 </ul>
+                <p className="text-sm sm:text-base text-gray-700 mt-3">
+                  ※ 최소 6개 기준 이상 충족하는 종목만 표시
+                </p>
               </div>
             </div>
           </div>
@@ -435,6 +445,21 @@ export default function EnhancedGrahamPage() {
               {/* 데스크탑 필터 UI */}
               <div className="hidden md:block border-t border-gray-100 p-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {/* 최소 충족 기준 개수 필터 */}
+                  <div className="mb-3">
+                    <label className="block font-medium text-gray-700 mb-1 text-sm">
+                      최소 충족 기준 개수
+                    </label>
+                    <select
+                      value={minCriteriaFilter}
+                      onChange={(e) => setMinCriteriaFilter(Number(e.target.value))}
+                      className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
+                    >
+                      <option value={6}>6개 이상</option>
+                      <option value={7}>7개 모두</option>
+                    </select>
+                  </div>
+
                   {/* 산업군 필터 */}
                   <div className="mb-3">
                     <label className="block font-medium text-gray-700 mb-1 text-sm">산업군</label>
@@ -543,14 +568,19 @@ export default function EnhancedGrahamPage() {
                         onChange={(e) => setSortField(e.target.value as SortField)}
                         className="flex-1 border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                       >
+                        <option value="criteria_met_count">충족 기준 개수</option>
+                        <option value="discount_rate">저평가율</option>
                         <option value="current_per">PER</option>
+                        <option value="current_pbr">PBR</option>
+                        <option value="eps_growth_rate">EPS 성장률</option>
                         <option value="debtratio">부채비율</option>
                         <option value="dividend_yield">배당률</option>
+                        <option value="market_cap">시가총액</option>
+                        <option value="revenue">매출액</option>
                         <option value="current_price">현재가</option>
                         <option value="graham_price">그레이엄 가격</option>
                         <option value="ncav">NCAV</option>
                         <option value="ncav_price">NCAV 가격</option>
-                        <option value="discount_rate">저평가율</option>
                         <option value="company_name">회사명</option>
                         <option value="industry">산업군</option>
                         <option value="consecutive_dividend">연속 배당</option>
@@ -579,6 +609,19 @@ export default function EnhancedGrahamPage() {
               {/* 모바일 필터 UI - 수직 배치로 최적화 */}
               <div className="md:hidden border-t border-gray-100 p-4">
                 <div className="space-y-4">
+                  {/* 기준 개수 필터 */}
+                  <div className="pb-3 border-b border-gray-100">
+                    <label className="text-xs text-gray-600 block mb-1">최소 충족 기준 개수</label>
+                    <select
+                      value={minCriteriaFilter}
+                      onChange={(e) => setMinCriteriaFilter(Number(e.target.value))}
+                      className="w-full rounded-lg border border-gray-300 p-2 text-sm"
+                    >
+                      <option value={6}>6개 이상</option>
+                      <option value={7}>7개 모두</option>
+                    </select>
+                  </div>
+
                   {/* 산업군 섹션 */}
                   <div className="pb-3 border-b border-gray-100">
                     <h3 className="text-sm font-medium text-gray-700 mb-2">산업군 필터</h3>
@@ -697,13 +740,17 @@ export default function EnhancedGrahamPage() {
                         onChange={(e) => setSortField(e.target.value as SortField)}
                         className="flex-1 rounded-lg border border-gray-300 p-2 text-sm"
                       >
+                        <option value="discount_rate">저평가율</option>
                         <option value="current_per">PER</option>
+                        <option value="current_pbr">PBR</option>
+                        <option value="eps_growth_rate">EPS 성장률</option>
                         <option value="debtratio">부채비율</option>
                         <option value="dividend_yield">배당률</option>
+                        <option value="market_cap">시가총액</option>
+                        <option value="revenue">매출액</option>
                         <option value="current_price">현재가</option>
                         <option value="graham_price">그레이엄 가격</option>
                         <option value="ncav_price">NCAV 가격</option>
-                        <option value="discount_rate">저평가율</option>
                         <option value="company_name">회사명</option>
                         <option value="industry">산업군</option>
                         <option value="consecutive_dividend">연속 배당</option>
@@ -798,6 +845,7 @@ export default function EnhancedGrahamPage() {
                             {renderSortIcon('company_name')}
                           </div>
                         </th>
+
                         <th
                           scope="col"
                           className="bg-gray-50 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
@@ -808,17 +856,6 @@ export default function EnhancedGrahamPage() {
                             {renderSortIcon('current_price')}
                           </div>
                         </th>
-                        <th
-                          scope="col"
-                          className="bg-gray-50 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
-                          onClick={() => toggleSort('modified_graham_price')}
-                        >
-                          <div className="flex items-center whitespace-nowrap">
-                            그레이엄가
-                            {renderSortIcon('modified_graham_price')}
-                          </div>
-                        </th>
-
                         <th
                           scope="col"
                           className="bg-gray-50 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
@@ -842,11 +879,11 @@ export default function EnhancedGrahamPage() {
                         <th
                           scope="col"
                           className="bg-gray-50 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
-                          onClick={() => toggleSort('consecutive_dividend')}
+                          onClick={() => toggleSort('current_pbr')}
                         >
                           <div className="flex items-center whitespace-nowrap">
-                            연속배당
-                            {renderSortIcon('consecutive_dividend')}
+                            PBR
+                            {renderSortIcon('current_pbr')}
                           </div>
                         </th>
                         <th
@@ -870,17 +907,12 @@ export default function EnhancedGrahamPage() {
                             </div>
                             <div className="text-xs text-gray-500">({stock.stock_code})</div>
                           </td>
+
                           <td className="bg-gray-50 px-3 py-3 whitespace-nowrap">
                             <div className="text-xs font-semibold text-gray-900">
                               {formatNumber(stock.current_price)}원
                             </div>
                           </td>
-                          <td className="bg-gray-50 px-3 py-3 whitespace-nowrap">
-                            <div className="text-xs font-semibold text-gray-900">
-                              {formatNumber(stock.modified_graham_price)}원
-                            </div>
-                          </td>
-
                           <td className="bg-gray-50 px-3 py-3 whitespace-nowrap">
                             <div className="text-xs font-semibold text-gray-900">
                               {stock.modified_graham_price > 0
@@ -898,16 +930,10 @@ export default function EnhancedGrahamPage() {
                               {stock.current_per.toFixed(2)}
                             </div>
                           </td>
-                          <td className="bg-gray-50 px-3 py-3 whitespace-nowrap text-center">
-                            {stock.consecutive_dividend ? (
-                              <div className="inline-flex items-center justify-center bg-emerald-50 w-5 h-5 rounded-full">
-                                <Check size={12} className="text-emerald-600" />
-                              </div>
-                            ) : (
-                              <div className="inline-flex items-center justify-center bg-gray-100 w-5 h-5 rounded-full">
-                                <X size={12} className="text-gray-600" />
-                              </div>
-                            )}
+                          <td className="bg-gray-50 px-3 py-3 whitespace-nowrap">
+                            <div className="text-xs font-semibold text-gray-900">
+                              {stock.current_pbr.toFixed(2)}
+                            </div>
                           </td>
                           <td className="bg-gray-50 px-3 py-3 text-right whitespace-nowrap">
                             <StockLinkButtons stockCode={stock.stock_code} style="mobileTable" />
@@ -935,6 +961,7 @@ export default function EnhancedGrahamPage() {
                             {renderSortIcon('company_name')}
                           </div>
                         </th>
+
                         <th
                           scope="col"
                           className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
@@ -955,17 +982,6 @@ export default function EnhancedGrahamPage() {
                             {renderSortIcon('modified_graham_price')}
                           </div>
                         </th>
-
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
-                          onClick={() => toggleSort('ncav_price')}
-                        >
-                          <div className="flex items-center">
-                            NCAV
-                            {renderSortIcon('ncav_price')}
-                          </div>
-                        </th>
                         <th
                           scope="col"
                           className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
@@ -976,7 +992,6 @@ export default function EnhancedGrahamPage() {
                             {renderSortIcon('discount_rate')}
                           </div>
                         </th>
-
                         <th
                           scope="col"
                           className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
@@ -985,6 +1000,26 @@ export default function EnhancedGrahamPage() {
                           <div className="flex items-center">
                             PER
                             {renderSortIcon('current_per')}
+                          </div>
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
+                          onClick={() => toggleSort('current_pbr')}
+                        >
+                          <div className="flex items-center">
+                            PBR
+                            {renderSortIcon('current_pbr')}
+                          </div>
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
+                          onClick={() => toggleSort('eps_growth_rate')}
+                        >
+                          <div className="flex items-center">
+                            EPS 성장률
+                            {renderSortIcon('eps_growth_rate')}
                           </div>
                         </th>
                         <th
@@ -1007,16 +1042,7 @@ export default function EnhancedGrahamPage() {
                             {renderSortIcon('dividend_yield')}
                           </div>
                         </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
-                          onClick={() => toggleSort('consecutive_dividend')}
-                        >
-                          <div className="flex items-center">
-                            연속배당
-                            {renderSortIcon('consecutive_dividend')}
-                          </div>
-                        </th>
+
                         <th
                           scope="col"
                           className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
@@ -1038,6 +1064,7 @@ export default function EnhancedGrahamPage() {
                             <div className="text-xs text-gray-500">({stock.stock_code})</div>
                             <div className="text-xs text-gray-500">{stock.industry}</div>
                           </td>
+
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-semibold text-gray-900">
                               {formatNumber(stock.current_price)}원
@@ -1048,14 +1075,8 @@ export default function EnhancedGrahamPage() {
                               {formatNumber(stock.modified_graham_price)}원
                             </div>
                           </td>
-
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">
-                              {formatNumber(stock.ncav_price)}원
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">
+                            <div className="text-sm text-gray-900 font-semibold">
                               {stock.modified_graham_price > 0
                                 ? (
                                     ((stock.modified_graham_price - stock.current_price) /
@@ -1066,14 +1087,25 @@ export default function EnhancedGrahamPage() {
                               %
                             </div>
                           </td>
-
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm  text-gray-900">
+                            <div className="text-sm text-gray-900">
                               {stock.current_per.toFixed(2)}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm  text-gray-900">
+                            <div className="text-sm text-gray-900">
+                              {stock.current_pbr.toFixed(2)}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {stock.eps_growth_rate > 0
+                                ? `${stock.eps_growth_rate.toFixed(1)}%`
+                                : '-'}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
                               {stock.debtratio.toFixed(1)}%
                             </div>
                           </td>
@@ -1084,17 +1116,7 @@ export default function EnhancedGrahamPage() {
                                 : '-'}
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-center">
-                            {stock.consecutive_dividend ? (
-                              <div className="inline-flex items-center justify-center bg-emerald-50 w-7 h-7 rounded-full">
-                                <Check size={16} className="text-emerald-600" />
-                              </div>
-                            ) : (
-                              <div className="inline-flex items-center justify-center bg-gray-200 w-7 h-7 rounded-full">
-                                <X size={16} className="text-gray-700" />
-                              </div>
-                            )}
-                          </td>
+
                           <td className="px-6 py-4 whitespace-nowrap text-right">
                             <StockLinkButtons stockCode={stock.stock_code} style="table" />
                           </td>
@@ -1138,13 +1160,11 @@ export default function EnhancedGrahamPage() {
 
                         {[...Array(totalPages)].map((_, i) => {
                           const pageNumber = i + 1;
-                          // 현재 페이지, 첫 페이지, 마지막 페이지, 그리고 현재 페이지 양쪽 1페이지만 표시
                           const isVisible =
                             pageNumber === 1 ||
                             pageNumber === totalPages ||
                             Math.abs(pageNumber - currentPage) <= 1;
 
-                          // 생략 부호(...) 표시 조건
                           const showEllipsisBefore = i === 1 && currentPage > 3;
                           const showEllipsisAfter =
                             i === totalPages - 2 && currentPage < totalPages - 2;
