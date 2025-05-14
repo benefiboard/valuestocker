@@ -86,11 +86,11 @@ export interface LynchStock {
   industry: string;
   subindustry: string;
   current_price: number;
-  current_per: number; // 현재 PER 추가
-  peg_price: number; // PEG 기반 적정주가
+  current_per: number; // 현재 PER
+  peg: number; // PEG 값 (peg_price 대신)
   growth_rate: number; // 성장률
   average_eps: number; // 평균 EPS
-  margin_of_safety: number; // 안전마진
+  margin_of_safety: number; // 안전마진 (1 - PEG) * 100
   dividend_yield: number; // 배당률
   consecutive_dividend: boolean; // 3년 연속 배당 여부
 }
@@ -302,6 +302,154 @@ function calculateDCF(
 
   // 총 내재가치
   return presentValue + presentTerminalValue;
+}
+
+// fetchLynchStocks 함수 - PEG 기반으로 수정된 버전
+export async function fetchLynchStocks(): Promise<StockDataResult<LynchStock>> {
+  try {
+    console.log('=== 피터 린치 PEG 기반 주식 데이터 가져오기 시작 ===');
+
+    // 부채비율 조건을 충족하는 종목 데이터 가져오기 (캐시된 JSON 사용)
+    const acceptableDebtStocks = await getAcceptableDebtStocks();
+
+    if (!acceptableDebtStocks || acceptableDebtStocks.length === 0) {
+      return emptyResult<LynchStock>('부채비율 조건을 충족하는 종목이 없습니다.');
+    }
+
+    const validStockCodes = acceptableDebtStocks.map((item) => item.stock_code);
+    console.log(`부채비율 조건을 충족하는 종목 수: ${validStockCodes.length}`);
+
+    // 2. stock_current 테이블에서 PEG 값과 필요한 데이터 조회
+    const currentData = await fetchDataInBatches<any>(
+      'stock_current',
+      'stock_code, peg, current_per, current_dividend',
+      validStockCodes
+    );
+
+    if (!currentData || currentData.length === 0) {
+      return emptyResult<LynchStock>('현재 주식 데이터를 찾을 수 없습니다.');
+    }
+
+    // PEG가 0 초과인 종목만 필터링
+    const pegStockData = currentData.filter((item) => safeNumber(item.peg) > 0);
+    const pegStockCodes = pegStockData.map((item) => item.stock_code);
+    console.log(`PEG > 0인 종목 수: ${pegStockCodes.length}`);
+
+    // 3. 필요한 추가 데이터 가져오기
+    const stockInfo = await fetchDataInBatches<any>(
+      'stock_fairprice',
+      'stock_code, company_name, industry, subindustry',
+      pegStockCodes
+    );
+
+    const priceData = await fetchDataInBatches<any>(
+      'stock_price',
+      'stock_code, current_price',
+      pegStockCodes
+    );
+
+    const fairpriceData = await fetchDataInBatches<any>(
+      'stock_fairprice',
+      'stock_code, growthrate, averageeps',
+      pegStockCodes
+    );
+
+    const rawData = await fetchDataInBatches<any>(
+      'stock_raw_data',
+      `stock_code, 
+      2022_dividend, 2023_dividend, 2024_dividend,
+      2022_operating_income, 2023_operating_income, 2024_operating_income`,
+      pegStockCodes
+    );
+
+    // 4. 데이터 맵 생성
+    console.log('데이터 맵 생성 중...');
+    const stockInfoMap = new Map(stockInfo.map((item) => [item.stock_code, item]));
+    const priceMap = new Map(
+      priceData.map((item) => [item.stock_code, safeNumber(item.current_price)])
+    );
+    const fairpriceMap = new Map(fairpriceData.map((item) => [item.stock_code, item]));
+    const rawDataMap = new Map(rawData.map((item) => [item.stock_code, item]));
+    const currentDataMap = new Map(pegStockData.map((item) => [item.stock_code, item]));
+
+    // 5. PEG 기반 주식 데이터 생성
+    console.log('PEG 기반 주식 데이터 생성 중...');
+    const lynchStocks: LynchStock[] = [];
+
+    for (const stockCode of pegStockCodes) {
+      const info = stockInfoMap.get(stockCode);
+      const currentPrice = priceMap.get(stockCode);
+      const fairPrice = fairpriceMap.get(stockCode);
+      const rawStockData = rawDataMap.get(stockCode);
+      const currentInfo = currentDataMap.get(stockCode);
+
+      // 필요한 모든 데이터가 있는지 확인
+      if (!info || !currentPrice || !fairPrice || !rawStockData || !currentInfo) {
+        continue;
+      }
+
+      // 영업이익 데이터 확인
+      const operatingIncome2022 = safeNumber(rawStockData['2022_operating_income']);
+      const operatingIncome2023 = safeNumber(rawStockData['2023_operating_income']);
+      const operatingIncome2024 = safeNumber(rawStockData['2024_operating_income']);
+
+      // 3년 중 2년 이상 영업이익이 음수인 기업 제외
+      let negativeOperatingIncomeCount = 0;
+      if (operatingIncome2022 < 0) negativeOperatingIncomeCount++;
+      if (operatingIncome2023 < 0) negativeOperatingIncomeCount++;
+      if (operatingIncome2024 < 0) negativeOperatingIncomeCount++;
+
+      if (negativeOperatingIncomeCount >= 2) {
+        continue;
+      }
+
+      // PEG 값과 안전마진 계산
+      const pegValue = safeNumber(currentInfo.peg);
+      const marginOfSafety = (1 - pegValue) * 100; // (1 - PEG) × 100
+
+      // 연속 배당 확인
+      const consecutiveDividend =
+        safeNumber(rawStockData['2022_dividend']) > 0 &&
+        safeNumber(rawStockData['2023_dividend']) > 0 &&
+        safeNumber(rawStockData['2024_dividend']) > 0;
+
+      lynchStocks.push({
+        stock_code: stockCode,
+        company_name: info.company_name,
+        industry: info.industry || '미분류',
+        subindustry: info.subindustry || '미분류',
+        current_price: currentPrice,
+        current_per: safeNumber(currentInfo.current_per),
+        peg: pegValue,
+        growth_rate: safeNumber(fairPrice.growthrate),
+        average_eps: safeNumber(fairPrice.averageeps),
+        margin_of_safety: marginOfSafety,
+        dividend_yield: safeNumber(currentInfo.current_dividend) || 0,
+        consecutive_dividend: consecutiveDividend,
+      });
+    }
+
+    // 6. 산업군과 하위 산업군 목록 생성
+    console.log('산업군 및 하위 산업군 목록 생성 중...');
+    const uniqueIndustries = Array.from(new Set(lynchStocks.map((stock) => stock.industry))).sort();
+    const uniqueSubIndustries = Array.from(
+      new Set(lynchStocks.map((stock) => stock.subindustry))
+    ).sort();
+
+    console.log(`최종 종목 수: ${lynchStocks.length}`);
+
+    return {
+      stocks: lynchStocks,
+      industries: uniqueIndustries,
+      subIndustries: uniqueSubIndustries,
+      error: null,
+    };
+  } catch (err) {
+    console.error('데이터 가져오기 오류:', err);
+    return emptyResult<LynchStock>(
+      err instanceof Error ? err.message : '데이터를 가져오는 중 오류가 발생했습니다.'
+    );
+  }
 }
 
 // 향상된 그레이엄 가치주 데이터 가져오기
@@ -936,165 +1084,6 @@ export async function fetchQualityStocks(): Promise<StockDataResult<QualityStock
   } catch (err) {
     console.error('데이터 가져오기 오류:', err);
     return emptyResult<QualityStock>(
-      err instanceof Error ? err.message : '데이터를 가져오는 중 오류가 발생했습니다.'
-    );
-  }
-}
-
-// fetchLynchStocks 함수 - 수정된 버전
-export async function fetchLynchStocks(): Promise<StockDataResult<LynchStock>> {
-  try {
-    console.log('=== 피터 린치 PEG 기반 주식 데이터 가져오기 시작 ===');
-
-    // 부채비율 조건을 충족하는 종목 데이터 가져오기 (캐시된 JSON 사용)
-    const acceptableDebtStocks = await getAcceptableDebtStocks();
-
-    if (!acceptableDebtStocks || acceptableDebtStocks.length === 0) {
-      return emptyResult<LynchStock>('부채비율 조건을 충족하는 종목이 없습니다.');
-    }
-
-    const validStockCodes = acceptableDebtStocks.map((item) => item.stock_code);
-    console.log(`부채비율 조건을 충족하는 종목 수: ${validStockCodes.length}`);
-
-    // 2. 부채비율 조건을 충족하는 종목에 대해서만 stock_fairprice 테이블에서 필요한 데이터 조회
-    const fairpriceData = await fetchDataInBatches<any>(
-      'stock_fairprice',
-      'stock_code, company_name, industry, subindustry, pegbased, growthrate, averageeps',
-      validStockCodes
-    );
-
-    if (!fairpriceData || fairpriceData.length === 0) {
-      return emptyResult<LynchStock>('적정가 데이터를 찾을 수 없습니다.');
-    }
-
-    const fairpriceStockCodes = fairpriceData.map((item) => item.stock_code);
-    console.log(`필터링 후 적정가 데이터가 있는 종목 수: ${fairpriceStockCodes.length}`);
-
-    // 3. 현재가 데이터 배치로 가져오기
-    const priceData = await fetchDataInBatches<any>(
-      'stock_price',
-      'stock_code, current_price',
-      fairpriceStockCodes
-    );
-
-    // 4. 배당률 및 PER 데이터 배치로 가져오기
-    const dividendData = await fetchDataInBatches<any>(
-      'stock_current',
-      'stock_code, current_dividend, current_per',
-      fairpriceStockCodes
-    );
-
-    // 5. 연속 배당 확인과 영업이익 확인을 위한 데이터 배치로 가져오기
-    const rawData = await fetchDataInBatches<any>(
-      'stock_raw_data',
-      `stock_code, 
-      2022_dividend, 2023_dividend, 2024_dividend,
-      2022_operating_income, 2023_operating_income, 2024_operating_income`,
-      fairpriceStockCodes
-    );
-
-    // 6. 데이터 맵 생성 및 연결
-    console.log('데이터 맵 생성 중...');
-    const fairpriceMap = new Map(fairpriceData.map((item) => [item.stock_code, item]));
-    const priceMap = new Map(
-      priceData.map((item) => [item.stock_code, safeNumber(item.current_price)])
-    );
-    const dividendMap = new Map(
-      dividendData.map((item) => [
-        item.stock_code,
-        {
-          dividend: safeNumber(item.current_dividend),
-          per: safeNumber(item.current_per),
-        },
-      ])
-    );
-    const rawDataMap = new Map(rawData.map((item) => [item.stock_code, item]));
-
-    // 7. PEG 기반 저평가 주식 필터링 (안전마진 30% 이상)
-    console.log('PEG 기반 저평가 주식 필터링 중...');
-    const lynchStocks: LynchStock[] = [];
-    const MIN_MARGIN_OF_SAFETY = 0.3; // 30% 안전마진
-
-    for (const stockCode of fairpriceStockCodes) {
-      const fairpriceItem = fairpriceMap.get(stockCode);
-      const currentPrice = priceMap.get(stockCode);
-      const dividendInfo = dividendMap.get(stockCode);
-      const rawStockData = rawDataMap.get(stockCode);
-
-      // 필요한 모든 데이터가 있는지 확인
-      if (!fairpriceItem || !currentPrice || !rawStockData || !dividendInfo) {
-        continue;
-      }
-
-      // 영업이익 데이터 확인 및 음수 개수 카운트
-      const operatingIncome2022 = safeNumber(rawStockData['2022_operating_income']);
-      const operatingIncome2023 = safeNumber(rawStockData['2023_operating_income']);
-      const operatingIncome2024 = safeNumber(rawStockData['2024_operating_income']);
-
-      // 3년 중 2년 이상 영업이익이 음수인 기업 제외
-      let negativeOperatingIncomeCount = 0;
-      if (operatingIncome2022 < 0) negativeOperatingIncomeCount++;
-      if (operatingIncome2023 < 0) negativeOperatingIncomeCount++;
-      if (operatingIncome2024 < 0) negativeOperatingIncomeCount++;
-
-      if (negativeOperatingIncomeCount >= 2) {
-        continue;
-      }
-
-      // PEG 기반 적정주가 확인
-      const pegPrice = safeNumber(fairpriceItem.pegbased);
-
-      // 적정주가가 0 이하인 경우 제외
-      if (pegPrice <= 0) {
-        continue;
-      }
-
-      // 안전마진 계산
-      const marginOfSafety = (pegPrice - currentPrice) / pegPrice;
-
-      // 연속 배당 확인
-      const consecutiveDividend =
-        safeNumber(rawStockData['2022_dividend']) > 0 &&
-        safeNumber(rawStockData['2023_dividend']) > 0 &&
-        safeNumber(rawStockData['2024_dividend']) > 0;
-
-      // 30% 이상 저평가된 종목만 추가
-      if (marginOfSafety >= MIN_MARGIN_OF_SAFETY) {
-        lynchStocks.push({
-          stock_code: stockCode,
-          company_name: fairpriceItem.company_name,
-          industry: fairpriceItem.industry || '미분류',
-          subindustry: fairpriceItem.subindustry || '미분류',
-          current_price: currentPrice,
-          current_per: dividendInfo.per,
-          peg_price: pegPrice,
-          growth_rate: safeNumber(fairpriceItem.growthrate),
-          average_eps: safeNumber(fairpriceItem.averageeps),
-          margin_of_safety: marginOfSafety * 100, // 백분율로 변환
-          dividend_yield: dividendInfo.dividend || 0,
-          consecutive_dividend: consecutiveDividend,
-        });
-      }
-    }
-
-    // 8. 산업군과 하위 산업군 목록 생성
-    console.log('산업군 및 하위 산업군 목록 생성 중...');
-    const uniqueIndustries = Array.from(new Set(lynchStocks.map((stock) => stock.industry))).sort();
-    const uniqueSubIndustries = Array.from(
-      new Set(lynchStocks.map((stock) => stock.subindustry))
-    ).sort();
-
-    console.log(`최종 필터링 후 종목 수: ${lynchStocks.length}`);
-
-    return {
-      stocks: lynchStocks,
-      industries: uniqueIndustries,
-      subIndustries: uniqueSubIndustries,
-      error: null,
-    };
-  } catch (err) {
-    console.error('데이터 가져오기 오류:', err);
-    return emptyResult<LynchStock>(
       err instanceof Error ? err.message : '데이터를 가져오는 중 오류가 발생했습니다.'
     );
   }

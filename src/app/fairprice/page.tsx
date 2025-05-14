@@ -44,7 +44,7 @@ export default function FairPricePage() {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [industryParams, setIndustryParams] = useState({
     avgPER: 10,
-    avgPEG: 1.0,
+    // avgPEG: 1.0, // PEG 관련 제거
     liabilityMultiplier: 1.2,
   });
   const [autoSearchTriggered, setAutoSearchTriggered] = useState<boolean>(false);

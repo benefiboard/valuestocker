@@ -24,7 +24,7 @@ export interface UserData {
   treasuryShares: string;
   targetPER: string;
   expectedReturn: string;
-  pegRatio: string;
+  // pegRatio: string; // PEG 관련 제거
 }
 
 export interface ModelItem {
@@ -50,7 +50,7 @@ export interface CalculatedResults {
   threeIndicatorsRoeEps: number;
   yamaguchi: number;
   sRimBase: number;
-  pegBased: number;
+  // pegBased: number; // PEG 관련 제거
   sRimDecline10pct: number;
   sRimDecline20pct: number;
   priceRange: { lowRange: number; midRange: number; highRange: number };
@@ -82,15 +82,15 @@ export interface StockFairPriceData {
   threeIndicatorsRoeEps: number;
   yamaguchi: number;
   sRimBase: number;
-  pegBased: number;
+  // pegBased: number; // PEG 관련 제거
   sRimDecline10pct: number;
   sRimDecline20pct: number;
 
   // 미리 계산된 부가 정보
   averageEps: number;
   averagePER: number;
-  growthRate: number;
-  pegBasedPER: number;
+  // growthRate: number;
+  // pegBasedPER: number; // PEG 관련 제거
   latestRoe: number; // averageRoe에서 변경됨
 
   // 적정가 범위

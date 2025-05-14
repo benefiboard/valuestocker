@@ -36,7 +36,7 @@ type SortField =
   | 'subindustry'
   | 'current_price'
   | 'current_per'
-  | 'peg_price'
+  | 'peg'
   | 'growth_rate'
   | 'average_eps'
   | 'margin_of_safety'
@@ -52,8 +52,8 @@ export default function LynchPage() {
   const [filteredStocks, setFilteredStocks] = useState<LynchStock[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
-  const [sortField, setSortField] = useState<SortField>('margin_of_safety');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [sortField, setSortField] = useState<SortField>('peg');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [industryFilter, setIndustryFilter] = useState<string>('');
   const [subIndustryFilter, setSubIndustryFilter] = useState<string>('');
   const [safetyMinFilter, setSafetyMinFilter] = useState<number | ''>('');
@@ -62,6 +62,8 @@ export default function LynchPage() {
   const [dividendMaxFilter, setDividendMaxFilter] = useState<number | ''>('');
   const [growthMinFilter, setGrowthMinFilter] = useState<number | ''>('');
   const [growthMaxFilter, setGrowthMaxFilter] = useState<number | ''>('');
+  const [pegMinFilter, setPegMinFilter] = useState<number | ''>('');
+  const [pegMaxFilter, setPegMaxFilter] = useState<number | ''>('');
   const [consecutiveDividendFilter, setConsecutiveDividendFilter] = useState<boolean | null>(null);
   const [industries, setIndustries] = useState<string[]>([]);
   const [subIndustries, setSubIndustries] = useState<string[]>([]);
@@ -141,12 +143,21 @@ export default function LynchPage() {
       filtered = filtered.filter((stock) => stock.subindustry === subIndustryFilter);
     }
 
+    // PEG 범위 필터
+    if (typeof pegMinFilter === 'number' && pegMinFilter > 0) {
+      filtered = filtered.filter((stock) => stock.peg >= pegMinFilter);
+    }
+
+    if (typeof pegMaxFilter === 'number' && pegMaxFilter > 0) {
+      filtered = filtered.filter((stock) => stock.peg <= pegMaxFilter);
+    }
+
     // 안전마진 범위 필터
-    if (typeof safetyMinFilter === 'number' && safetyMinFilter > 0) {
+    if (typeof safetyMinFilter === 'number') {
       filtered = filtered.filter((stock) => stock.margin_of_safety >= safetyMinFilter);
     }
 
-    if (typeof safetyMaxFilter === 'number' && safetyMaxFilter > 0) {
+    if (typeof safetyMaxFilter === 'number') {
       filtered = filtered.filter((stock) => stock.margin_of_safety <= safetyMaxFilter);
     }
 
@@ -206,6 +217,8 @@ export default function LynchPage() {
     stocks,
     industryFilter,
     subIndustryFilter,
+    pegMinFilter,
+    pegMaxFilter,
     safetyMinFilter,
     safetyMaxFilter,
     dividendMinFilter,
@@ -269,9 +282,11 @@ export default function LynchPage() {
     setDividendMaxFilter('');
     setGrowthMinFilter('');
     setGrowthMaxFilter('');
+    setPegMinFilter('');
+    setPegMaxFilter('');
     setConsecutiveDividendFilter(null);
-    setSortField('margin_of_safety');
-    setSortDirection('desc');
+    setSortField('peg');
+    setSortDirection('asc');
   };
 
   // 페이지네이션 계산
@@ -297,6 +312,30 @@ export default function LynchPage() {
     ) : (
       <ArrowDown size={12} className="ml-1 text-emerald-600 sort-icon" />
     );
+  };
+
+  // PEG 기반 평가 렌더링 함수
+  const renderPegEvaluation = (peg: number) => {
+    const margin = (1 - peg) * 100;
+
+    if (margin >= 10) {
+      return (
+        <span className="text-xs font-medium text-emerald-600">{margin.toFixed(1)}% 저평가</span>
+      );
+    } else if (margin >= -10) {
+      return (
+        <span className="text-xs font-medium text-gray-600">
+          적정가 ({margin > 0 ? '+' : ''}
+          {margin.toFixed(1)}%)
+        </span>
+      );
+    } else {
+      return (
+        <span className="text-xs font-medium text-red-600">
+          {Math.abs(margin).toFixed(1)}% 고평가
+        </span>
+      );
+    }
   };
 
   return (
@@ -363,20 +402,20 @@ export default function LynchPage() {
                     값으로, 성장성 대비 주가의 적정성을 판단
                   </li>
                   <li>
-                    <strong className="text-emerald-700">적정 PEG = 1.0</strong> - 피터 린치는 PEG가
-                    1.0 이하인 주식을 매력적으로 평가
+                    <strong className="text-emerald-700">PEG = 1.0</strong> - 피터 린치는 PEG가 1.0
+                    이하인 주식을 매력적으로 평가
                   </li>
                   <li>
-                    <strong className="text-emerald-700">산업별 PEG 적용</strong> - 각 산업별 특성에
-                    맞는 적정 PEG 비율 적용
+                    <strong className="text-emerald-700">저평가 기준</strong> - PEG가 0.9 이하면 10%
+                    이상 저평가로 판단
                   </li>
                   <li>
-                    <strong className="text-emerald-700">적정주가 계산</strong> - EPS × 성장률 ×
-                    산업 적정 PEG = 적정 PER → EPS × 적정 PER = 적정주가
+                    <strong className="text-emerald-700">적정가 범위</strong> - PEG가 0.9~1.1 사이인
+                    종목은 적정가 수준
                   </li>
                   <li>
-                    <strong className="text-emerald-700">최소 30% 안전마진</strong> - PEG 기반
-                    적정주가 대비 30% 이상 저평가된 종목만 표시
+                    <strong className="text-emerald-700">고평가 기준</strong> - PEG가 1.1 초과하면
+                    고평가 종목으로 분류
                   </li>
                   <li>
                     <strong className="text-emerald-700">성장률 기반 투자</strong> - 합리적인
@@ -472,10 +511,40 @@ export default function LynchPage() {
                     </select>
                   </div>
 
-                  {/* 안전마진 범위 필터 */}
+                  {/* PEG 범위 필터 */}
+                  <div className="mb-3">
+                    <label className="block font-medium text-gray-700 mb-1 text-sm">PEG 범위</label>
+                    <div className="flex space-x-2">
+                      <input
+                        type="number"
+                        value={pegMinFilter}
+                        onChange={(e) =>
+                          setPegMinFilter(e.target.value === '' ? '' : Number(e.target.value))
+                        }
+                        placeholder="최소"
+                        min="0"
+                        step="0.1"
+                        className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
+                      />
+                      <span className="self-center text-gray-400 text-sm">~</span>
+                      <input
+                        type="number"
+                        value={pegMaxFilter}
+                        onChange={(e) =>
+                          setPegMaxFilter(e.target.value === '' ? '' : Number(e.target.value))
+                        }
+                        placeholder="최대"
+                        min="0"
+                        step="0.1"
+                        className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
+                      />
+                    </div>
+                  </div>
+
+                  {/* 평가 범위 필터 (기존 안전마진) */}
                   <div className="mb-3">
                     <label className="block font-medium text-gray-700 mb-1 text-sm">
-                      안전마진 범위 (%)
+                      평가 범위 (%)
                     </label>
                     <div className="flex space-x-2">
                       <input
@@ -485,7 +554,6 @@ export default function LynchPage() {
                           setSafetyMinFilter(e.target.value === '' ? '' : Number(e.target.value))
                         }
                         placeholder="최소"
-                        min="0"
                         step="1"
                         className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                       />
@@ -497,7 +565,6 @@ export default function LynchPage() {
                           setSafetyMaxFilter(e.target.value === '' ? '' : Number(e.target.value))
                         }
                         placeholder="최대"
-                        min="0"
                         step="1"
                         className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                       />
@@ -607,11 +674,11 @@ export default function LynchPage() {
                         onChange={(e) => setSortField(e.target.value as SortField)}
                         className="flex-1 border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                       >
-                        <option value="margin_of_safety">안전마진</option>
+                        <option value="peg">PEG</option>
+                        <option value="margin_of_safety">평가 수준</option>
                         <option value="growth_rate">성장률</option>
                         <option value="current_price">현재가</option>
                         <option value="current_per">현재 PER</option>
-                        <option value="peg_price">PEG 적정가</option>
                         <option value="average_eps">평균 EPS</option>
                         <option value="dividend_yield">배당률</option>
                         <option value="company_name">회사명</option>
@@ -685,9 +752,44 @@ export default function LynchPage() {
                   <div className="pb-3 border-b border-gray-100">
                     <h3 className="text-sm font-medium text-gray-700 mb-2">범위 필터</h3>
 
-                    {/* 안전마진 범위 - 수직 배치 */}
+                    {/* PEG 범위 - 수직 배치 */}
                     <div className="mb-3">
-                      <label className="text-xs text-gray-600 block mb-1">안전마진 범위 (%)</label>
+                      <label className="text-xs text-gray-600 block mb-1">PEG 범위</label>
+                      <div className="flex flex-col space-y-2">
+                        <div className="flex items-center">
+                          <span className="w-10 text-xs text-gray-500">최소:</span>
+                          <input
+                            type="number"
+                            value={pegMinFilter}
+                            onChange={(e) =>
+                              setPegMinFilter(e.target.value === '' ? '' : Number(e.target.value))
+                            }
+                            placeholder="최소값"
+                            min="0"
+                            step="0.1"
+                            className="w-full rounded-lg border border-gray-300 p-1.5 text-sm"
+                          />
+                        </div>
+                        <div className="flex items-center">
+                          <span className="w-10 text-xs text-gray-500">최대:</span>
+                          <input
+                            type="number"
+                            value={pegMaxFilter}
+                            onChange={(e) =>
+                              setPegMaxFilter(e.target.value === '' ? '' : Number(e.target.value))
+                            }
+                            placeholder="최대값"
+                            min="0"
+                            step="0.1"
+                            className="w-full rounded-lg border border-gray-300 p-1.5 text-sm"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 평가 범위 - 수직 배치 */}
+                    <div className="mb-3">
+                      <label className="text-xs text-gray-600 block mb-1">평가 범위 (%)</label>
                       <div className="flex flex-col space-y-2">
                         <div className="flex items-center">
                           <span className="w-10 text-xs text-gray-500">최소:</span>
@@ -700,7 +802,6 @@ export default function LynchPage() {
                               )
                             }
                             placeholder="최소값"
-                            min="0"
                             className="w-full rounded-lg border border-gray-300 p-1.5 text-sm"
                           />
                         </div>
@@ -715,7 +816,6 @@ export default function LynchPage() {
                               )
                             }
                             placeholder="최대값"
-                            min="0"
                             className="w-full rounded-lg border border-gray-300 p-1.5 text-sm"
                           />
                         </div>
@@ -834,11 +934,11 @@ export default function LynchPage() {
                         onChange={(e) => setSortField(e.target.value as SortField)}
                         className="flex-1 rounded-lg border border-gray-300 p-2 text-sm"
                       >
-                        <option value="margin_of_safety">안전마진</option>
+                        <option value="peg">PEG</option>
+                        <option value="margin_of_safety">평가 수준</option>
                         <option value="growth_rate">성장률</option>
                         <option value="current_price">현재가</option>
                         <option value="current_per">현재 PER</option>
-                        <option value="peg_price">PEG 적정가</option>
                         <option value="average_eps">평균 EPS</option>
                         <option value="dividend_yield">배당률</option>
                         <option value="company_name">회사명</option>
@@ -948,11 +1048,11 @@ export default function LynchPage() {
                         <th
                           scope="col"
                           className="bg-gray-50 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
-                          onClick={() => toggleSort('peg_price')}
+                          onClick={() => toggleSort('peg')}
                         >
                           <div className="flex items-center whitespace-nowrap">
-                            PEG 적정가
-                            {renderSortIcon('peg_price')}
+                            PEG
+                            {renderSortIcon('peg')}
                           </div>
                         </th>
                         <th
@@ -961,7 +1061,7 @@ export default function LynchPage() {
                           onClick={() => toggleSort('margin_of_safety')}
                         >
                           <div className="flex items-center whitespace-nowrap">
-                            안전마진
+                            평가
                             {renderSortIcon('margin_of_safety')}
                           </div>
                         </th>
@@ -1023,13 +1123,11 @@ export default function LynchPage() {
                           </td>
                           <td className="bg-gray-50 px-3 py-3 whitespace-nowrap">
                             <div className="text-xs font-semibold text-gray-900">
-                              {formatNumber(stock.peg_price)}원
+                              {stock.peg.toFixed(2)}
                             </div>
                           </td>
                           <td className="bg-gray-50 px-3 py-3 whitespace-nowrap">
-                            <div className="text-xs text-gray-900">
-                              {stock.margin_of_safety.toFixed(1)}%
-                            </div>
+                            {renderPegEvaluation(stock.peg)}
                           </td>
                           <td className="bg-gray-50 px-3 py-3 whitespace-nowrap">
                             <div className="text-xs text-gray-900">
@@ -1093,11 +1191,11 @@ export default function LynchPage() {
                         <th
                           scope="col"
                           className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
-                          onClick={() => toggleSort('peg_price')}
+                          onClick={() => toggleSort('peg')}
                         >
                           <div className="flex items-center">
-                            PEG 적정가
-                            {renderSortIcon('peg_price')}
+                            PEG
+                            {renderSortIcon('peg')}
                           </div>
                         </th>
                         <th
@@ -1106,7 +1204,7 @@ export default function LynchPage() {
                           onClick={() => toggleSort('margin_of_safety')}
                         >
                           <div className="flex items-center">
-                            안전마진
+                            평가 수준
                             {renderSortIcon('margin_of_safety')}
                           </div>
                         </th>
@@ -1188,13 +1286,11 @@ export default function LynchPage() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-semibold text-gray-900">
-                              {formatNumber(stock.peg_price)}원
+                              {stock.peg.toFixed(2)}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">
-                              {stock.margin_of_safety.toFixed(1)}%
-                            </div>
+                            {renderPegEvaluation(stock.peg)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-900">

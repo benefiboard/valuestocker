@@ -47,19 +47,17 @@ async function migrateFairPriceData() {
       threeindicatorsroeeps: item.threeIndicatorsRoeEps, // 소문자로 변경
       yamaguchi: item.yamaguchi,
       srimbase: item.sRimBase, // 소문자로 변경
-      pegbased: item.pegBased, // 소문자로 변경
       srimdecline10pct: item.sRimDecline10pct, // 소문자로 변경
       srimdecline20pct: item.sRimDecline20pct, // 소문자로 변경
       averageeps: item.averageEps, // 소문자로 변경
       averageper: item.averagePER, // 소문자로 변경
-      growthrate: item.growthRate, // 소문자로 변경
-      pegbasedper: item.pegBasedPER, // 소문자로 변경
       latestroe: item.latestRoe, // 소문자로 변경
       pricerange_lowrange: item.priceRange_lowRange, // 소문자로 변경
       pricerange_midrange: item.priceRange_midRange, // 소문자로 변경
       pricerange_highrange: item.priceRange_highRange, // 소문자로 변경
       trustscore: item.trustScore, // 소문자로 변경
       riskscore: item.riskScore, // 소문자로 변경
+      growthrate: item.averageGrowth, // 소문자로 변경
     }));
 
     // 배치 크기 정의

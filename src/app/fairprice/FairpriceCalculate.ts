@@ -42,7 +42,7 @@ export const getStockDataFromSupabase = async (
     threeIndicatorsRoeEps: Number(data.threeindicatorsroeeps || 0),
     yamaguchi: Number(data.yamaguchi || 0),
     sRimBase: Number(data.srimbase || 0),
-    pegBased: Number(data.pegbased || 0),
+    // pegBased: Number(data.pegbased || 0), // PEG 관련 제거
     sRimDecline10pct: Number(data.srimdecline10pct || 0),
     sRimDecline20pct: Number(data.srimdecline20pct || 0),
 
@@ -50,7 +50,7 @@ export const getStockDataFromSupabase = async (
     averageEps: Number(data.averageeps || 0),
     averagePER: Number(data.averageper || 0),
     growthRate: Number(data.growthrate || 0),
-    pegBasedPER: Number(data.pegbasedper || 0),
+    // pegBasedPER: Number(data.pegbasedper || 0), // PEG 관련 제거
     latestRoe: Number(data.latestroe || 0),
 
     // 적정가 범위
@@ -110,7 +110,7 @@ export const categorizeModels = (results: CalculatedResults) => {
     { name: 'EPS × 과거 평균 PER', value: results.epsPer },
     { name: '당기순이익 기반 PER 모델', value: results.controllingShareHolder },
     { name: 'EPS 기준(P₂)', value: results.threeIndicatorsEps },
-    { name: 'PEG 기반 적정주가', value: results.pegBased },
+    // { name: 'PEG 기반 적정주가', value: results.pegBased }, // PEG 관련 제거
   ];
 
   // 3. 혼합 모델
@@ -199,7 +199,7 @@ export const extractCalculatedResultsFromSupabase = async (
     threeIndicatorsRoeEps: stockDataItem.threeIndicatorsRoeEps,
     yamaguchi: stockDataItem.yamaguchi,
     sRimBase: stockDataItem.sRimBase,
-    pegBased: stockDataItem.pegBased,
+    // pegBased: stockDataItem.pegBased, // PEG 관련 제거
     sRimDecline10pct: stockDataItem.sRimDecline10pct,
     sRimDecline20pct: stockDataItem.sRimDecline20pct,
     latestPrice,
@@ -305,7 +305,7 @@ export const extractCalculatedResultsFromJson = (stockCode: string): CalculatedR
     threeIndicatorsRoeEps: stockDataItem.threeIndicatorsRoeEps,
     yamaguchi: stockDataItem.yamaguchi,
     sRimBase: stockDataItem.sRimBase,
-    pegBased: stockDataItem.pegBased,
+    // pegBased: stockDataItem.pegBased, // PEG 관련 제거
     sRimDecline10pct: stockDataItem.sRimDecline10pct,
     sRimDecline20pct: stockDataItem.sRimDecline20pct,
     latestPrice,
