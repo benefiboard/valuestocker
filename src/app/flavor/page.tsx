@@ -299,9 +299,9 @@ export default function FlavorPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 px-4 sm:px-6 py-8">
+    <div className="flex flex-col min-h-screen bg-gray-50 px-4 sm:px-6 py-4 sm:py-6">
       {/* 헤더 - 글래스모픽 스타일 */}
-      <header className="mb-6 max-w-6xl mx-auto w-full sticky top-0 z-10">
+      {/* <header className="mb-6 max-w-6xl mx-auto w-full sticky top-0 z-10">
         <div className="bg-white bg-opacity-90 backdrop-blur-md shadow-sm rounded-2xl p-4 flex items-center">
           <Link
             href="/"
@@ -316,7 +316,7 @@ export default function FlavorPage() {
             고배당 가치주 리스트
           </h1>
         </div>
-      </header>
+      </header> */}
 
       <main className="flex-1 max-w-6xl mx-auto w-full animate-fadeIn">
         <div className="flex flex-col mb-6">

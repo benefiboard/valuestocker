@@ -201,9 +201,9 @@ export default function ProfitCalculatorPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 px-4 sm:px-6 py-8">
+    <div className="flex flex-col min-h-screen bg-gray-50 px-4 sm:px-6 py-4 sm:py-6">
       {/* 헤더 */}
-      <header className="mb-6 max-w-4xl mx-auto w-full">
+      {/* <header className="mb-6 max-w-4xl mx-auto w-full">
         <div className="bg-white shadow-sm rounded-2xl p-4 flex items-center justify-between">
           <div className="flex items-center">
             <Link
@@ -214,16 +214,14 @@ export default function ProfitCalculatorPage() {
             </Link>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center">
-                {/* <div className="p-2 bg-emerald-50 rounded-full mr-3">
-                  <Calculator className="text-emerald-600 w-5 h-5 sm:w-6 sm:h-6" />
-                </div> */}
+            
                 수익가치 계산기
               </h1>
               <p className="text-sm text-gray-600 mt-1">기업이 버는 돈으로 적정 주가 계산하기</p>
             </div>
           </div>
         </div>
-      </header>
+      </header> */}
 
       <main className="flex-1 max-w-4xl mx-auto w-full">
         {/* 검색 영역 */}
@@ -464,7 +462,7 @@ export default function ProfitCalculatorPage() {
         {success && calculatedResult && (
           <div>
             {/* 수익가치 분석 결과 */}
-            <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-md mb-6">
+            <div className="bg-gradient-to-tl from-gray-50 to-gray-100 border-2 border-gray-200 rounded-2xl p-6 sm:p-8 shadow-md mb-6">
               <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-5">
                 💰 예상 수익률 분석
               </h2>

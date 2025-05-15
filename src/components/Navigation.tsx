@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronDown, Menu, X } from 'lucide-react';
+import { ChevronDown, ChevronLeft, Home, Menu, X } from 'lucide-react';
 
 // 타입 정의
 interface NavItem {
@@ -76,6 +76,7 @@ const Navigation = () => {
 
   // 현재 경로 확인
   const pathname = usePathname();
+  const router = useRouter();
   const isHomePage = pathname === '/';
 
   // 모든 드롭다운 닫기
@@ -106,6 +107,7 @@ const Navigation = () => {
   const strategyItems: NavItem[] = [
     { label: '적정가 계산', href: '/fairprice' },
     { label: '체크리스트', href: '/checklist' },
+    { label: '수익가치 계산', href: '/profit-calculator' },
   ];
 
   // 분석 도구 드롭다운 아이템
@@ -118,19 +120,40 @@ const Navigation = () => {
     { label: '하워드 막스 내재가치', href: '/howard' },
   ];
 
+  // 모든 네비게이션 아이템 합치기
+  const allNavigationItems = [...strategyItems, ...toolsItems];
+
+  // 현재 페이지에 해당하는 label 찾기
+  const currentPageLabel =
+    allNavigationItems.find((item) => item.href === pathname)?.label || 'ValueTargeter';
+
+  // 이전 페이지로 이동
+  const handleGoBack = () => {
+    router.back();
+  };
+
   return (
     <>
-      <nav className="py-5 px-6 md:px-16 border-b border-gray-100 flex items-center justify-between sticky top-0 z-50 bg-white/90 backdrop-blur-md">
+      <nav className="p-4  border-b border-gray-100 flex items-center justify-between sticky top-0 z-50 bg-white/90 backdrop-blur-md">
         {/* 로고 - 클릭 시 홈으로 이동 */}
-        <Link
+        {/* <Link
           href="/"
-          className="font-bold text-2xl text-emerald-700 hover:text-emerald-800 transition-colors"
+          className=" font-bold text-2xl text-emerald-700 hover:text-emerald-800 transition-colors"
         >
           ValueTargeter
-        </Link>
+        </Link> */}
+        <div className="flex items-center gap-1">
+          <button
+            onClick={handleGoBack}
+            className="hover:bg-gray-100 rounded-md p-1 transition-colors"
+          >
+            <ChevronLeft />
+          </button>
+          <p className=" sm:text-xl font-semibold text-gray-600">{currentPageLabel}</p>
+        </div>
 
         {/* 데스크탑 메뉴 */}
-        <div className="hidden md:flex items-center space-x-10">
+        <div className="hidden md:flex items-center space-x-4">
           <Dropdown
             title="투자 전략"
             items={strategyItems}
@@ -157,18 +180,20 @@ const Navigation = () => {
           >
             적정가 계산
           </Link>
+          <p>|</p>
+          <Link href="/" className="text-gray-300 hover:text-emerald-700 transition-colors py-2">
+            메인페이지
+            {/* <Home /> */}
+          </Link>
         </div>
 
         {/* 모바일 햄버거 메뉴 버튼 */}
-        <div className="flex items-center md:hidden">
+        <div className="flex items-center gap-2 md:hidden">
           {/* 메인 페이지에서만 시작하기 버튼 표시 */}
-          {isHomePage && (
-            <Link href="/fairprice" className="mr-4">
-              <button className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors">
-                시작하기
-              </button>
-            </Link>
-          )}
+
+          <Link href="/">
+            <Home />
+          </Link>
 
           {/* 햄버거 메뉴 아이콘 */}
           <button

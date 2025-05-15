@@ -285,9 +285,9 @@ export default function SrimPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 px-4 sm:px-6 py-8">
+    <div className="flex flex-col min-h-screen bg-gray-50 px-4 sm:px-6 py-4 sm:py-6">
       {/* 헤더 - 글래스모픽 스타일 */}
-      <header className="mb-6 max-w-6xl mx-auto w-full sticky top-0 z-10">
+      {/* <header className="mb-6 max-w-6xl mx-auto w-full sticky top-0 z-10">
         <div className="bg-white bg-opacity-90 backdrop-blur-md shadow-sm rounded-2xl p-4 flex items-center">
           <Link
             href="/"
@@ -302,7 +302,7 @@ export default function SrimPage() {
             S-RIM 기반 종목
           </h1>
         </div>
-      </header>
+      </header> */}
 
       <main className="flex-1 max-w-6xl mx-auto w-full animate-fadeIn">
         <div className="flex flex-col mb-6">
@@ -368,8 +368,8 @@ export default function SrimPage() {
                     이상 영업이익이 음수인 기업 제외
                   </li>
                   <li>
-                    <strong className="text-emerald-700">연속 배당 여부 표시</strong> - 3년
-                    연속 배당금 지급 체크
+                    <strong className="text-emerald-700">연속 배당 여부 표시</strong> - 3년 연속
+                    배당금 지급 체크
                   </li>
                 </ul>
               </div>
