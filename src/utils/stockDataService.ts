@@ -1300,7 +1300,6 @@ export async function fetchHowardStocks(): Promise<StockDataResult<HowardStock>>
 
     // 6. 데이터 맵 생성 - 캐시된 부채비율 데이터 활용
     console.log('데이터 맵 생성 중...');
-    // 캐시된 부채비율 데이터에서 맵 생성
     const stockMap = new Map(
       acceptableDebtStocks.map((item) => [
         item.stock_code,
@@ -1325,7 +1324,7 @@ export async function fetchHowardStocks(): Promise<StockDataResult<HowardStock>>
     // 7. 하워드 막스 내재가치 계산 및 종목 필터링
     console.log('하워드 막스 내재가치 계산 및 종목 필터링 중...');
     const howardStocks: HowardStock[] = [];
-    const DISCOUNT_RATE = 0.08; // 요구사항대로 8% 고정
+    const DISCOUNT_RATE = 0.1; // 기본 할인율 10%로 변경
     const MIN_MARGIN_OF_SAFETY = 0.3; // 30% 안전마진
 
     for (const stockCode of stockCodes) {
@@ -1415,39 +1414,28 @@ export async function fetchHowardStocks(): Promise<StockDataResult<HowardStock>>
         industryInfo = industryData.find((item) => item.industry === 'etc')!;
       }
 
-      // 시나리오별 성장률 및 영구성장률 설정
+      // 시나리오별 성장률 설정 (영구성장률은 사용하지 않음)
       const baseGrowthRate = industryInfo.minGrowthRate / 100;
       const optimisticGrowthRate = industryInfo.maxGrowthRate / 100;
       const conservativeGrowthRate = Math.max(0.01, (industryInfo.minGrowthRate - 1) / 100); // 최소 1%
 
-      const basePerpetualGrowthRate = industryInfo.minPerpetualGrowthRate / 100;
-      const optimisticPerpetualGrowthRate = industryInfo.maxPerpetualGrowthRate / 100;
-      const conservativePerpetualGrowthRate = industryInfo.minPerpetualGrowthRate / 100;
-
       // 시나리오별 할인율 설정
-      const baseDiscountRate = DISCOUNT_RATE;
-      const optimisticDiscountRate = DISCOUNT_RATE - 0.02; // 6%
-      const conservativeDiscountRate = DISCOUNT_RATE + 0.04; // 12%
+      const baseDiscountRate = DISCOUNT_RATE; // 10%
+      const optimisticDiscountRate = 0.06; // 6%
+      const conservativeDiscountRate = 0.12; // 12%
 
-      // DCF 모델로 내재가치 계산 (10년 + 영구가치)
-      const baseIntrinsicValue = calculateDCF(
-        fcfPerShare,
-        baseGrowthRate,
-        basePerpetualGrowthRate,
-        baseDiscountRate
-      );
+      // DCF 모델로 내재가치 계산 (5년만, 영구가치 없음)
+      const baseIntrinsicValue = calculateDCF5Year(fcfPerShare, baseGrowthRate, baseDiscountRate);
 
-      const optimisticIntrinsicValue = calculateDCF(
+      const optimisticIntrinsicValue = calculateDCF5Year(
         fcfPerShare,
         optimisticGrowthRate,
-        optimisticPerpetualGrowthRate,
         optimisticDiscountRate
       );
 
-      const conservativeIntrinsicValue = calculateDCF(
+      const conservativeIntrinsicValue = calculateDCF5Year(
         fcfPerShare,
         conservativeGrowthRate,
-        conservativePerpetualGrowthRate,
         conservativeDiscountRate
       );
 
@@ -1505,4 +1493,18 @@ export async function fetchHowardStocks(): Promise<StockDataResult<HowardStock>>
       err instanceof Error ? err.message : '데이터를 가져오는 중 오류가 발생했습니다.'
     );
   }
+}
+
+// 5년 DCF 계산 함수 (영구가치 없음)
+function calculateDCF5Year(fcfPerShare: number, growthRate: number, discountRate: number): number {
+  let intrinsicValue = 0;
+
+  // 5년간의 FCF 현재가치 계산
+  for (let year = 1; year <= 5; year++) {
+    const futureFCF = fcfPerShare * Math.pow(1 + growthRate, year);
+    const presentValue = futureFCF / Math.pow(1 + discountRate, year);
+    intrinsicValue += presentValue;
+  }
+
+  return intrinsicValue;
 }
