@@ -1,11 +1,13 @@
+//src/app/fairprice/page.tsx
+
 'use client';
 
 import { useState, ChangeEvent, FormEvent, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import CompanySearchInput from '@/components/CompanySearchInput';
-
+import { CompanyInfo, stockCodeMap } from '../../lib/stockCodeData';
 import { CalculatedResults, StockPrice } from './types';
-
+import { getIndustryParameters } from '../../lib/industryData';
 import Link from 'next/link';
 import {
   AlertCircle,
@@ -23,8 +25,6 @@ import {
   X,
 } from 'lucide-react';
 import { extractCalculatedResultsFromSupabase } from './FairpriceCalculate';
-import { CompanyInfo, stockCodeMap } from '@/lib/stockCodeData';
-import { getIndustryParameters } from '@/lib/industryData';
 
 export default function FairPricePage() {
   // URL 쿼리 파라미터 가져오기
@@ -41,12 +41,10 @@ export default function FairPricePage() {
   const [success, setSuccess] = useState<boolean>(false);
   const [isSrimExpanded, setIsSrimExpanded] = useState<boolean>(false);
   const [showSearchForm, setShowSearchForm] = useState<boolean>(true);
-  // 초기에 모든 카테고리를 확장된 상태로 설정
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
-    new Set(['assetBased', 'profitBased', 'srimModels'])
-  );
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [industryParams, setIndustryParams] = useState({
     avgPER: 10,
+    // avgPEG: 1.0, // PEG 관련 제거
     liabilityMultiplier: 1.2,
   });
   const [autoSearchTriggered, setAutoSearchTriggered] = useState<boolean>(false);
@@ -382,6 +380,24 @@ export default function FairPricePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 px-4 sm:px-6 py-4 sm:py-6">
+      {/* 헤더 - 글래스모픽 스타일 */}
+      {/* <header className="mb-6 max-w-4xl mx-auto w-full sticky top-0 z-10">
+        <div className="bg-white bg-opacity-90 backdrop-blur-md shadow-sm rounded-2xl p-4 flex items-center">
+          <Link
+            href="/"
+            className="mr-3 sm:mr-4 text-gray-600 hover:text-gray-900 transition-colors p-2 rounded-full hover:bg-gray-100"
+          >
+            <ArrowLeft size={20} className="sm:w-6 sm:h-6" />
+          </Link>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center">
+            <div className="hidden sm:block p-2 bg-emerald-50 rounded-full mr-3">
+              <BarChart4 className="text-emerald-600 w-5 h-5 sm:w-6 sm:h-6" />
+            </div>
+            주식 적정가 계산
+          </h1>
+        </div>
+      </header> */}
+
       <main className="flex-1 max-w-4xl mx-auto w-full">
         {/* 검색 영역 - 세련된 카드 디자인 */}
         {showSearchForm ? (
@@ -462,7 +478,7 @@ export default function FairPricePage() {
               onClick={() => setShowSearchForm(true)}
               className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 text-sm rounded-xl flex items-center transition-all duration-300 group"
             >
-              <SearchIcon className="h-4 w-4 sm:mr-2 group-hover:scale-110 transition-transform duration-300" />
+              <SearchIcon className="h-4 w-4 sm:mr-2   group-hover:scale-110 transition-transform duration-300" />
               <span className="hidden sm:block">다른 종목</span>
             </button>
           </div>
@@ -531,7 +547,7 @@ export default function FairPricePage() {
               )}
 
               <div className="space-y-5">
-                {/* 자산 가치 기반 모델 - BPS만 표시 */}
+                {/* 자산 가치 기반 모델 */}
                 <div className="mb-5 group">
                   <button
                     className="w-full flex items-center justify-between p-5 bg-gray-50 rounded-xl text-left focus:outline-none hover:bg-gray-100 transition-all duration-300 border border-gray-100 group-hover:border-gray-200"
@@ -568,122 +584,19 @@ export default function FairPricePage() {
                           <div className="flex items-center">
                             <span className="text-sm sm:text-base font-medium text-gray-800">
                               {model.name}
-                              {calculatedResults.outliers?.some((o) => o.name === model.name) && (
-                                <span className="ml-2 sm:ml-3 text-xs text-white bg-yellow-500 px-2 py-0.5 rounded-full flex items-center animate-pulse">
-                                  <AlertTriangle size={12} className="mr-1 sm:mr-2" /> 참고용
-                                </span>
-                              )}
-                            </span>
-                          </div>
-                          <span className="text-sm sm:text-base font-bold text-gray-800">
-                            {formatNumber(model.value)}원
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* 수익 가치 기반 모델 - profitBasedPrice만 표시 */}
-                <div className="mb-5 group">
-                  <button
-                    className="w-full flex items-center justify-between p-5 bg-gray-50 rounded-xl text-left focus:outline-none hover:bg-gray-100 transition-all duration-300 border border-gray-100 group-hover:border-gray-200"
-                    onClick={() => toggleCategory('profitBased')}
-                  >
-                    <div className="flex items-center">
-                      <div className="p-2 bg-emerald-50 rounded-full mr-3 group-hover:bg-emerald-100 transition-colors duration-300">
-                        <Info className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-600" />
-                      </div>
-                      <h3 className="text-base sm:text-lg font-medium text-gray-800 group-hover:text-gray-900 transition-colors duration-300">
-                        수익 가치 기반 모델
-                      </h3>
-                    </div>
-                    <div className="bg-white p-2 rounded-full transform transition-all duration-300 group-hover:bg-emerald-50">
-                      {expandedCategories.has('profitBased') ? (
-                        <ChevronUp className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600 group-hover:text-emerald-600 transition-colors duration-300" />
-                      ) : (
-                        <ChevronDown className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600 group-hover:text-emerald-600 transition-colors duration-300" />
-                      )}
-                    </div>
-                  </button>
-
-                  {expandedCategories.has('profitBased') && (
-                    <div className="mt-3 divide-y divide-gray-100 bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm transition-all duration-300 hover:shadow-md animate-fadeIn">
-                      {calculatedResults.categorizedModels?.profitBased.map((model) => (
-                        <div
-                          key={model.name}
-                          className={`flex justify-between items-center px-5 py-4 hover:bg-gray-50 transition-all duration-300 ${
-                            calculatedResults.outliers?.some((o) => o.name === model.name)
-                              ? 'bg-gray-50'
-                              : ''
-                          }`}
-                        >
-                          <div className="flex items-center">
-                            <span className="text-sm sm:text-base font-medium text-gray-800">
-                              {model.name}
-                              {calculatedResults.outliers?.some((o) => o.name === model.name) && (
-                                <span className="ml-2 sm:ml-3 text-xs text-white bg-yellow-500 px-2 py-0.5 rounded-full flex items-center animate-pulse">
-                                  <AlertTriangle size={12} className="mr-1 sm:mr-2" /> 참고용
-                                </span>
-                              )}
-                            </span>
-                          </div>
-                          <span className="text-sm sm:text-base font-bold text-gray-800">
-                            {formatNumber(model.value)}원
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* S-RIM 모델 */}
-                <div className="mb-5 group">
-                  <button
-                    className="w-full flex items-center justify-between p-5 bg-gray-50 rounded-xl text-left focus:outline-none hover:bg-gray-100 transition-all duration-300 border border-gray-100 group-hover:border-gray-200"
-                    onClick={() => toggleCategory('srimModels')}
-                  >
-                    <div className="flex items-center">
-                      <div className="p-2 bg-emerald-50 rounded-full mr-3 group-hover:bg-emerald-100 transition-colors duration-300">
-                        <Info className="h-5 w-5 sm:h-6 sm:h-6 text-emerald-600" />
-                      </div>
-                      <h3 className="text-base sm:text-lg font-medium text-gray-800 group-hover:text-gray-900 transition-colors duration-300">
-                        S-RIM 모델
-                      </h3>
-                    </div>
-                    <div className="bg-white p-2 rounded-full transform transition-all duration-300 group-hover:bg-emerald-50">
-                      {expandedCategories.has('srimModels') ? (
-                        <ChevronUp className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600 group-hover:text-emerald-600 transition-colors duration-300" />
-                      ) : (
-                        <ChevronDown className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600 group-hover:text-emerald-600 transition-colors duration-300" />
-                      )}
-                    </div>
-                  </button>
-
-                  {expandedCategories.has('srimModels') && (
-                    <div className="mt-3 divide-y divide-gray-100 bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm transition-all duration-300 hover:shadow-md animate-fadeIn">
-                      {/* 기본 S-RIM 시나리오 표시 */}
-                      {calculatedResults.categorizedModels?.srimMain?.map((model) => (
-                        <div
-                          key={model.name}
-                          className={`flex justify-between items-center px-5 py-4 hover:bg-gray-50 transition-all duration-300 ${
-                            calculatedResults.outliers?.some((o) => o.name === model.name)
-                              ? 'bg-gray-50'
-                              : ''
-                          }`}
-                        >
-                          <div className="flex items-center">
-                            <span className="text-sm sm:text-base font-medium text-gray-800">
-                              {model.name}
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleSrimScenarios();
-                                }}
-                                className="ml-2 sm:ml-3 text-emerald-600 hover:text-emerald-700 focus:outline-none bg-emerald-50 rounded-full px-2 py-0.5 text-xs transition-colors duration-300"
-                              >
-                                {isSrimExpanded ? '시나리오 접기 ▼' : '시나리오 더보기 ▶'}
-                              </button>
+                              {model.name === 'S-RIM 기본 시나리오' &&
+                                calculatedResults.categorizedModels?.srimScenarios &&
+                                calculatedResults.categorizedModels.srimScenarios.length > 0 && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleSrimScenarios();
+                                    }}
+                                    className="ml-2 sm:ml-3 text-emerald-600 hover:text-emerald-700 focus:outline-none bg-emerald-50 rounded-full px-2 py-0.5 text-xs transition-colors duration-300"
+                                  >
+                                    {isSrimExpanded ? '접기 ▼' : '더보기 ▶'}
+                                  </button>
+                                )}
                               {calculatedResults.outliers?.some((o) => o.name === model.name) && (
                                 <span className="ml-2 sm:ml-3 text-xs text-white bg-yellow-500 px-2 py-0.5 rounded-full flex items-center animate-pulse">
                                   <AlertTriangle size={12} className="mr-1 sm:mr-2" /> 참고용
@@ -719,6 +632,112 @@ export default function FairPricePage() {
                             ))}
                           </div>
                         )}
+                    </div>
+                  )}
+                </div>
+
+                {/* 수익 가치 기반 모델 */}
+                <div className="mb-5 group">
+                  <button
+                    className="w-full flex items-center justify-between p-5 bg-gray-50 rounded-xl text-left focus:outline-none hover:bg-gray-100 transition-all duration-300 border border-gray-100 group-hover:border-gray-200"
+                    onClick={() => toggleCategory('earningsBased')}
+                  >
+                    <div className="flex items-center">
+                      <div className="p-2 bg-emerald-50 rounded-full mr-3 group-hover:bg-emerald-100 transition-colors duration-300">
+                        <Info className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-600" />
+                      </div>
+                      <h3 className="text-base sm:text-lg font-medium text-gray-800 group-hover:text-gray-900 transition-colors duration-300">
+                        수익 가치 기반 모델
+                      </h3>
+                    </div>
+                    <div className="bg-white p-2 rounded-full transform transition-all duration-300 group-hover:bg-emerald-50">
+                      {expandedCategories.has('earningsBased') ? (
+                        <ChevronUp className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600 group-hover:text-emerald-600 transition-colors duration-300" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600 group-hover:text-emerald-600 transition-colors duration-300" />
+                      )}
+                    </div>
+                  </button>
+
+                  {expandedCategories.has('earningsBased') && (
+                    <div className="mt-3 divide-y divide-gray-100 bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm transition-all duration-300 hover:shadow-md animate-fadeIn">
+                      {calculatedResults.categorizedModels?.earningsBased.map((model) => (
+                        <div
+                          key={model.name}
+                          className={`flex justify-between items-center px-5 py-4 hover:bg-gray-50 transition-all duration-300 ${
+                            calculatedResults.outliers?.some((o) => o.name === model.name)
+                              ? 'bg-gray-50'
+                              : ''
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <span className="text-sm sm:text-base font-medium text-gray-800">
+                              {model.name}
+                              {calculatedResults.outliers?.some((o) => o.name === model.name) && (
+                                <span className="ml-2 sm:ml-3 text-xs text-white bg-yellow-500 px-2 py-0.5 rounded-full flex items-center animate-pulse">
+                                  <AlertTriangle size={12} className="mr-1 sm:mr-2" /> 참고용
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                          <span className="text-sm sm:text-base font-bold text-gray-800">
+                            {formatNumber(model.value)}원
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* 혼합 모델 */}
+                <div className="mb-5 group">
+                  <button
+                    className="w-full flex items-center justify-between p-5 bg-gray-50 rounded-xl text-left focus:outline-none hover:bg-gray-100 transition-all duration-300 border border-gray-100 group-hover:border-gray-200"
+                    onClick={() => toggleCategory('mixedModels')}
+                  >
+                    <div className="flex items-center">
+                      <div className="p-2 bg-emerald-50 rounded-full mr-3 group-hover:bg-emerald-100 transition-colors duration-300">
+                        <Info className="h-5 w-5 sm:h-6 sm:h-6 text-emerald-600" />
+                      </div>
+                      <h3 className="text-base sm:text-lg font-medium text-gray-800 group-hover:text-gray-900 transition-colors duration-300">
+                        혼합 모델
+                      </h3>
+                    </div>
+                    <div className="bg-white p-2 rounded-full transform transition-all duration-300 group-hover:bg-emerald-50">
+                      {expandedCategories.has('mixedModels') ? (
+                        <ChevronUp className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600 group-hover:text-emerald-600 transition-colors duration-300" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600 group-hover:text-emerald-600 transition-colors duration-300" />
+                      )}
+                    </div>
+                  </button>
+
+                  {expandedCategories.has('mixedModels') && (
+                    <div className="mt-3 divide-y divide-gray-100 bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm transition-all duration-300 hover:shadow-md animate-fadeIn">
+                      {calculatedResults.categorizedModels?.mixedModels.map((model) => (
+                        <div
+                          key={model.name}
+                          className={`flex justify-between items-center px-5 py-4 hover:bg-gray-50 transition-all duration-300 ${
+                            calculatedResults.outliers?.some((o) => o.name === model.name)
+                              ? 'bg-gray-50'
+                              : ''
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <span className="text-sm sm:text-base font-medium text-gray-800">
+                              {model.name}
+                              {calculatedResults.outliers?.some((o) => o.name === model.name) && (
+                                <span className="ml-2 sm:ml-3 text-xs text-white bg-yellow-500 px-2 py-0.5 rounded-full flex items-center animate-pulse">
+                                  <AlertTriangle size={12} className="mr-1 sm:mr-2" /> 참고용
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                          <span className="text-sm sm:text-base font-bold text-gray-800">
+                            {formatNumber(model.value)}원
+                          </span>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
@@ -848,63 +867,27 @@ export default function FairPricePage() {
                       className={`px-3 py-1.5 rounded-lg text-white text-sm font-medium shadow-sm ${
                         calculatedResults.riskScore < 0.3
                           ? 'bg-gradient-to-r from-emerald-500 to-emerald-600'
-                          : calculatedResults.riskScore < 0.7
+                          : calculatedResults.riskScore < 0.6
                           ? 'bg-gradient-to-r from-yellow-400 to-yellow-500'
                           : 'bg-gradient-to-r from-red-400 to-red-500'
                       }`}
                     >
                       {calculatedResults.riskScore < 0.3
                         ? '낮음'
-                        : calculatedResults.riskScore < 0.7
+                        : calculatedResults.riskScore < 0.6
                         ? '중간'
                         : '높음'}
                     </p>
                     <p className="text-sm flex-1">
                       {calculatedResults.riskScore < 0.3
                         ? '수익성이 안정적입니다. 예측 가능성이 높은 기업입니다.'
-                        : calculatedResults.riskScore < 0.7
+                        : calculatedResults.riskScore < 0.6
                         ? '보통 수준의 수익 변동성을 보입니다.'
                         : '수익성 변동이 큽니다. 주의가 필요합니다.'}
                     </p>
                   </div>
                 </div>
               </div>
-
-              {/* 가중평균 ROE 표시 (새로 추가) */}
-              {calculatedResults.weightedRoe !== undefined && (
-                <div className="p-5 bg-gray-50 rounded-xl border border-gray-100 transition-all duration-300 hover:shadow-md mb-6">
-                  <h4 className="text-sm sm:text-base font-medium text-gray-700 mb-3 flex items-center">
-                    <div className="p-1 bg-emerald-50 rounded-full mr-2">
-                      <Info className="h-3 w-3 sm:h-4 sm:w-4 text-emerald-600" />
-                    </div>
-                    가중평균 ROE
-                  </h4>
-                  <div className="flex items-center gap-4">
-                    <p
-                      className={`px-3 py-1.5 rounded-lg text-white text-sm font-medium shadow-sm ${
-                        calculatedResults.weightedRoe <= 0
-                          ? 'bg-gradient-to-r from-red-400 to-red-500'
-                          : calculatedResults.weightedRoe < 8
-                          ? 'bg-gradient-to-r from-yellow-400 to-yellow-500'
-                          : calculatedResults.weightedRoe > 20
-                          ? 'bg-gradient-to-r from-yellow-400 to-yellow-500'
-                          : 'bg-gradient-to-r from-emerald-500 to-emerald-600'
-                      }`}
-                    >
-                      {calculatedResults.weightedRoe.toFixed(1)}%
-                    </p>
-                    <p className="text-sm flex-1">
-                      {calculatedResults.weightedRoe <= 0
-                        ? '손실 기록 중입니다. 수익성 개선이 필요합니다.'
-                        : calculatedResults.weightedRoe < 8
-                        ? '수익성이 다소 낮습니다. 업종 평균과 비교가 필요합니다.'
-                        : calculatedResults.weightedRoe > 20
-                        ? '수익성이 매우 높습니다. 지속가능성을 확인하세요.'
-                        : '양호한 수익성을 보이고 있습니다.'}
-                    </p>
-                  </div>
-                </div>
-              )}
 
               {/* 현재가 대비 적정가 상태 */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
@@ -992,7 +975,7 @@ export default function FairPricePage() {
                   )}
                   {calculatedResults.perAnalysis?.status === 'extreme_high' && (
                     <li className="text-yellow-500 hover:text-yellow-600 transition-colors duration-300">
-                      이 기업은 현재 PBR이 매우 높아 자산 기반 모델의 신뢰도가 낮을 수 있습니다.
+                      이 기업은 현재 PER이 매우 높아 수익 기반 모델의 신뢰도가 낮을 수 있습니다.
                     </li>
                   )}
                 </ul>

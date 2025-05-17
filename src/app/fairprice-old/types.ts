@@ -1,4 +1,4 @@
-// src/fairprice/types.ts
+// src/app/fairprice/types.ts
 
 export interface ApiResponse {
   // API 응답 타입 정의
@@ -20,6 +20,13 @@ export interface StockPrice {
   formattedDate?: string;
 }
 
+export interface UserData {
+  treasuryShares: string;
+  targetPER: string;
+  expectedReturn: string;
+  // pegRatio: string; // PEG 관련 제거
+}
+
 export interface ModelItem {
   name: string;
   value: number;
@@ -29,44 +36,35 @@ export interface ModelItem {
 
 export interface CategorizedModels {
   assetBased: ModelItem[];
-  profitBased: ModelItem[]; // 수익가치 기반 모델로 변경
-  srimMain: ModelItem[]; // S-RIM 기본 시나리오
-  srimScenarios?: ModelItem[]; // S-RIM 추가 시나리오 분리
-  all: ModelItem[]; // 계산에 사용되는 모든 모델
+  earningsBased: ModelItem[];
+  mixedModels: ModelItem[];
+  srimScenarios?: ModelItem[];
+  all: ModelItem[];
 }
 
 export interface CalculatedResults {
-  // 자산 가치 기반 모델
-  bps: number; // BPS 기반 적정가
-
-  // S-RIM 모델
-  sRimBase: number; // 기본 S-RIM
-  sRimDecline10pct: number; // ROE 10% 하락 시나리오
-  sRimDecline20pct: number; // ROE 20% 하락 시나리오
-
-  // 수익가치 기반 모델
-  profitBasedPrice: number; // 새로 추가된 수익가치 기반 모델
-
-  // 투자 지표
+  epsPer: number;
+  controllingShareHolder: number;
+  threeIndicatorsBps: number;
+  threeIndicatorsEps: number;
+  threeIndicatorsRoeEps: number;
+  yamaguchi: number;
+  sRimBase: number;
+  // pegBased: number; // PEG 관련 제거
+  sRimDecline10pct: number;
+  sRimDecline20pct: number;
   priceRange: { lowRange: number; midRange: number; highRange: number };
   trustScore: number;
   riskScore: number;
   priceRatio: number;
-
-  // 분류 및 이상치
   categorizedModels?: CategorizedModels;
   outliers?: ModelItem[];
   hasOutliers?: boolean;
-
-  // 분석 결과
   perAnalysis?: { status: string; message: string };
   latestPrice?: StockPrice;
-
-  // 추가 정보
-  weightedRoe?: number; // 가중평균 ROE
 }
 
-// Supabase 데이터 구조를 위한 타입
+// JSON 데이터 구조를 위한 타입 추가
 export interface StockFairPriceData {
   stock_code: string;
   dart_code: string;
@@ -76,13 +74,24 @@ export interface StockFairPriceData {
   last_updated: string;
   shares_outstanding: string;
 
-  // 새로운 모델 구조
-  bps: number; // BPS 값
-  weightedRoe: number; // 가중평균 ROE
-  sRimBase: number; // 기본 S-RIM
-  sRimDecline10pct: number; // ROE 10% 하락 시나리오
-  sRimDecline20pct: number; // ROE 20% 하락 시나리오
-  profitBasedPrice: number; // 새로 추가된 수익가치 모델
+  // 미리 계산된 적정가 모델 결과
+  epsPer: number;
+  controllingShareHolder: number;
+  threeIndicatorsBps: number;
+  threeIndicatorsEps: number;
+  threeIndicatorsRoeEps: number;
+  yamaguchi: number;
+  sRimBase: number;
+  // pegBased: number; // PEG 관련 제거
+  sRimDecline10pct: number;
+  sRimDecline20pct: number;
+
+  // 미리 계산된 부가 정보
+  averageEps: number;
+  averagePER: number;
+  // growthRate: number;
+  // pegBasedPER: number; // PEG 관련 제거
+  latestRoe: number; // averageRoe에서 변경됨
 
   // 적정가 범위
   priceRange_lowRange: number;

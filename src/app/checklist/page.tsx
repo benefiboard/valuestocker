@@ -41,6 +41,10 @@ import Link from 'next/link';
 import React from 'react';
 import CompanySearchInput from '../../components/CompanySearchInput';
 import { FINANCIAL_COMPANIES } from './constants/industryThresholds';
+import OperatingMarginAdjustmentBadge from './components/OperatingMarginAdjustmentBadge';
+import GrowthRateExplanation from './components/GrowthRateExplanation';
+
+// 새로 추가된 컴포넌트들 import
 
 interface HierarchicalCategory {
   [mainCategory: string]: {
@@ -99,6 +103,8 @@ export default function ChecklistPage() {
   const [investmentRating, setInvestmentRating] = useState<InvestmentRating | null>(null);
   // 등급에 따른 설명 상태 추가
   const [ratingDescription, setRatingDescription] = useState<string>('');
+  // 현재 영업이익률 상태 추가
+  const [currentOpMargin, setCurrentOpMargin] = useState<number>(0);
 
   // URL 쿼리 파라미터에서 stockCode를 읽어 자동 검색 수행
   useEffect(() => {
@@ -174,6 +180,7 @@ export default function ChecklistPage() {
     setSuccess(false);
     setError('');
     setLoading(true);
+    setCurrentOpMargin(0); // 영업이익률 초기화
 
     try {
       console.log('===== 검색 시작 =====');
@@ -215,6 +222,13 @@ export default function ChecklistPage() {
       );
       setRatingDescription(description);
       setInvestmentRating(rating);
+
+      // 현재 영업이익률 설정 (stockData에서 가져옴)
+      const stockData = (window as any).tempStockData?.[company.stockCode];
+      if (stockData && typeof stockData.avgOpMargin === 'number') {
+        setCurrentOpMargin(stockData.avgOpMargin);
+        console.log('현재 영업이익률:', stockData.avgOpMargin);
+      }
 
       console.log('분석 완료!');
       setSuccess(true);
@@ -724,6 +738,11 @@ export default function ChecklistPage() {
                 </div>
               )}
 
+              {/* 영업이익률 기반 성장률 평가 조정 배지 */}
+              {!investmentRating.isFinancialCompany && currentOpMargin >= 10 && (
+                <OperatingMarginAdjustmentBadge currentOpMargin={currentOpMargin} />
+              )}
+
               {/* 위험 요소 경고 섹션 추가 */}
               {investmentRating.riskFlags &&
                 Object.entries(investmentRating.riskFlags).some(([_, value]) => value) && (
@@ -1048,13 +1067,13 @@ export default function ChecklistPage() {
                                     <div className="mt-2 flex flex-wrap items-center">
                                       <span
                                         className={`px-3 py-1 rounded-xl text-sm font-semibold transition-all duration-300
-                                          ${
-                                            item.isFailCriteria
-                                              ? 'border-2 border-red-500 text-red-700 bg-red-50'
-                                              : item.score >= 7
-                                              ? 'border-2 border-emerald-600 text-emerald-800 bg-emerald-50'
-                                              : 'border border-gray-400 text-gray-800 bg-gray-50'
-                                          }`}
+                  ${
+                    item.isFailCriteria
+                      ? 'border-2 border-red-500 text-red-700 bg-red-50'
+                      : item.score >= 7
+                      ? 'border-2 border-emerald-600 text-emerald-800 bg-emerald-50'
+                      : 'border border-gray-400 text-gray-800 bg-gray-50'
+                  }`}
                                       >
                                         {typeof item.actualValue === 'number' &&
                                         item.actualValue < 0
@@ -1087,6 +1106,25 @@ export default function ChecklistPage() {
                                       </div>
                                       {renderScoreBar(item.score, item.maxScore)}
                                     </div>
+
+                                    {/* 성장률 관련 지표에 대한 추가 설명 컴포넌트 */}
+                                    {(item.title === '영업이익 성장률' ||
+                                      item.title === 'EPS 성장률' ||
+                                      item.title === '순이익 증가율') &&
+                                      !investmentRating.isFinancialCompany &&
+                                      currentOpMargin >= 10 && (
+                                        <GrowthRateExplanation
+                                          type={
+                                            item.title === '영업이익 성장률'
+                                              ? 'operating'
+                                              : item.title === 'EPS 성장률'
+                                              ? 'eps'
+                                              : 'net'
+                                          }
+                                          opMargin={currentOpMargin}
+                                          actualValue={item.actualValue as number}
+                                        />
+                                      )}
                                   </div>
                                   <div className="ml-4 flex-shrink-0">
                                     {item.isPassed === true ? (

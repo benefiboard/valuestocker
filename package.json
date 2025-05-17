@@ -11,6 +11,7 @@
     "migrate-checklist": "node scripts/migrate-checklist-to-supabase.js",
     "migrate-fairprice": "node scripts/migrate-fairprice-to-supabase.js",
     "migrate-currentprice": "node scripts/migrate-currentprice-to-supabase.js",
+    "new-migrate-currentprice": "node scripts/new-migrate-currentprice-to-supabase.js",
     "debt-stocks": "node scripts/generateDebtStocksData.js"
   },
   "dependencies": {
@@ -37,6 +38,8 @@
     "react-dom": "^19.0.0",
     "react-hot-toast": "^2.5.2",
     "react-json-view-lite": "^2.4.1",
+    "suneditor": "^2.47.5",
+    "suneditor-react": "^3.6.1",
     "tailwind-merge": "^3.2.0",
     "tw-animate-css": "^1.2.5",
     "uuid": "^11.1.0",

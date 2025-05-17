@@ -146,6 +146,12 @@ export default function ProfitCalculatorPage() {
       setCalculatedResult(result);
       setSuccess(true);
       setShowSearchForm(false);
+
+      // 부드럽게 화면 최상단으로 스크롤
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      });
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
@@ -469,10 +475,11 @@ export default function ProfitCalculatorPage() {
 
               <div className="grid grid-cols-3  sm:gap-4">
                 {/* 현재 주가 */}
-                <div className="text-center p-4">
+                <div className="text-center py-4">
                   <p className="text-sm text-gray-600 mb-1">현재 주가</p>
                   <p className="text-lg sm:text-2xl font-bold text-gray-800">
-                    {formatNumber(calculatedResult.currentPrice)}원
+                    {formatNumber(calculatedResult.currentPrice)}
+                    <span className="text-sm sm:text-lg"> 원</span>
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
                     PBR {calculatedResult.currentPBR.toFixed(2)}
@@ -496,7 +503,7 @@ export default function ProfitCalculatorPage() {
                       />
                     </svg> */}
                     <p
-                      className={`text-xl font-bold mt-2 sm:text-4xl ${
+                      className={`text-2xl font-bold mt-2 sm:text-4xl ${
                         calculatedResult.expectedReturn > 0 ? 'text-emerald-600' : 'text-red-600'
                       }`}
                     >
@@ -508,10 +515,11 @@ export default function ProfitCalculatorPage() {
                 </div>
 
                 {/* 적정 주가 */}
-                <div className="text-center p-4">
+                <div className="text-center py-4">
                   <p className="text-sm text-gray-600 mb-1">적정 주가</p>
                   <p className="text-lg sm:text-2xl font-bold text-emerald-600">
-                    {formatNumber(calculatedResult.expectedPrice)}원
+                    {formatNumber(calculatedResult.expectedPrice)}
+                    <span className="text-sm sm:text-lg"> 원</span>
                   </p>
                   <p className="text-xs text-emerald-600 mt-1">
                     PBR {calculatedResult.expectedPBR.toFixed(2)}

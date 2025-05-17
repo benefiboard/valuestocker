@@ -1,4 +1,4 @@
-// src/app/fairprice/fairpriceCalculate.ts
+// src/fairprice/FairpriceCalculate.ts
 
 import {
   CalculatedResults,
@@ -7,14 +7,14 @@ import {
   StockFairPriceData,
   StockPrice,
 } from './types';
-import { supabase } from '../../lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 
 // Supabase에서 주식 데이터를 가져오는 함수
 export const getStockDataFromSupabase = async (
   stockCode: string
 ): Promise<StockFairPriceData | null> => {
   const { data, error } = await supabase
-    .from('stock_fairprice')
+    .from('new_stock_fairprice')
     .select('*')
     .eq('stock_code', stockCode)
     .single();
@@ -23,8 +23,7 @@ export const getStockDataFromSupabase = async (
 
   console.log('Supabase 데이터:', data); // 디버깅용 로그
 
-  // Supabase에서 가져온 데이터를 기존 StockFairPriceData 형식으로 변환
-  // 정확한 컬럼명 사용
+  // Supabase에서 가져온 데이터를 StockFairPriceData 형식으로 변환
   return {
     stock_code: data.stock_code,
     dart_code: data.dart_code,
@@ -34,24 +33,13 @@ export const getStockDataFromSupabase = async (
     last_updated: data.last_updated || new Date().toISOString(),
     shares_outstanding: data.shares_outstanding || '0',
 
-    // 적정가 모델 결과 - 정확한 컬럼명 사용
-    epsPer: Number(data.epsper || 0),
-    controllingShareHolder: Number(data.controllingshareholder || 0),
-    threeIndicatorsBps: Number(data.threeindicatorsbps || 0),
-    threeIndicatorsEps: Number(data.threeindicatorseps || 0),
-    threeIndicatorsRoeEps: Number(data.threeindicatorsroeeps || 0),
-    yamaguchi: Number(data.yamaguchi || 0),
+    // 새로운 적정가 모델 결과
+    bps: Number(data.bps || 0),
+    weightedRoe: Number(data.weightedroe || 0),
     sRimBase: Number(data.srimbase || 0),
-    // pegBased: Number(data.pegbased || 0), // PEG 관련 제거
     sRimDecline10pct: Number(data.srimdecline10pct || 0),
     sRimDecline20pct: Number(data.srimdecline20pct || 0),
-
-    // 부가 정보
-    averageEps: Number(data.averageeps || 0),
-    averagePER: Number(data.averageper || 0),
-    growthRate: Number(data.growthrate || 0),
-    // pegBasedPER: Number(data.pegbasedper || 0), // PEG 관련 제거
-    latestRoe: Number(data.latestroe || 0),
+    profitBasedPrice: Number(data.profitbasedprice || 0),
 
     // 적정가 범위
     priceRange_lowRange: Number(data.pricerange_lowrange || 0),
@@ -90,44 +78,31 @@ export const getPriceRatio = (currentPrice: number, fairPriceMedian: number): nu
   return currentPrice / fairPriceMedian;
 };
 
-// 모델 분류 함수
+// 모델 분류 함수 - 새로운 카테고리 구조 적용
 export const categorizeModels = (results: CalculatedResults) => {
-  // 1. 자산 가치 기반 모델 (S-RIM은 기본 시나리오만 포함)
-  const assetBased = [
-    { name: 'BPS 기준(P₁, 순자산가치)', value: results.threeIndicatorsBps },
-    { name: 'S-RIM 기본 시나리오', value: results.sRimBase },
-    // 10%, 20% 감소 시나리오는 제외
-  ];
+  // 1. 자산 가치 기반 모델
+  const assetBased = [{ name: 'BPS 기반 적정가', value: results.bps }];
 
-  // 참고용 S-RIM 시나리오 - 중앙값/평균 계산에 포함되지 않음
+  // 2. 수익 가치 기반 모델
+  const profitBased = [{ name: '수익가치 기반 적정가', value: results.profitBasedPrice }];
+
+  // 3. S-RIM 시나리오 (기본 시나리오는 계산에 포함, 나머지는 참고용)
+  const srimMain = [{ name: 'S-RIM 기본 시나리오', value: results.sRimBase }];
+
   const srimScenarios = [
     { name: 'S-RIM ROE 10% 감소', value: results.sRimDecline10pct, isReference: true },
     { name: 'S-RIM ROE 20% 감소', value: results.sRimDecline20pct, isReference: true },
   ];
 
-  // 2. 수익 가치 기반 모델
-  const earningsBased = [
-    { name: 'EPS × 과거 평균 PER', value: results.epsPer },
-    { name: '당기순이익 기반 PER 모델', value: results.controllingShareHolder },
-    { name: 'EPS 기준(P₂)', value: results.threeIndicatorsEps },
-    // { name: 'PEG 기반 적정주가', value: results.pegBased }, // PEG 관련 제거
-  ];
-
-  // 3. 혼합 모델
-  const mixedModels = [
-    { name: 'ROE×EPS 기준(P₃)', value: results.threeIndicatorsRoeEps },
-    { name: '야마구치 요해이 공식', value: results.yamaguchi },
-  ];
-
-  // 중앙값, 평균 등 계산에 사용할 모델들 (참고용 S-RIM 시나리오 제외)
-  const modelsForCalculation = [...assetBased, ...earningsBased, ...mixedModels];
+  // 중앙값, 평균 등 계산에 사용할 모델들 (참고용 시나리오 제외)
+  const modelsForCalculation = [...assetBased, ...srimMain, ...profitBased];
 
   return {
     assetBased,
-    earningsBased,
-    mixedModels,
-    srimScenarios, // 별도 카테고리로 분리
-    all: modelsForCalculation, // 참고용 시나리오 제외한 모든 모델
+    profitBased,
+    srimMain,
+    srimScenarios,
+    all: modelsForCalculation, // 계산용 시나리오만 포함
   };
 };
 
@@ -138,7 +113,7 @@ export const detectOutliers = (
   outliers: ModelItem[];
   hasOutliers: boolean;
 } => {
-  // 계산에 사용할 모델들만 대상으로 함 (참고용 시나리오 제외)
+  // 계산에 사용할 모델들만 대상으로 함
   const allModels = categorizedModels.all;
   const validValues = allModels.filter((item) => item.value > 0).map((item) => item.value);
 
@@ -151,13 +126,10 @@ export const detectOutliers = (
 
   allModels.forEach((model) => {
     // 이상치 판별 조건
-    if (!(model.name.includes('BPS') && model.value > 0)) {
-      // BPS는 음수가 아닌 한 이상치로 판별하지 않음
-      if (model.value <= 0) {
-        outliers.push({ ...model, reason: 'negative_or_zero' });
-      } else if (model.value > median * 3 || model.value < median / 3) {
-        outliers.push({ ...model, reason: 'value_range' });
-      }
+    if (model.value <= 0) {
+      outliers.push({ ...model, reason: 'negative_or_zero' });
+    } else if (model.value > median * 3 || model.value < median / 3) {
+      outliers.push({ ...model, reason: 'value_range' });
     }
   });
 
@@ -191,20 +163,18 @@ export const extractCalculatedResultsFromSupabase = async (
 
   // Supabase 데이터로 결과 생성
   const results: CalculatedResults = {
-    // 직접 모델 값들 가져오기
-    epsPer: stockDataItem.epsPer,
-    controllingShareHolder: stockDataItem.controllingShareHolder,
-    threeIndicatorsBps: stockDataItem.threeIndicatorsBps,
-    threeIndicatorsEps: stockDataItem.threeIndicatorsEps,
-    threeIndicatorsRoeEps: stockDataItem.threeIndicatorsRoeEps,
-    yamaguchi: stockDataItem.yamaguchi,
+    // 새로운 모델 값들 가져오기
+    bps: stockDataItem.bps,
     sRimBase: stockDataItem.sRimBase,
-    // pegBased: stockDataItem.pegBased, // PEG 관련 제거
     sRimDecline10pct: stockDataItem.sRimDecline10pct,
     sRimDecline20pct: stockDataItem.sRimDecline20pct,
+    profitBasedPrice: stockDataItem.profitBasedPrice,
     latestPrice,
 
-    // 적정가 범위 (Supabase에서 priceRange_* 필드로 저장됨)
+    // 가중평균 ROE 추가
+    weightedRoe: stockDataItem.weightedRoe,
+
+    // 적정가 범위
     priceRange: {
       lowRange: stockDataItem.priceRange_lowRange,
       midRange: stockDataItem.priceRange_midRange,
@@ -219,13 +189,12 @@ export const extractCalculatedResultsFromSupabase = async (
 
   // 문제 진단을 위한 로그 추가
   console.log('계산된 결과값들:');
-  console.log('epsPer:', results.epsPer);
-  console.log('controllingShareHolder:', results.controllingShareHolder);
-  console.log('threeIndicatorsBps:', results.threeIndicatorsBps);
-  console.log('threeIndicatorsEps:', results.threeIndicatorsEps);
-  console.log('threeIndicatorsRoeEps:', results.threeIndicatorsRoeEps);
-  console.log('yamaguchi:', results.yamaguchi);
+  console.log('bps:', results.bps);
   console.log('sRimBase:', results.sRimBase);
+  console.log('sRimDecline10pct:', results.sRimDecline10pct);
+  console.log('sRimDecline20pct:', results.sRimDecline20pct);
+  console.log('profitBasedPrice:', results.profitBasedPrice);
+  console.log('weightedRoe:', results.weightedRoe);
   console.log('priceRange:', results.priceRange);
 
   // 모델 분류 및 이상치 계산
@@ -236,100 +205,23 @@ export const extractCalculatedResultsFromSupabase = async (
   results.outliers = outliers;
   results.hasOutliers = hasOutliers;
 
-  // PER 분석 (선택적으로 구현. 원본 코드에 없다면 주석처리하세요)
-  const currentPER = currentPrice / (stockDataItem.averageEps || 1);
-  if (stockDataItem.averageEps <= 0) {
+  // PER 분석 (필요시 구현)
+  if (results.weightedRoe && results.weightedRoe <= 0) {
     results.perAnalysis = {
       status: 'negative',
       message: '현재 기업이 손실을 기록 중입니다.',
     };
-  } else if (currentPER > 100) {
+  } else if (currentPrice / results.bps > 5) {
     results.perAnalysis = {
       status: 'extreme_high',
-      message: 'PER이 매우 높습니다. 고평가 위험이 있습니다.',
+      message: 'PBR이 매우 높습니다. 고평가 위험이 있습니다.',
     };
   } else {
     results.perAnalysis = {
       status: 'normal',
-      message: '정상 범위 내의 PER입니다.',
+      message: '정상 범위 내의 평가입니다.',
     };
   }
-
-  return results;
-};
-
-// ----- 하위 호환성을 위한 원래 함수 유지 (선택 사항) -----
-
-import stockData from '../../lib/finance/stock_fairprice_2025.json';
-import stockPriceData from '../../lib/finance/stock_price_2025.json';
-
-// 주식 데이터를 JSON에서 가져오는 함수 (기존 함수 유지)
-export const getStockDataFromJson = (stockCode: string): StockFairPriceData | null => {
-  // JSON에서 해당 주식 코드에 맞는 데이터 가져오기
-  const data = (stockData as Record<string, StockFairPriceData>)[stockCode];
-  if (!data) return null;
-  return data;
-};
-
-// 최신 주가 데이터를 JSON에서 가져오는 함수 (기존 함수 유지)
-export const getStockPriceFromJson = (stockCode: string): StockPrice | null => {
-  const data = (stockPriceData as Record<string, any>)[stockCode];
-  if (!data) return null;
-
-  return {
-    code: data.stock_code,
-    name: data.company_name,
-    price: Number(data.current_price),
-    sharesOutstanding: 0, // 필요하면 채울 수 있음
-    formattedDate: data.last_updated,
-  };
-};
-
-// JSON에서 데이터를 추출해서 CalculatedResults 객체를 생성하는 함수 (기존 함수 유지)
-export const extractCalculatedResultsFromJson = (stockCode: string): CalculatedResults | null => {
-  const stockDataItem = getStockDataFromJson(stockCode);
-  if (!stockDataItem) return null;
-
-  const latestPrice = getStockPriceFromJson(stockCode);
-  if (!latestPrice) return null;
-
-  const currentPrice = latestPrice.price;
-
-  // JSON에서 직접 가져올 수 있는 값들
-  const results: CalculatedResults = {
-    // 직접 모델 값들 가져오기
-    epsPer: stockDataItem.epsPer,
-    controllingShareHolder: stockDataItem.controllingShareHolder,
-    threeIndicatorsBps: stockDataItem.threeIndicatorsBps,
-    threeIndicatorsEps: stockDataItem.threeIndicatorsEps,
-    threeIndicatorsRoeEps: stockDataItem.threeIndicatorsRoeEps,
-    yamaguchi: stockDataItem.yamaguchi,
-    sRimBase: stockDataItem.sRimBase,
-    // pegBased: stockDataItem.pegBased, // PEG 관련 제거
-    sRimDecline10pct: stockDataItem.sRimDecline10pct,
-    sRimDecline20pct: stockDataItem.sRimDecline20pct,
-    latestPrice,
-
-    // 적정가 범위 (JSON에서 priceRange_* 접두사로 저장됨)
-    priceRange: {
-      lowRange: stockDataItem.priceRange_lowRange,
-      midRange: stockDataItem.priceRange_midRange,
-      highRange: stockDataItem.priceRange_highRange,
-    },
-
-    // JSON에서 직접 가져오는 값들
-    trustScore: stockDataItem.trustScore,
-    riskScore: stockDataItem.riskScore,
-    priceRatio: getPriceRatio(currentPrice, stockDataItem.priceRange_midRange),
-  };
-
-  // 모델 분류 및 이상치 계산
-  const categorizedModels = categorizeModels(results);
-  results.categorizedModels = categorizedModels;
-
-  const { outliers, hasOutliers } = detectOutliers(categorizedModels);
-  results.outliers = outliers;
-  results.hasOutliers = hasOutliers;
 
   return results;
 };

@@ -275,6 +275,10 @@ export const calculateJsonChecklist = (
     });
   }
 
+  // 현재 영업이익률 확인 (성장률 지표 평가 조정에 사용)
+  const currentOpMargin = stockData.avgOpMargin || 0;
+  console.log(`현재 영업이익률: ${currentOpMargin}%`);
+
   // 이제 각 체크리스트 항목을 JSON 데이터를 사용하여 업데이트
   results.forEach((item) => {
     // 기본값 설정
@@ -404,93 +408,264 @@ export const calculateJsonChecklist = (
 
       case '영업이익 성장률':
         item.actualValue = stockData.opIncomeGrowthRate;
-
-        // 영업이익 성장률 점수 계산
-        if (isNaN(stockData.opIncomeGrowthRate)) {
-          item.score = 0;
-        } else if (stockData.opIncomeGrowthRate < -10) {
-          item.score = 0;
-        } else if (stockData.opIncomeGrowthRate <= 0) {
-          item.score = 2;
-        } else if (stockData.opIncomeGrowthRate >= 25) {
-          item.score = 10;
-        } else if (stockData.opIncomeGrowthRate >= 20) {
-          item.score = 9;
-        } else if (stockData.opIncomeGrowthRate >= 15) {
-          item.score = 8;
-        } else if (stockData.opIncomeGrowthRate >= 10) {
-          item.score = 7;
-        } else if (stockData.opIncomeGrowthRate >= 5) {
-          item.score = 6;
-        } else {
-          item.score = 4;
+        
+        // 영업이익률에 따른 조정된 기준 적용
+        if (currentOpMargin >= 20) {
+          // 매우 높은 영업이익률(20% 이상)
+          console.log('영업이익률 20% 이상 기업 - 영업이익 성장률 기준 조정 적용');
+          if (stockData.opIncomeGrowthRate >= 0) {
+            item.score = 8;  // 양수 성장이면 이미 좋은 점수
+          } else if (stockData.opIncomeGrowthRate >= -10) {
+            item.score = 6;  // 소폭 감소는 합리적 평가
+          } else if (stockData.opIncomeGrowthRate >= -20) {
+            item.score = 4;  // 중간 감소도 여전히 양호
+          } else {
+            item.score = 2;  // 큰 감소만 낮은 점수
+          }
+          // 영업이익률 20% 이상 기업은 -10%까지 통과 인정
+          item.isPassed = stockData.opIncomeGrowthRate >= -10;
+          // 표시 기준값 변경
+          item.targetValue = "> -10%";
         }
-
-        item.isPassed = stockData.opIncomeGrowthRate >= 10 || stockData.opIncomeGrowthRate === 100;
-        // 흑자전환이면 미달에서 제외
+        else if (currentOpMargin >= 15) {
+          // 높은 영업이익률(15% 이상)
+          console.log('영업이익률 15% 이상 기업 - 영업이익 성장률 기준 조정 적용');
+          if (stockData.opIncomeGrowthRate >= 0) {
+            item.score = 8;
+          } else if (stockData.opIncomeGrowthRate >= -5) {
+            item.score = 6;
+          } else if (stockData.opIncomeGrowthRate >= -15) {
+            item.score = 4;
+          } else {
+            item.score = 2;
+          }
+          // 영업이익률 15% 이상 기업은 -5%까지 통과 인정
+          item.isPassed = stockData.opIncomeGrowthRate >= -5;
+          // 표시 기준값 변경
+          item.targetValue = "> -5%";
+        }
+        else if (currentOpMargin >= 10) {
+          // 양호한 영업이익률(10% 이상)
+          console.log('영업이익률 10% 이상 기업 - 영업이익 성장률 기준 조정 적용');
+          if (stockData.opIncomeGrowthRate >= 5) {
+            item.score = 8;
+          } else if (stockData.opIncomeGrowthRate >= 0) {
+            item.score = 6;
+          } else if (stockData.opIncomeGrowthRate >= -10) {
+            item.score = 4;
+          } else {
+            item.score = 2;
+          }
+          // 영업이익률 10% 이상 기업은 0%까지 통과 인정
+          item.isPassed = stockData.opIncomeGrowthRate >= 0;
+          // 표시 기준값 변경
+          item.targetValue = "> 0%";
+        }
+        else {
+          // 기존 로직 (영업이익률이 10% 미만인 일반 기업)
+          if (isNaN(stockData.opIncomeGrowthRate)) {
+            item.score = 0;
+          } else if (stockData.opIncomeGrowthRate < -10) {
+            item.score = 0;
+          } else if (stockData.opIncomeGrowthRate <= 0) {
+            item.score = 2;
+          } else if (stockData.opIncomeGrowthRate >= 25) {
+            item.score = 10;
+          } else if (stockData.opIncomeGrowthRate >= 20) {
+            item.score = 9;
+          } else if (stockData.opIncomeGrowthRate >= 15) {
+            item.score = 8;
+          } else if (stockData.opIncomeGrowthRate >= 10) {
+            item.score = 7;
+          } else if (stockData.opIncomeGrowthRate >= 5) {
+            item.score = 6;
+          } else {
+            item.score = 4;
+          }
+          
+          item.isPassed = stockData.opIncomeGrowthRate >= 10 || stockData.opIncomeGrowthRate === 100;
+          // 표시 기준값 유지
+          item.targetValue = "> 10%";
+        }
+        
+        // 흑자전환이면 미달에서 제외 (공통)
         item.isFailCriteria = item.score === 0 && stockData.opIncomeGrowthRate !== 100;
         break;
 
       case 'EPS 성장률':
         item.actualValue = stockData.epsGrowthRate;
-
-        // EPS 성장률 점수 계산
-        if (isNaN(stockData.epsGrowthRate)) {
-          item.score = 0;
-        } else if (stockData.epsGrowthRate < -10) {
-          item.score = 0;
-        } else if (stockData.epsGrowthRate < 0) {
-          item.score = 2;
-        } else if (stockData.epsGrowthRate >= 25) {
-          item.score = 10;
-        } else if (stockData.epsGrowthRate >= 20) {
-          item.score = 9;
-        } else if (stockData.epsGrowthRate >= 15) {
-          item.score = 8;
-        } else if (stockData.epsGrowthRate >= 10) {
-          item.score = 7;
-        } else if (stockData.epsGrowthRate >= 5) {
-          item.score = 6;
-        } else {
-          item.score = 4;
+        
+        // 영업이익률에 따른 조정된 기준 적용
+        if (currentOpMargin >= 20) {
+          // 매우 높은 영업이익률(20% 이상)
+          console.log('영업이익률 20% 이상 기업 - EPS 성장률 기준 조정 적용');
+          if (stockData.epsGrowthRate >= 0) {
+            item.score = 8;
+          } else if (stockData.epsGrowthRate >= -10) {
+            item.score = 6;
+          } else if (stockData.epsGrowthRate >= -20) {
+            item.score = 4;
+          } else {
+            item.score = 2;
+          }
+          // 영업이익률 20% 이상 기업은 -10%까지 통과 인정
+          item.isPassed = stockData.epsGrowthRate >= -10;
+          // 표시 기준값 변경
+          item.targetValue = "> -10%";
         }
-
-        item.isPassed = stockData.epsGrowthRate >= 10 || stockData.epsGrowthRate === 100;
-        // 흑자전환이면 미달에서 제외
+        else if (currentOpMargin >= 15) {
+          // 높은 영업이익률(15% 이상)
+          console.log('영업이익률 15% 이상 기업 - EPS 성장률 기준 조정 적용');
+          if (stockData.epsGrowthRate >= 0) {
+            item.score = 8;
+          } else if (stockData.epsGrowthRate >= -5) {
+            item.score = 6;
+          } else if (stockData.epsGrowthRate >= -15) {
+            item.score = 4;
+          } else {
+            item.score = 2;
+          }
+          // 영업이익률 15% 이상 기업은 -5%까지 통과 인정
+          item.isPassed = stockData.epsGrowthRate >= -5;
+          // 표시 기준값 변경
+          item.targetValue = "> -5%";
+        }
+        else if (currentOpMargin >= 10) {
+          // 양호한 영업이익률(10% 이상)
+          console.log('영업이익률 10% 이상 기업 - EPS 성장률 기준 조정 적용');
+          if (stockData.epsGrowthRate >= 5) {
+            item.score = 8;
+          } else if (stockData.epsGrowthRate >= 0) {
+            item.score = 6;
+          } else if (stockData.epsGrowthRate >= -10) {
+            item.score = 4;
+          } else {
+            item.score = 2;
+          }
+          // 영업이익률 10% 이상 기업은 0%까지 통과 인정
+          item.isPassed = stockData.epsGrowthRate >= 0;
+          // 표시 기준값 변경
+          item.targetValue = "> 0%";
+        }
+        else {
+          // 기존 로직 (영업이익률이 10% 미만인 일반 기업)
+          if (isNaN(stockData.epsGrowthRate)) {
+            item.score = 0;
+          } else if (stockData.epsGrowthRate < -10) {
+            item.score = 0;
+          } else if (stockData.epsGrowthRate < 0) {
+            item.score = 2;
+          } else if (stockData.epsGrowthRate >= 25) {
+            item.score = 10;
+          } else if (stockData.epsGrowthRate >= 20) {
+            item.score = 9;
+          } else if (stockData.epsGrowthRate >= 15) {
+            item.score = 8;
+          } else if (stockData.epsGrowthRate >= 10) {
+            item.score = 7;
+          } else if (stockData.epsGrowthRate >= 5) {
+            item.score = 6;
+          } else {
+            item.score = 4;
+          }
+          
+          item.isPassed = stockData.epsGrowthRate >= 10 || stockData.epsGrowthRate === 100;
+          // 표시 기준값 유지
+          item.targetValue = "> 10%";
+        }
+        
+        // 흑자전환이면 미달에서 제외 (공통)
         item.isFailCriteria = item.score === 0 && stockData.epsGrowthRate !== 100;
         break;
 
       case '순이익 증가율':
         item.actualValue = stockData.netIncomeGrowthRate;
-
-        // 순이익 증가율 점수 계산
-        if (isNaN(stockData.netIncomeGrowthRate)) {
-          item.score = 0;
-        } else if (stockData.netIncomeGrowthRate < -10) {
-          item.score = 0;
-        } else if (stockData.netIncomeGrowthRate < 0) {
-          item.score = 2;
-        } else if (stockData.netIncomeGrowthRate >= 50) {
-          item.score = 7;
-        } else if (stockData.netIncomeGrowthRate >= 40) {
-          item.score = 9;
-        } else if (stockData.netIncomeGrowthRate >= 30) {
-          item.score = 10;
-        } else if (stockData.netIncomeGrowthRate >= 20) {
-          item.score = 9;
-        } else if (stockData.netIncomeGrowthRate >= 10) {
-          item.score = 7;
-        } else if (stockData.netIncomeGrowthRate >= 5) {
-          item.score = 6;
-        } else {
-          item.score = 4;
+        
+        // 영업이익률에 따른 조정된 기준 적용
+        if (currentOpMargin >= 20) {
+          // 매우 높은 영업이익률(20% 이상)
+          console.log('영업이익률 20% 이상 기업 - 순이익 증가율 기준 조정 적용');
+          if (stockData.netIncomeGrowthRate >= 0) {
+            item.score = 8;
+          } else if (stockData.netIncomeGrowthRate >= -10) {
+            item.score = 6;
+          } else if (stockData.netIncomeGrowthRate >= -20) {
+            item.score = 4;
+          } else {
+            item.score = 2;
+          }
+          // 영업이익률 20% 이상 기업은 -10%까지 통과 인정
+          item.isPassed = stockData.netIncomeGrowthRate >= -10;
+          // 표시 기준값 변경
+          item.targetValue = "> -10%";
         }
-
-        // 순이익은 20~50% 범위가 이상적이지만, 흑자전환도 매우 긍정적으로 평가
-        item.isPassed =
-          (stockData.netIncomeGrowthRate >= 20 && stockData.netIncomeGrowthRate < 50) ||
-          stockData.netIncomeGrowthRate === 100;
-        // 흑자전환이면 미달에서 제외
+        else if (currentOpMargin >= 15) {
+          // 높은 영업이익률(15% 이상)
+          console.log('영업이익률 15% 이상 기업 - 순이익 증가율 기준 조정 적용');
+          if (stockData.netIncomeGrowthRate >= 0) {
+            item.score = 8;
+          } else if (stockData.netIncomeGrowthRate >= -5) {
+            item.score = 6;
+          } else if (stockData.netIncomeGrowthRate >= -15) {
+            item.score = 4;
+          } else {
+            item.score = 2;
+          }
+          // 영업이익률 15% 이상 기업은 -5%까지 통과 인정
+          item.isPassed = stockData.netIncomeGrowthRate >= -5;
+          // 표시 기준값 변경
+          item.targetValue = "> -5%";
+        }
+        else if (currentOpMargin >= 10) {
+          // 양호한 영업이익률(10% 이상)
+          console.log('영업이익률 10% 이상 기업 - 순이익 증가율 기준 조정 적용');
+          if (stockData.netIncomeGrowthRate >= 5) {
+            item.score = 8;
+          } else if (stockData.netIncomeGrowthRate >= 0) {
+            item.score = 6;
+          } else if (stockData.netIncomeGrowthRate >= -10) {
+            item.score = 4;
+          } else {
+            item.score = 2;
+          }
+          // 영업이익률 10% 이상 기업은 0%까지 통과 인정
+          item.isPassed = stockData.netIncomeGrowthRate >= 0;
+          // 표시 기준값 변경
+          item.targetValue = "> 0%";
+        }
+        else {
+          // 기존 로직 (영업이익률이 10% 미만인 일반 기업)
+          if (isNaN(stockData.netIncomeGrowthRate)) {
+            item.score = 0;
+          } else if (stockData.netIncomeGrowthRate < -10) {
+            item.score = 0;
+          } else if (stockData.netIncomeGrowthRate < 0) {
+            item.score = 2;
+          } else if (stockData.netIncomeGrowthRate >= 50) {
+            item.score = 7;
+          } else if (stockData.netIncomeGrowthRate >= 40) {
+            item.score = 9;
+          } else if (stockData.netIncomeGrowthRate >= 30) {
+            item.score = 10;
+          } else if (stockData.netIncomeGrowthRate >= 20) {
+            item.score = 9;
+          } else if (stockData.netIncomeGrowthRate >= 10) {
+            item.score = 7;
+          } else if (stockData.netIncomeGrowthRate >= 5) {
+            item.score = 6;
+          } else {
+            item.score = 4;
+          }
+          
+          // 순이익은 20~50% 범위가 이상적이지만, 흑자전환도 매우 긍정적으로 평가
+          item.isPassed = 
+            (stockData.netIncomeGrowthRate >= 20 && stockData.netIncomeGrowthRate < 50) ||
+            stockData.netIncomeGrowthRate === 100;
+          // 표시 기준값 유지
+          item.targetValue = "20% ~ 50%";
+        }
+        
+        // 흑자전환이면 미달에서 제외 (공통)
         item.isFailCriteria = item.score === 0 && stockData.netIncomeGrowthRate !== 100;
         break;
 
