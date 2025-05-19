@@ -41,11 +41,8 @@ import Link from 'next/link';
 import React from 'react';
 import CompanySearchInput from '../../components/CompanySearchInput';
 import { FINANCIAL_COMPANIES } from './constants/industryThresholds';
-import OperatingMarginAdjustmentBadge from './components/OperatingMarginAdjustmentBadge';
-import GrowthRateExplanation from './components/GrowthRateExplanation';
 
-// 새로 추가된 컴포넌트들 import
-
+// 계층적 카테고리 구조 정의
 interface HierarchicalCategory {
   [mainCategory: string]: {
     [subCategory: string]: ScoredChecklistItem[];
@@ -81,6 +78,122 @@ const getRiskFlagDetails = (flag: string) => {
     },
   };
   return flagDetails[flag as keyof typeof flagDetails];
+};
+
+// 영업이익률 조정 설명 배지 컴포넌트
+const OperatingMarginAdjustmentBadge = ({ currentOpMargin }: { currentOpMargin: number }) => {
+  // 영업이익률 수준에 따른 메시지 및 스타일 조정
+  let title = '';
+  let description = '';
+  let bgColor = 'bg-blue-50';
+  let iconColor = 'text-blue-600';
+  let textColor = 'text-blue-800';
+  let textDetailColor = 'text-blue-700';
+
+  if (currentOpMargin >= 20) {
+    title = '매우 높은 영업이익률 (20% 이상)';
+    description =
+      '높은 영업이익률을 갖추어 일부 성장률 지표에서 마이너스 성장(-10%)까지 허용됩니다.';
+    bgColor = 'bg-emerald-50';
+    iconColor = 'text-emerald-600';
+    textColor = 'text-emerald-800';
+    textDetailColor = 'text-emerald-700';
+  } else if (currentOpMargin >= 15) {
+    title = '우수한 영업이익률 (15% 이상)';
+    description =
+      '우수한 영업이익률을 갖추어 일부 성장률 지표에서 소폭 마이너스 성장(-5%)까지 허용됩니다.';
+    bgColor = 'bg-emerald-50';
+    iconColor = 'text-emerald-600';
+    textColor = 'text-emerald-800';
+    textDetailColor = 'text-emerald-700';
+  } else if (currentOpMargin >= 10) {
+    title = '양호한 영업이익률 (10% 이상)';
+    description = '양호한 영업이익률을 갖추어 일부 성장률 지표에서 성장률 0%까지 허용됩니다.';
+    bgColor = 'bg-blue-50';
+    iconColor = 'text-blue-600';
+    textColor = 'text-blue-800';
+    textDetailColor = 'text-blue-700';
+  }
+
+  return (
+    <div
+      className={`${bgColor} p-4 sm:p-5 rounded-xl mb-5 border border-${bgColor.replace(
+        'bg-',
+        'border-'
+      )} transition-all duration-300 hover:shadow-md`}
+    >
+      <div className="flex items-start">
+        <div className={`p-2 ${bgColor.replace('50', '100')} rounded-full mr-3 flex-shrink-0`}>
+          <TrendingUp className={`h-4 w-4 sm:h-5 sm:w-5 ${iconColor}`} />
+        </div>
+        <div>
+          <p className={`font-medium text-sm sm:text-base ${textColor}`}>{title}</p>
+          <p className={`text-sm ${textDetailColor} mt-2`}>{description}</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// 성장률 지표 관련 추가 설명 컴포넌트
+const GrowthRateExplanation = ({
+  type,
+  opMargin,
+  actualValue,
+}: {
+  type: 'operating' | 'eps' | 'net';
+  opMargin: number;
+  actualValue: number;
+}) => {
+  // 지표 유형별 텍스트 조정
+  const getTitle = () => {
+    switch (type) {
+      case 'operating':
+        return '영업이익 성장률';
+      case 'eps':
+        return 'EPS 성장률';
+      case 'net':
+        return '순이익 증가율';
+      default:
+        return '성장률';
+    }
+  };
+
+  // 영업이익률 수준별 기준치 조정
+  let threshold = '10%';
+  let explanation = '';
+
+  if (opMargin >= 20) {
+    threshold = '-10%';
+    explanation =
+      '매우 높은 영업이익률(20% 이상)을 가진 기업은 소폭의 마이너스 성장도 건전한 비즈니스의 일부로 볼 수 있습니다.';
+  } else if (opMargin >= 15) {
+    threshold = '-5%';
+    explanation = '우수한 영업이익률(15% 이상)을 가진 기업은 약간의 마이너스 성장도 용인됩니다.';
+  } else if (opMargin >= 10) {
+    threshold = '0%';
+    explanation =
+      '양호한 영업이익률(10% 이상)을 가진 기업은 성장이 정체되어도(0%) 합리적인 평가가 가능합니다.';
+  }
+
+  // 실제값이 기준치를 넘는지 평가
+  const isPassing =
+    (opMargin >= 20 && actualValue >= -10) ||
+    (opMargin >= 15 && actualValue >= -5) ||
+    (opMargin >= 10 && actualValue >= 0);
+
+  return (
+    <div className={`mt-3 p-3 text-xs rounded-lg ${isPassing ? 'bg-emerald-50' : 'bg-amber-50'}`}>
+      <p className="font-medium flex items-center mb-1">
+        <Info className="w-3 h-3 mr-1 inline" />
+        <span>{getTitle()} 조정 기준 적용</span>
+      </p>
+      <p className="text-gray-700">
+        영업이익률 {opMargin.toFixed(1)}%에 따라 기준치가 {threshold}로 조정되었습니다.
+      </p>
+      <p className="text-gray-700 mt-1">{explanation}</p>
+    </div>
+  );
 };
 
 export default function ChecklistPage() {
@@ -668,7 +781,7 @@ export default function ChecklistPage() {
                 onClick={() => setShowSearchForm(true)}
                 className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 text-sm rounded-xl flex items-center transition-all duration-300 group"
               >
-                <SearchIcon className="h-4 w-4 sm:mr-2   group-hover:scale-110 transition-transform duration-300" />
+                <SearchIcon className="h-4 w-4 sm:mr-2 group-hover:scale-110 transition-transform duration-300" />
                 <span className="hidden sm:block">다른 종목</span>
               </button>
             </div>
@@ -738,12 +851,12 @@ export default function ChecklistPage() {
                 </div>
               )}
 
-              {/* 영업이익률 기반 성장률 평가 조정 배지 */}
+              {/* 영업이익률 기반 성장률 평가 조정 배지 - 업데이트됨 */}
               {!investmentRating.isFinancialCompany && currentOpMargin >= 10 && (
                 <OperatingMarginAdjustmentBadge currentOpMargin={currentOpMargin} />
               )}
 
-              {/* 위험 요소 경고 섹션 추가 */}
+              {/* 위험 요소 경고 섹션 - 업데이트됨 */}
               {investmentRating.riskFlags &&
                 Object.entries(investmentRating.riskFlags).some(([_, value]) => value) && (
                   <div className="bg-red-50 p-4 sm:p-5 rounded-xl mb-5 border border-red-100 transition-all duration-300 hover:shadow-md">
@@ -846,25 +959,31 @@ export default function ChecklistPage() {
                     {renderScoreBar(investmentRating.detailedItemsScore)}
                   </div>
 
-                  {/* 점수 분해 표시 추가 */}
+                  {/* 점수 분해 표시 - 업데이트됨 */}
                   <div className="bg-gray-50 p-4 sm:p-5 rounded-xl border border-gray-100">
-                    <h4 className="font-medium text-sm text-gray-700 mb-3">점수 구성</h4>
+                    <h4 className="font-medium text-sm text-gray-700 mb-3 flex items-center">
+                      <Calculator className="w-4 h-4 mr-2 text-emerald-600" />
+                      점수 구성
+                    </h4>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
-                        <span>기본 점수</span>
+                        <span>기본 점수 (가중 평균)</span>
                         <span className="font-medium">{investmentRating.baseScore}점</span>
                       </div>
                       {investmentRating.riskPenalty > 0 && (
                         <>
-                          <div className="border-t pt-2"></div>
+                          <div className="border-t pt-2 mt-2"></div>
                           <div className="flex justify-between text-red-600">
                             <span>위험 요소 차감</span>
                             <span className="font-medium">-{investmentRating.riskPenalty}점</span>
                           </div>
-                          <div className="border-t pt-2"></div>
+                          <div className="border-t pt-2 mt-2"></div>
                           <div className="flex justify-between font-bold">
                             <span>최종 점수</span>
                             <span>{investmentRating.score}점</span>
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            * 핵심 지표(70%), 세부 지표(30%) 가중치 적용
                           </div>
                         </>
                       )}
@@ -1212,7 +1331,7 @@ export default function ChecklistPage() {
 
               <hr className="mt-6" />
 
-              <div className="mt-6 w-1/2 grid grid-cols-1 sm:grid-cols-2 gap-4 ">
+              <div className="mt-6 w-full sm:w-1/2 grid grid-cols-1 sm:grid-cols-2 gap-4 ">
                 <Link href={`/fairprice?stockCode=${stockPrice.code}`} className="w-full">
                   <button className="w-full inline-flex items-center justify-center bg-emerald-600 text-white px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-emerald-700 transition-all duration-300 shadow-sm hover:shadow group relative overflow-hidden">
                     {/* 버튼 배경 효과 */}

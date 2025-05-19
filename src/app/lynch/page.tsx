@@ -1131,7 +1131,9 @@ export default function LynchPage() {
                           </td>
                           <td className="bg-gray-50 px-3 py-3 whitespace-nowrap">
                             <div className="text-xs text-gray-900">
-                              {stock.growth_rate > 0 ? `${stock.growth_rate.toFixed(1)}%` : '-'}
+                              {stock.growth_rate > 0
+                                ? (stock.growth_rate * 100).toFixed(1) + '%'
+                                : '-'}
                             </div>
                           </td>
                           <td className="bg-gray-50 px-3 py-3 whitespace-nowrap">

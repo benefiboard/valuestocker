@@ -14,7 +14,7 @@ export const getStockDataFromSupabase = async (
   stockCode: string
 ): Promise<StockFairPriceData | null> => {
   const { data, error } = await supabase
-    .from('new_stock_fairprice')
+    .from('stock_naver_fairprice')
     .select('*')
     .eq('stock_code', stockCode)
     .single();

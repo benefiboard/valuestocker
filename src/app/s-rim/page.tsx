@@ -42,7 +42,7 @@ type SortField =
   | 'margin_of_safety'
   | 'dividend_yield'
   | 'consecutive_dividend'
-  | 'latestroe';
+  | 'weightedroe';
 
 type SortDirection = 'asc' | 'desc';
 type ViewMode = 'card' | 'table' | 'mobileTable';

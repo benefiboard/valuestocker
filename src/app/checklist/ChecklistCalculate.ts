@@ -6,6 +6,7 @@ import {
   ScoredChecklistItem,
   InvestmentRating,
   JsonChecklistData,
+  StockCurrent,
 } from './types';
 import { supabase } from '../../lib/supabaseClient';
 import {
@@ -17,12 +18,12 @@ import {
 } from './constants/industryThresholds';
 import { initialChecklist, SCORE_THRESHOLDS } from './constants/checklistItems';
 
-// Supabase에서 체크리스트 데이터 가져오기
+// Supabase에서 체크리스트 데이터 가져오기 (stock_naver_checklist 테이블)
 export const getStockChecklistFromSupabase = async (
   stockCode: string
 ): Promise<JsonChecklistData | null> => {
   const { data, error } = await supabase
-    .from('stock_checklist')
+    .from('stock_naver_checklist')
     .select('*')
     .eq('stock_code', stockCode)
     .single();
@@ -42,25 +43,37 @@ export const getStockChecklistFromSupabase = async (
     industry: data.industry,
     subIndustry: data.subindustry,
 
-    // 기존 필드들...
+    // 성장률 지표들
     revenueGrowthRate: Number(data.revenuegrowthrate || 0),
     opIncomeGrowthRate: Number(data.opincomegrowthrate || 0),
     epsGrowthRate: Number(data.epsgrowthrate || 0),
     netIncomeGrowthRate: Number(data.netincomegrowthrate || 0),
     bpsGrowthRate: Number(data.bpsgrowthrate || 0),
-    retainedEarningsGrowthRate: Number(data.retainedearningsgrowthrate || 0),
+    
+    // 수익성 및 효율성 지표들
     avgOpMargin: Number(data.avgopmargin || 0),
     avgRoe: Number(data.avgroe || 0),
+    avgRoa: Number(data.avgroa || 0),
+    assetTurnover: Number(data.assetturnover || 0),
+    equityTurnover: Number(data.equityturnover || 0),
+    
+    // 재무 건전성 지표들
     debtRatio: Number(data.debtratio || 0),
-    currentRatio: Number(data.currentratio || 0),
-    interestCoverageRatio: Number(data.interestcoverageratio || 0),
-    nonCurrentLiabilitiesToNetIncome: Number(data.noncurrentliabilitiestonetincome || 0),
-    cashCycleDays: Number(data.cashcycledays || 0),
+    interestBearingDebtRatio: Number(data.interestbearingdebtratio || 0),
+    equityRatio: Number(data.equityratio || 0),
+    
+    // 현금흐름 및 경쟁력 지표들
     fcfRatio: Number(data.fcfratio || 0),
-    grossProfitMargin: Number(data.grossprofitmargin || 0),
+    opCashFlowToRevenueRatio: Number(data.opcashflowtorevenueratio || 0),
+    fcfMargin: Number(data.fcfmargin || 0),
+    dividendYield: Number(data.dividendyield || 0),
+    
+    // PER 관련 지표들
     avgPer: Number(data.avgper || 0),
     maxPer: Number(data.maxper || 0),
     maxPerTimes04: Number(data.maxpertimes04 || 0),
+    
+    // 연도별 값
     currentBps: Number(data.currentbps || 0),
     previousBps: Number(data.previousbps || 0),
     twoYearsAgoBps: Number(data.twoyearsagobps || 0),
@@ -69,7 +82,7 @@ export const getStockChecklistFromSupabase = async (
     twoYearsAgoPer: Number(data.twoyearsagoper || 0),
     currentYearEps: Number(data.currentyeareps || 0),
 
-    // 추가: 위험 플래그 필드들
+    // 위험 플래그 필드들
     has_consecutive_operating_losses: data.has_consecutive_operating_losses || false,
     operating_to_net_income_discrepancy: data.operating_to_net_income_discrepancy || false,
     operating_margin_critical: data.operating_margin_critical || false,
@@ -101,6 +114,25 @@ export const getStockPriceFromSupabase = async (stockCode: string): Promise<Stoc
   };
 };
 
+// Supabase에서 현재 PER 데이터 가져오기
+export const getStockCurrentFromSupabase = async (stockCode: string): Promise<StockCurrent | null> => {
+  const { data, error } = await supabase
+    .from('stock_current')
+    .select('*')
+    .eq('stock_code', stockCode)
+    .single();
+
+  if (error || !data) {
+    console.error('현재 PER 데이터 조회 실패:', error);
+    return null;
+  }
+
+  return {
+    code: data.stock_code,
+    currentPer: data.current_per || 0,
+  };
+};
+
 // Supabase에서 데이터를 가져와서 체크리스트 계산
 export const calculateChecklist = async (
   stockCode: string,
@@ -129,18 +161,28 @@ export const calculateChecklist = async (
     return [];
   }
 
+  // 3. 현재 PER 정보 가져오기
+  const stockCurrent = await getStockCurrentFromSupabase(stockCode);
+  if (!stockCurrent) {
+    console.log(`현재 PER 데이터를 찾을 수 없습니다: ${stockCode}, 계산된 PER를 사용합니다.`);
+  }
+
   // sharesOutstanding 채우기
   stockPrice.sharesOutstanding = parseFloat(stockData.shares_outstanding || '0');
 
-  // 3. 기존 함수로 체크리스트 계산
-  return calculateJsonChecklist(stockCode, stockPrice, industry);
+  // 4. 현재 PER 설정 (stock_current에서 가져오거나 계산)
+  const currentPer = stockCurrent?.currentPer || (stockPrice.price / stockData.currentYearEps);
+
+  // 5. 기존 함수로 체크리스트 계산 (현재 PER 전달)
+  return calculateJsonChecklist(stockCode, stockPrice, industry, currentPer);
 };
 
 // 미리 계산된 데이터와 현재 주가를 이용한 체크리스트 계산 함수
 export const calculateJsonChecklist = (
   stockCode: string,
   stockPrice: StockPrice,
-  industry: string = 'etc'
+  industry: string = 'etc',
+  currentPer: number = 0
 ): ScoredChecklistItem[] => {
   // 미리 계산된 데이터 가져오기
   let stockData: any;
@@ -171,13 +213,17 @@ export const calculateJsonChecklist = (
   // 현재 주가
   const currentPrice = stockPrice.price;
   const currentEps = stockData.currentYearEps || 0;
-  // 현재 EPS
-  console.log('EPS 데이터:', currentEps);
+  
+  // 현재 PER 계산 (제공된 값 없으면 직접 계산)
+  const per = currentPer > 0 ? currentPer : (currentEps > 0 ? currentPrice / currentEps : 0);
+  console.log('현재 PER:', per);
   console.log('현재가격:', currentPrice);
-  const currentPer = currentPrice / currentEps;
-  console.log('현재 PER:', currentPer);
+  
+  // 현재 PBR 계산
+  const currentBps = stockData.currentBps || 0;
+  const pbr = currentBps > 0 ? currentPrice / currentBps : 0;
+  console.log('현재 PBR:', pbr);
   console.log('스톡데이터전체:', stockData);
-  // 현재 PER 계산
 
   // 금융회사 여부 확인
   const isFinancialCompany = FINANCIAL_COMPANIES.includes(stockCode);
@@ -289,42 +335,42 @@ export const calculateJsonChecklist = (
     switch (item.title) {
       // 핵심 지표
       case 'PER':
-        item.actualValue = currentPer;
+        item.actualValue = per;
 
         // 산업군별 차별화된 PER 평가
-        if (currentPer <= 0) {
+        if (per <= 0) {
           item.score = 0; // 적자기업 (미달)
           item.isPassed = false;
         } else if (industry === '금융') {
           // 금융업 특화 PER 평가
-          if (currentPer < thresholds.per * 0.8) item.score = 10;
-          else if (currentPer < thresholds.per) item.score = 9;
-          else if (currentPer < thresholds.per * 1.2) item.score = 8;
-          else if (currentPer < thresholds.per * 1.5) item.score = 6;
-          else if (currentPer < thresholds.per * 2) item.score = 4;
+          if (per < thresholds.per * 0.8) item.score = 10;
+          else if (per < thresholds.per) item.score = 9;
+          else if (per < thresholds.per * 1.2) item.score = 8;
+          else if (per < thresholds.per * 1.5) item.score = 6;
+          else if (per < thresholds.per * 2) item.score = 4;
           else item.score = 2;
 
-          item.isPassed = currentPer > 0.5 && currentPer < thresholds.per * 1.2;
+          item.isPassed = per > 0.5 && per < thresholds.per * 1.2;
         } else if (INDUSTRY_GROUPS.HIGH_GROWTH.includes(industry)) {
           // 고성장 산업 PER 평가
-          if (currentPer < thresholds.per * 0.7) item.score = 10;
-          else if (currentPer < thresholds.per) item.score = 9;
-          else if (currentPer < thresholds.per * 1.3) item.score = 7;
-          else if (currentPer < thresholds.per * 1.6) item.score = 5;
-          else if (currentPer < thresholds.per * 2) item.score = 3;
+          if (per < thresholds.per * 0.7) item.score = 10;
+          else if (per < thresholds.per) item.score = 9;
+          else if (per < thresholds.per * 1.3) item.score = 7;
+          else if (per < thresholds.per * 1.6) item.score = 5;
+          else if (per < thresholds.per * 2) item.score = 3;
           else item.score = 1;
 
-          item.isPassed = currentPer > 0.5 && currentPer < thresholds.per;
+          item.isPassed = per > 0.5 && per < thresholds.per;
         } else {
           // 일반 산업 PER 평가
-          if (currentPer < thresholds.per * 0.6) item.score = 10;
-          else if (currentPer < thresholds.per * 0.8) item.score = 9;
-          else if (currentPer < thresholds.per) item.score = 8;
-          else if (currentPer < thresholds.per * 1.3) item.score = 6;
-          else if (currentPer < thresholds.per * 1.7) item.score = 3;
+          if (per < thresholds.per * 0.6) item.score = 10;
+          else if (per < thresholds.per * 0.8) item.score = 9;
+          else if (per < thresholds.per) item.score = 8;
+          else if (per < thresholds.per * 1.3) item.score = 6;
+          else if (per < thresholds.per * 1.7) item.score = 3;
           else item.score = 1;
 
-          item.isPassed = currentPer > 0.5 && currentPer < thresholds.per;
+          item.isPassed = per > 0.5 && per < thresholds.per;
         }
 
         // 미달 여부 설정
@@ -669,6 +715,7 @@ export const calculateJsonChecklist = (
         item.isFailCriteria = item.score === 0 && stockData.netIncomeGrowthRate !== 100;
         break;
 
+      // 수익성 및 효율성 지표
       case 'ROE (자기자본이익률)':
         item.actualValue = stockData.avgRoe;
 
@@ -718,10 +765,82 @@ export const calculateJsonChecklist = (
         }
         break;
 
+      case 'ROA(%)':
+        item.actualValue = stockData.avgRoa;
+        
+        // ROA 점수 계산
+        if (stockData.avgRoa < 0) {
+          item.score = 0;  // 음수 ROA는 0점
+          item.isPassed = false;
+          item.isFailCriteria = true;
+        } else {
+          // 일반 기업 ROA 기준
+          item.score =
+            stockData.avgRoa > 15
+              ? 10
+              : stockData.avgRoa > 10
+              ? 8
+              : stockData.avgRoa > 7
+              ? 6
+              : stockData.avgRoa > 4
+              ? 4
+              : stockData.avgRoa > 0
+              ? 2
+              : 0;
+
+          // ROA 7% 이상이면 통과
+          item.isPassed = stockData.avgRoa > 7;
+        }
+        
+        item.targetValue = "> 7%";
+        break;
+
+      case '자산회전율':
+        item.actualValue = stockData.assetTurnover;
+        
+        // 자산회전율 점수 계산
+        item.score =
+          stockData.assetTurnover > 2
+            ? 10
+            : stockData.assetTurnover > 1.5
+            ? 8
+            : stockData.assetTurnover > 1
+            ? 6
+            : stockData.assetTurnover > 0.7
+            ? 4
+            : stockData.assetTurnover > 0.4
+            ? 2
+            : 0;
+        
+        // 자산회전율 1 이상이면 통과
+        item.isPassed = stockData.assetTurnover > 1;
+        item.targetValue = "> 1.0";
+        break;
+
+      case '자기자본회전율':
+        item.actualValue = stockData.equityTurnover;
+        
+        // 자기자본회전율 점수 계산
+        item.score =
+          stockData.equityTurnover > 3
+            ? 10
+            : stockData.equityTurnover > 2
+            ? 8
+            : stockData.equityTurnover > 1.5
+            ? 6
+            : stockData.equityTurnover > 1
+            ? 4
+            : stockData.equityTurnover > 0.5
+            ? 2
+            : 0;
+        
+        // 자기자본회전율 1.5 이상이면 통과
+        item.isPassed = stockData.equityTurnover > 1.5;
+        item.targetValue = "> 1.5";
+        break;
+
+      // 자산 가치 지표
       case 'PBR (주가순자산비율)':
-        // 현재 PBR 계산
-        const currentBps = stockData.currentBps;
-        const pbr = currentBps > 0 ? currentPrice / currentBps : 0;
         item.actualValue = pbr;
 
         // 금융사는 기준 다르게 적용
@@ -748,140 +867,6 @@ export const calculateJsonChecklist = (
 
           // 일반 기업은 1.2 미만
           item.isPassed = pbr < 1.2;
-        }
-        break;
-
-      case '부채비율':
-        item.actualValue = stockData.debtRatio;
-        item.score =
-          stockData.debtRatio < 50
-            ? 10
-            : stockData.debtRatio < 80
-            ? 8
-            : stockData.debtRatio < 100
-            ? 6
-            : stockData.debtRatio < 150
-            ? 4
-            : stockData.debtRatio < 200
-            ? 2
-            : 0;
-        item.isPassed = stockData.debtRatio < 100;
-        item.isFailCriteria = stockData.debtRatio > 200;
-        break;
-
-      case '현금회전일수':
-        item.actualValue = stockData.cashCycleDays;
-        item.score =
-          stockData.cashCycleDays < 60
-            ? 10
-            : stockData.cashCycleDays < 90
-            ? 8
-            : stockData.cashCycleDays < 120
-            ? 6
-            : stockData.cashCycleDays < 150
-            ? 4
-            : 2;
-        item.isPassed = stockData.cashCycleDays < 120;
-        break;
-
-      case '매출총이익률':
-        // 필요한 데이터가 없으면 중립 평가
-        if (stockData.grossProfitMargin === null) {
-          item.actualValue = null;
-          item.score = 5;
-          item.isPassed = null;
-        } else {
-          item.actualValue = stockData.grossProfitMargin;
-          const grossProfitMargin = stockData.grossProfitMargin as number;
-          item.score =
-            grossProfitMargin > 50
-              ? 10
-              : grossProfitMargin > 40
-              ? 8
-              : grossProfitMargin > 30
-              ? 6
-              : grossProfitMargin > 20
-              ? 4
-              : grossProfitMargin > 10
-              ? 2
-              : 0;
-          item.isPassed = grossProfitMargin > 40;
-        }
-        break;
-
-      case 'FCF 비율':
-        item.actualValue = stockData.fcfRatio;
-        item.score =
-          stockData.fcfRatio > 10
-            ? 10
-            : stockData.fcfRatio > 7
-            ? 8
-            : stockData.fcfRatio > 5
-            ? 6
-            : stockData.fcfRatio > 3
-            ? 4
-            : stockData.fcfRatio > 0
-            ? 2
-            : 0;
-        item.isPassed = stockData.fcfRatio > 7;
-        break;
-
-      case '현재 PER < 3년 최고 PER * 0.4':
-        const maxPerTimes04 = stockData.maxPerTimes04;
-        item.actualValue = currentPer;
-
-        if (currentPer <= 0) {
-          item.score = 0;
-          item.isPassed = false;
-          item.isFailCriteria = true;
-        } else {
-          if (isFinancialCompany) {
-            // 금융주는 PER 변동성이 작아 기준 완화
-            const maxPer = stockData.maxPer;
-            const maxPerRatio = maxPer > 0 ? currentPer / maxPer : 0;
-            item.score =
-              maxPerRatio < 0.6 ? 10 : maxPerRatio < 0.75 ? 8 : maxPerRatio < 0.9 ? 6 : 4;
-            item.isPassed = currentPer < maxPer * 0.7;
-            item.targetValue = '< 3년 최고 PER * 0.7'; // 금융주용 기준 수정
-          } else {
-            // 기존 일반 기업 기준
-            const maxPer = stockData.maxPer;
-            item.score =
-              currentPer < maxPerTimes04
-                ? 10
-                : currentPer < maxPer * 0.6
-                ? 7
-                : currentPer < maxPer * 0.8
-                ? 4
-                : 2;
-            item.isPassed = currentPer < maxPerTimes04;
-          }
-        }
-        break;
-
-      case 'PER < 3년 평균 PER':
-        if (currentPer <= 0) {
-          item.actualValue = currentPer;
-          item.score = 0;
-          item.isPassed = false;
-          item.isFailCriteria = true;
-        } else {
-          item.actualValue = currentPer;
-          const avgPer = stockData.avgPer;
-
-          if (isFinancialCompany) {
-            // 금융주는 PER 등락이 작아 기준 조정
-            const avgPerRatio = avgPer > 0 ? currentPer / avgPer : 0;
-            item.score =
-              avgPerRatio < 0.95 ? 10 : avgPerRatio < 1.1 ? 8 : avgPerRatio < 1.2 ? 6 : 4;
-            item.isPassed = currentPer < avgPer * 1.1; // 10% 이내면 양호로 간주
-            item.targetValue = '< 3년 평균 PER * 1.1'; // 금융주용 기준 수정
-          } else {
-            // 기존 일반 기업 기준
-            const avgPerRatio = avgPer > 0 ? currentPer / avgPer : 0;
-            item.score = avgPerRatio < 0.8 ? 10 : avgPerRatio < 1 ? 8 : avgPerRatio < 1.2 ? 5 : 2;
-            item.isPassed = currentPer < avgPer;
-          }
         }
         break;
 
@@ -926,78 +911,210 @@ export const calculateJsonChecklist = (
         }
         break;
 
-      case '유동비율':
-        item.actualValue = stockData.currentRatio;
+      // 재무 건전성 지표
+      case '부채비율':
+        item.actualValue = stockData.debtRatio;
         item.score =
-          stockData.currentRatio > 200
+          stockData.debtRatio < 50
             ? 10
-            : stockData.currentRatio > 150
+            : stockData.debtRatio < 80
             ? 8
-            : stockData.currentRatio > 120
+            : stockData.debtRatio < 100
             ? 6
-            : stockData.currentRatio > 100
+            : stockData.debtRatio < 150
             ? 4
-            : 2;
-        item.isPassed = stockData.currentRatio > 150;
+            : stockData.debtRatio < 200
+            ? 2
+            : 0;
+        item.isPassed = stockData.debtRatio < 100;
+        item.isFailCriteria = stockData.debtRatio > 200;
         break;
 
-      case '이자보상배율':
-        item.actualValue = stockData.interestCoverageRatio;
+      case '이자발생부채비율':
+        item.actualValue = stockData.interestBearingDebtRatio;
+        
+        // 이자발생부채비율 점수 계산
+        item.score =
+          stockData.interestBearingDebtRatio < 10
+            ? 10
+            : stockData.interestBearingDebtRatio < 20
+            ? 8
+            : stockData.interestBearingDebtRatio < 30
+            ? 6
+            : stockData.interestBearingDebtRatio < 40
+            ? 4
+            : stockData.interestBearingDebtRatio < 50
+            ? 2
+            : 0;
+        
+        // 이자발생부채비율 30% 이하면 통과
+        item.isPassed = stockData.interestBearingDebtRatio < 30;
+        item.targetValue = "< 30%";
+        break;
 
-        // 음수 이자보상배율은 0점 처리
-        if (stockData.interestCoverageRatio <= 0) {
+      case '자기자본비율':
+        item.actualValue = stockData.equityRatio;
+        
+        // 자기자본비율 점수 계산
+        item.score =
+          stockData.equityRatio > 70
+            ? 10
+            : stockData.equityRatio > 60
+            ? 8
+            : stockData.equityRatio > 50
+            ? 6
+            : stockData.equityRatio > 40
+            ? 4
+            : stockData.equityRatio > 30
+            ? 2
+            : 0;
+        
+        // 자기자본비율 50% 이상이면 통과
+        item.isPassed = stockData.equityRatio > 50;
+        item.targetValue = "> 50%";
+        break;
+
+      // 현금흐름 및 경쟁력 지표
+      case 'FCF 비율':
+        item.actualValue = stockData.fcfRatio;
+        item.score =
+          stockData.fcfRatio > 10
+            ? 10
+            : stockData.fcfRatio > 7
+            ? 8
+            : stockData.fcfRatio > 5
+            ? 6
+            : stockData.fcfRatio > 3
+            ? 4
+            : stockData.fcfRatio > 0
+            ? 2
+            : 0;
+        item.isPassed = stockData.fcfRatio > 7;
+        break;
+
+      case '영업현금흐름 대 매출액 비율':
+        item.actualValue = stockData.opCashFlowToRevenueRatio;
+        
+        // 영업현금흐름 대 매출액 비율 점수 계산
+        item.score =
+          stockData.opCashFlowToRevenueRatio > 15
+            ? 10
+            : stockData.opCashFlowToRevenueRatio > 10
+            ? 8
+            : stockData.opCashFlowToRevenueRatio > 7
+            ? 6
+            : stockData.opCashFlowToRevenueRatio > 4
+            ? 4
+            : stockData.opCashFlowToRevenueRatio > 0
+            ? 2
+            : 0;
+        
+        // 영업현금흐름 대 매출액 비율 7% 이상이면 통과
+        item.isPassed = stockData.opCashFlowToRevenueRatio > 7;
+        item.targetValue = "> 7%";
+        break;
+
+      case 'FCF 마진':
+        item.actualValue = stockData.fcfMargin;
+        
+        // FCF 마진 점수 계산
+        item.score =
+          stockData.fcfMargin > 12
+            ? 10
+            : stockData.fcfMargin > 9
+            ? 8
+            : stockData.fcfMargin > 6
+            ? 6
+            : stockData.fcfMargin > 3
+            ? 4
+            : stockData.fcfMargin > 0
+            ? 2
+            : 0;
+        
+        // FCF 마진 6% 이상이면 통과
+        item.isPassed = stockData.fcfMargin > 6;
+        item.targetValue = "> 6%";
+        break;
+
+      case '배당수익률':
+        item.actualValue = stockData.dividendYield;
+        
+        // 배당수익률 점수 계산
+        item.score =
+          stockData.dividendYield > 4
+            ? 10
+            : stockData.dividendYield > 3
+            ? 8
+            : stockData.dividendYield > 2
+            ? 6
+            : stockData.dividendYield > 1
+            ? 4
+            : stockData.dividendYield > 0
+            ? 2
+            : 0;
+        
+        // 배당수익률 2% 이상이면 통과
+        item.isPassed = stockData.dividendYield > 2;
+        item.targetValue = "> 2%";
+        break;
+
+      // PER 관련 지표
+      case '현재 PER < 3년 최고 PER * 0.4':
+        const maxPerTimes04 = stockData.maxPerTimes04;
+        item.actualValue = per;
+
+        if (per <= 0) {
           item.score = 0;
           item.isPassed = false;
           item.isFailCriteria = true;
         } else {
-          item.score =
-            stockData.interestCoverageRatio > 5
-              ? 10
-              : stockData.interestCoverageRatio > 3
-              ? 8
-              : stockData.interestCoverageRatio > 2
-              ? 6
-              : stockData.interestCoverageRatio > 1
-              ? 4
-              : 2;
-          item.isPassed = stockData.interestCoverageRatio > 2;
+          if (isFinancialCompany) {
+            // 금융주는 PER 변동성이 작아 기준 완화
+            const maxPer = stockData.maxPer;
+            const maxPerRatio = maxPer > 0 ? per / maxPer : 0;
+            item.score =
+              maxPerRatio < 0.6 ? 10 : maxPerRatio < 0.75 ? 8 : maxPerRatio < 0.9 ? 6 : 4;
+            item.isPassed = per < maxPer * 0.7;
+            item.targetValue = '< 3년 최고 PER * 0.7'; // 금융주용 기준 수정
+          } else {
+            // 기존 일반 기업 기준
+            const maxPer = stockData.maxPer;
+            item.score =
+              per < maxPerTimes04
+                ? 10
+                : per < maxPer * 0.6
+                ? 7
+                : per < maxPer * 0.8
+                ? 4
+                : 2;
+            item.isPassed = per < maxPerTimes04;
+          }
         }
         break;
 
-      case '장기부채 대비 순이익':
-        item.actualValue = stockData.nonCurrentLiabilitiesToNetIncome;
-
-        // 순이익이 음수면 바로 미달 처리
-        if (stockData.nonCurrentLiabilitiesToNetIncome <= 0) {
+      case 'PER < 3년 평균 PER':
+        if (per <= 0) {
+          item.actualValue = per;
           item.score = 0;
           item.isPassed = false;
           item.isFailCriteria = true;
         } else {
-          // 값을 숫자로 확실히 처리
-          const ratio = stockData.nonCurrentLiabilitiesToNetIncome as number;
-          item.score = ratio < 1 ? 10 : ratio < 2 ? 8 : ratio < 3 ? 6 : ratio < 5 ? 4 : 2;
-          item.isPassed = ratio < 3;
-        }
-        break;
+          item.actualValue = per;
+          const avgPer = stockData.avgPer;
 
-      case '이익잉여금 vs 당좌자산 증가율':
-        // 이익잉여금 성장률 가져오기
-        const retainedEarningsGrowthRate = stockData.retainedEarningsGrowthRate;
-
-        // 이익잉여금이 음수이거나 감소중이면 미달
-        if (retainedEarningsGrowthRate < 0) {
-          item.actualValue = retainedEarningsGrowthRate;
-          item.score = 0;
-          item.isPassed = false;
-          item.isFailCriteria = true;
-        } else {
-          const targetGrowthRate = retainedEarningsGrowthRate * 0.5;
-          item.actualValue = targetGrowthRate;
-
-          // 당좌자산 증가율 데이터가 없으면 중립 평가
-          // JSON에는 당좌자산 증가율이 없으므로 중립적 평가
-          item.isPassed = null;
-          item.score = 5;
+          if (isFinancialCompany) {
+            // 금융주는 PER 등락이 작아 기준 조정
+            const avgPerRatio = avgPer > 0 ? per / avgPer : 0;
+            item.score =
+              avgPerRatio < 0.95 ? 10 : avgPerRatio < 1.1 ? 8 : avgPerRatio < 1.2 ? 6 : 4;
+            item.isPassed = per < avgPer * 1.1; // 10% 이내면 양호로 간주
+            item.targetValue = '< 3년 평균 PER * 1.1'; // 금융주용 기준 수정
+          } else {
+            // 기존 일반 기업 기준
+            const avgPerRatio = avgPer > 0 ? per / avgPer : 0;
+            item.score = avgPerRatio < 0.8 ? 10 : avgPerRatio < 1 ? 8 : avgPerRatio < 1.2 ? 5 : 2;
+            item.isPassed = per < avgPer;
+          }
         }
         break;
     }

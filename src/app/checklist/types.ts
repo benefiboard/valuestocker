@@ -1,5 +1,10 @@
 // src/app/checklist/types.ts
 
+export interface StockCurrent {
+  code: string;
+  currentPer: number;
+}
+
 // 체크리스트 기본 항목 타입
 export interface ChecklistItem {
   category: string;
@@ -88,24 +93,38 @@ export interface JsonChecklistData {
   last_updated: string;
   industry: string;
   subIndustry: string;
+
+  // 성장률 지표들
   revenueGrowthRate: number;
   opIncomeGrowthRate: number;
   epsGrowthRate: number;
   netIncomeGrowthRate: number;
   bpsGrowthRate: number;
-  retainedEarningsGrowthRate: number;
+
+  // 수익성 및 효율성 지표들
   avgOpMargin: number;
   avgRoe: number;
+  avgRoa: number; // 추가: ROA(%)
+  assetTurnover: number; // 추가: 자산회전율
+  equityTurnover: number; // 추가: 자기자본회전율
+
+  // 재무 건전성 지표들
   debtRatio: number;
-  currentRatio: number;
-  interestCoverageRatio: number;
-  nonCurrentLiabilitiesToNetIncome: number;
-  cashCycleDays: number;
+  interestBearingDebtRatio: number; // 추가: 이자발생부채비율
+  equityRatio: number; // 추가: 자기자본비율
+
+  // 현금흐름 및 경쟁력 지표들
   fcfRatio: number;
-  grossProfitMargin: number;
+  opCashFlowToRevenueRatio: number; // 추가: 영업현금흐름 대 매출액 비율
+  fcfMargin: number; // 추가: FCF 마진
+  dividendYield: number; // 추가: 배당수익률
+
+  // PER 관련 지표들
   avgPer: number;
   maxPer: number;
   maxPerTimes04: number;
+
+  // 연도별 값
   currentBps: number;
   previousBps: number;
   twoYearsAgoBps: number;
@@ -113,11 +132,21 @@ export interface JsonChecklistData {
   previousYearPer: number;
   twoYearsAgoPer: number;
   currentYearEps: number;
-  // 추가: 위험 플래그 필드들
+
+  // 위험 플래그 필드들
   has_consecutive_operating_losses: boolean;
   operating_to_net_income_discrepancy: boolean;
   operating_margin_critical: boolean;
   insufficient_profitable_years: boolean;
+
+  // 이전 버전과의 호환성을 위해 남겨둔 필드들
+  retainedEarningsGrowthRate?: number;
+  currentRatio?: number;
+  interestCoverageRatio?: number;
+  nonCurrentLiabilitiesToNetIncome?: number;
+  cashCycleDays?: number;
+  grossProfitMargin?: number;
+
   // 연도별 데이터
   [key: string]: any;
 }

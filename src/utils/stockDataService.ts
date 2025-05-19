@@ -48,6 +48,7 @@ export interface EnhancedGrahamStock extends GrahamStock {
   meets_pbr_criteria: boolean; // PBR 기준 충족 여부
   meets_per_criteria: boolean; // PER 기준 충족 여부
   criteria_met_count: number; // 충족한 기준 개수
+  dividend_years_count?: number;
 }
 
 export interface QualityStock {
@@ -58,8 +59,8 @@ export interface QualityStock {
   current_per: number;
   current_price: number;
   dividend_yield: number;
-  avg_roe: number; // 3년 평균 ROE
-  avg_operating_margin: number; // 3년 평균 영업이익률
+  avg_roe: number; // 5년 평균 ROE
+  avg_operating_margin: number; // 5년 평균 영업이익률
   consecutive_dividend: boolean;
 }
 
@@ -77,7 +78,7 @@ export interface HowardStock {
   conservative_intrinsic_value: number; // 보수 시나리오 내재가치
   discount_rate: number; // 할인율 (%)
   margin_of_safety: number; // 안전마진 (%)
-  consecutive_dividend: boolean; // 3년 연속 배당 여부
+  consecutive_dividend: boolean; // 5년 연속 배당 여부
 }
 
 export interface LynchStock {
@@ -92,7 +93,7 @@ export interface LynchStock {
   average_eps: number; // 평균 EPS
   margin_of_safety: number; // 안전마진 (1 - PEG) * 100
   dividend_yield: number; // 배당률
-  consecutive_dividend: boolean; // 3년 연속 배당 여부
+  consecutive_dividend: boolean; // 5년 연속 배당 여부
 }
 
 export interface SrimStock {
@@ -107,8 +108,8 @@ export interface SrimStock {
   srim_decline_20pct: number; // ROE 20% 감소 시나리오
   margin_of_safety: number; // 안전마진
   dividend_yield: number; // 배당률
-  consecutive_dividend: boolean; // 3년 연속 배당 여부
-  latestroe: number; // 최신 ROE
+  consecutive_dividend: boolean; // 5년 연속 배당 여부
+  weightedroe: number; // 최신 ROE
 }
 
 export interface StockDataResult<T> {
@@ -132,8 +133,6 @@ const safeNumber = (value: any): number => {
   const num = Number(value);
   return isNaN(num) ? 0 : num;
 };
-
-// stockDataService.ts에 추가할 코드
 
 // 산업별 성장률 정보를 위한 인터페이스
 interface IndustryData {
@@ -269,42 +268,30 @@ export function isDebtRatioAcceptable(subindustry: string, debtRatio: number): b
   }
 }
 
-// DCF 모델 계산 함수
-function calculateDCF(
-  startingFCF: number,
-  growthRate: number,
-  perpetualGrowthRate: number,
-  discountRate: number
-): number {
-  // FCF가 음수인 경우 0으로 처리
-  if (startingFCF <= 0) return 0;
-
-  let presentValue = 0;
-  let yearlyFCF = startingFCF;
-
-  // 10년간의 현금흐름 현재가치 계산
-  for (let year = 1; year <= 10; year++) {
-    yearlyFCF *= 1 + growthRate;
-    presentValue += yearlyFCF / Math.pow(1 + discountRate, year);
-  }
-
-  // 할인율과 영구성장률의 차이가 너무 작으면 오류 방지
-  if (discountRate - perpetualGrowthRate < 0.01) {
-    perpetualGrowthRate = discountRate - 0.01;
-  }
-
-  // 영구가치(Terminal Value) 계산
-  const terminalValue =
-    (yearlyFCF * (1 + perpetualGrowthRate)) / (discountRate - perpetualGrowthRate);
-
-  // 영구가치의 현재가치
-  const presentTerminalValue = terminalValue / Math.pow(1 + discountRate, 10);
-
-  // 총 내재가치
-  return presentValue + presentTerminalValue;
+// 5년 연속 배당 확인 함수
+function hasConsecutiveDividend(dividendData: any): boolean {
+  return (
+    safeNumber(dividendData['2020_dividend']) > 0 &&
+    safeNumber(dividendData['2021_dividend']) > 0 &&
+    safeNumber(dividendData['2022_dividend']) > 0 &&
+    safeNumber(dividendData['2023_dividend']) > 0 &&
+    safeNumber(dividendData['2024_dividend']) > 0
+  );
 }
 
-// fetchLynchStocks 함수 - PEG 기반으로 수정된 버전
+// 영업이익 손실 개수 확인 함수
+function countNegativeOperatingIncomes(data: any): number {
+  let count = 0;
+  if (safeNumber(data['2020_operating_income']) < 0) count++;
+  if (safeNumber(data['2021_operating_income']) < 0) count++;
+  if (safeNumber(data['2022_operating_income']) < 0) count++;
+  if (safeNumber(data['2023_operating_income']) < 0) count++;
+  if (safeNumber(data['2024_operating_income']) < 0) count++;
+  return count;
+}
+
+// fetchLynchStocks 함수 - PEG 기반으로 수정된 버전 (테이블명 및 5년 데이터 활용)
+// fetchLynchStocks 함수 - PEG 기반으로 수정된 버전 (테이블명 및 5년 데이터 활용)
 export async function fetchLynchStocks(): Promise<StockDataResult<LynchStock>> {
   try {
     console.log('=== 피터 린치 PEG 기반 주식 데이터 가져오기 시작 ===');
@@ -337,8 +324,8 @@ export async function fetchLynchStocks(): Promise<StockDataResult<LynchStock>> {
 
     // 3. 필요한 추가 데이터 가져오기
     const stockInfo = await fetchDataInBatches<any>(
-      'stock_fairprice',
-      'stock_code, company_name, industry, subindustry',
+      'stock_naver_fairprice',
+      'stock_code, company_name, industry, subindustry, growthrate', // averageeps 제거
       pegStockCodes
     );
 
@@ -348,17 +335,12 @@ export async function fetchLynchStocks(): Promise<StockDataResult<LynchStock>> {
       pegStockCodes
     );
 
-    const fairpriceData = await fetchDataInBatches<any>(
-      'stock_fairprice',
-      'stock_code, growthrate, averageeps',
-      pegStockCodes
-    );
-
     const rawData = await fetchDataInBatches<any>(
-      'stock_raw_data',
+      'stock_naver_data',
       `stock_code, 
-      2022_dividend, 2023_dividend, 2024_dividend,
-      2022_operating_income, 2023_operating_income, 2024_operating_income`,
+      2020_dividend, 2021_dividend, 2022_dividend, 2023_dividend, 2024_dividend,
+      2020_operating_income, 2021_operating_income, 2022_operating_income, 2023_operating_income, 2024_operating_income,
+      2020_eps, 2021_eps, 2022_eps, 2023_eps, 2024_eps`, // 5년치 EPS 데이터 추가
       pegStockCodes
     );
 
@@ -368,7 +350,6 @@ export async function fetchLynchStocks(): Promise<StockDataResult<LynchStock>> {
     const priceMap = new Map(
       priceData.map((item) => [item.stock_code, safeNumber(item.current_price)])
     );
-    const fairpriceMap = new Map(fairpriceData.map((item) => [item.stock_code, item]));
     const rawDataMap = new Map(rawData.map((item) => [item.stock_code, item]));
     const currentDataMap = new Map(pegStockData.map((item) => [item.stock_code, item]));
 
@@ -379,39 +360,41 @@ export async function fetchLynchStocks(): Promise<StockDataResult<LynchStock>> {
     for (const stockCode of pegStockCodes) {
       const info = stockInfoMap.get(stockCode);
       const currentPrice = priceMap.get(stockCode);
-      const fairPrice = fairpriceMap.get(stockCode);
       const rawStockData = rawDataMap.get(stockCode);
       const currentInfo = currentDataMap.get(stockCode);
 
       // 필요한 모든 데이터가 있는지 확인
-      if (!info || !currentPrice || !fairPrice || !rawStockData || !currentInfo) {
+      if (!info || !currentPrice || !rawStockData || !currentInfo) {
         continue;
       }
 
-      // 영업이익 데이터 확인
-      const operatingIncome2022 = safeNumber(rawStockData['2022_operating_income']);
-      const operatingIncome2023 = safeNumber(rawStockData['2023_operating_income']);
-      const operatingIncome2024 = safeNumber(rawStockData['2024_operating_income']);
-
-      // 3년 중 2년 이상 영업이익이 음수인 기업 제외
-      let negativeOperatingIncomeCount = 0;
-      if (operatingIncome2022 < 0) negativeOperatingIncomeCount++;
-      if (operatingIncome2023 < 0) negativeOperatingIncomeCount++;
-      if (operatingIncome2024 < 0) negativeOperatingIncomeCount++;
-
-      if (negativeOperatingIncomeCount >= 2) {
+      // 5년 중 3년 이상 영업이익이 음수인 기업 제외
+      if (countNegativeOperatingIncomes(rawStockData) >= 3) {
         continue;
       }
+
+      // 5년치 EPS 데이터로 평균 EPS 계산
+      const epsValues = [
+        safeNumber(rawStockData['2020_eps']),
+        safeNumber(rawStockData['2021_eps']),
+        safeNumber(rawStockData['2022_eps']),
+        safeNumber(rawStockData['2023_eps']),
+        safeNumber(rawStockData['2024_eps']),
+      ];
+
+      // 0이 아닌 값들만 필터링하여 평균 계산
+      const validEpsValues = epsValues.filter((value) => value !== 0);
+      const averageEps =
+        validEpsValues.length > 0
+          ? validEpsValues.reduce((sum, value) => sum + value, 0) / validEpsValues.length
+          : 0;
 
       // PEG 값과 안전마진 계산
       const pegValue = safeNumber(currentInfo.peg);
       const marginOfSafety = (1 - pegValue) * 100; // (1 - PEG) × 100
 
-      // 연속 배당 확인
-      const consecutiveDividend =
-        safeNumber(rawStockData['2022_dividend']) > 0 &&
-        safeNumber(rawStockData['2023_dividend']) > 0 &&
-        safeNumber(rawStockData['2024_dividend']) > 0;
+      // 5년 연속 배당 확인
+      const consecutiveDividend = hasConsecutiveDividend(rawStockData);
 
       lynchStocks.push({
         stock_code: stockCode,
@@ -421,8 +404,8 @@ export async function fetchLynchStocks(): Promise<StockDataResult<LynchStock>> {
         current_price: currentPrice,
         current_per: safeNumber(currentInfo.current_per),
         peg: pegValue,
-        growth_rate: safeNumber(fairPrice.growthrate),
-        average_eps: safeNumber(fairPrice.averageeps),
+        growth_rate: safeNumber(info.growthrate), // Fairprice 테이블의 성장률 직접 사용
+        average_eps: averageEps, // 직접 계산한 평균 EPS 사용
         margin_of_safety: marginOfSafety,
         dividend_yield: safeNumber(currentInfo.current_dividend) || 0,
         consecutive_dividend: consecutiveDividend,
@@ -452,7 +435,7 @@ export async function fetchLynchStocks(): Promise<StockDataResult<LynchStock>> {
   }
 }
 
-// 향상된 그레이엄 가치주 데이터 가져오기
+// 향상된 그레이엄 가치주 데이터 가져오기 (테이블명 및 5년 데이터 활용)
 export async function fetchEnhancedGrahamStocks(): Promise<StockDataResult<EnhancedGrahamStock>> {
   try {
     console.log('=== 향상된 그레이엄 가치주 데이터 가져오기 시작 ===');
@@ -473,9 +456,9 @@ export async function fetchEnhancedGrahamStocks(): Promise<StockDataResult<Enhan
     const perStockCodes = perData.map((item) => item.stock_code);
     console.log(`PER 조건 통과 종목 수: ${perStockCodes.length}`);
 
-    // 2. 부채비율 조건에 맞는 종목 배치로 가져오기 (부채비율 100% 미만)
+    // 2. 부채비율 조건에 맞는 종목 배치로 가져오기
     const debtData = await fetchDataInBatches<any>(
-      'stock_checklist',
+      'stock_naver_checklist',
       'stock_code, company_name, industry, subindustry, debtratio',
       perStockCodes
     );
@@ -505,18 +488,20 @@ export async function fetchEnhancedGrahamStocks(): Promise<StockDataResult<Enhan
       return emptyResult<EnhancedGrahamStock>('현재가 데이터를 찾을 수 없습니다.');
     }
 
-    // 4. 재무 데이터 배치로 가져오기 (추가 필드 포함)
+    // 4. 재무 데이터 배치로 가져오기 (직접 필드 사용)
     const rawData = await fetchDataInBatches<any>(
-      'stock_raw_data',
+      'stock_naver_data',
       `stock_code,
-      2022_eps, 2023_eps, 2024_eps,
-      2024_equity,
+      2020_eps, 2021_eps, 2022_eps, 2023_eps, 2024_eps,
+      2024_equity, 2024_bps,
       shares_outstanding,
-      2022_dividend, 2023_dividend, 2024_dividend,
-      2024_current_assets, 2024_current_liabilities, 2024_non_current_liabilities,
+      2020_dividend, 2021_dividend, 2022_dividend, 2023_dividend, 2024_dividend,
+      2024_assets, 2024_liabilities,
       market_cap,
       2024_revenue,
-      2022_net_income, 2023_net_income, 2024_net_income`,
+      2020_net_income, 2021_net_income, 2022_net_income, 2023_net_income, 2024_net_income,
+      2024_pbr, 2024_debt_ratio,
+      2024_assets, 2024_liabilities`,
       debtStockCodes
     );
 
@@ -525,7 +510,19 @@ export async function fetchEnhancedGrahamStocks(): Promise<StockDataResult<Enhan
       return emptyResult<EnhancedGrahamStock>('재무 데이터를 찾을 수 없습니다.');
     }
 
-    // 5. 데이터 맵 생성
+    // 5. stock_naver_fairprice 테이블에서 growthrate 가져오기 (추가)
+    const fairpriceData = await fetchDataInBatches<any>(
+      'stock_naver_fairprice',
+      'stock_code, growthrate',
+      debtStockCodes
+    );
+
+    if (!fairpriceData || fairpriceData.length === 0) {
+      console.log('성장률 데이터가 없습니다.');
+      return emptyResult<EnhancedGrahamStock>('성장률 데이터를 찾을 수 없습니다.');
+    }
+
+    // 6. 데이터 맵 생성
     console.log('데이터 맵 생성 중...');
     const perMap = new Map(
       perData.map((item) => [
@@ -555,7 +552,17 @@ export async function fetchEnhancedGrahamStocks(): Promise<StockDataResult<Enhan
 
     const rawDataMap = new Map(rawData.map((item) => [item.stock_code, item]));
 
-    // 6. 종목 필터링 및 그레이엄 가격 계산
+    // 성장률 맵 생성 (추가)
+    const fairpriceMap = new Map(
+      fairpriceData.map((item) => [
+        item.stock_code,
+        {
+          growthrate: safeNumber(item.growthrate),
+        },
+      ])
+    );
+
+    // 7. 종목 필터링 및 그레이엄 가격 계산
     console.log('종목 필터링 및 그레이엄 가격 계산 중...');
     const enhancedGrahamStocks: EnhancedGrahamStock[] = [];
 
@@ -564,20 +571,27 @@ export async function fetchEnhancedGrahamStocks(): Promise<StockDataResult<Enhan
       const perInfo = perMap.get(stockCode);
       const currentPrice = priceMap.get(stockCode);
       const rawStockData = rawDataMap.get(stockCode);
+      const fairpriceInfo = fairpriceMap.get(stockCode); // 성장률 정보 가져오기 (추가)
 
-      // 필요한 모든 데이터가 있는지 확인
-      if (!debtInfo || !perInfo || !currentPrice || !rawStockData) {
+      // 필요한 모든 데이터가 있는지 확인 (fairpriceInfo 추가)
+      if (!debtInfo || !perInfo || !currentPrice || !rawStockData || !fairpriceInfo) {
         continue;
       }
 
-      // EPS 데이터 추출 및 평균 계산
-      const eps2022 = safeNumber(rawStockData['2022_eps']);
-      const eps2023 = safeNumber(rawStockData['2023_eps']);
-      const eps2024 = safeNumber(rawStockData['2024_eps']);
+      // EPS 데이터 추출 및 평균 계산 (5년 데이터 활용)
+      const epsValues = [
+        safeNumber(rawStockData['2020_eps']),
+        safeNumber(rawStockData['2021_eps']),
+        safeNumber(rawStockData['2022_eps']),
+        safeNumber(rawStockData['2023_eps']),
+        safeNumber(rawStockData['2024_eps']),
+      ].filter((eps) => eps > 0);
 
-      const epsData = [eps2022, eps2023, eps2024].filter((eps) => eps > 0);
       const avgEps =
-        epsData.length > 0 ? epsData.reduce((sum, eps) => sum + eps, 0) / epsData.length : 0;
+        epsValues.length > 0 ? epsValues.reduce((sum, eps) => sum + eps, 0) / epsValues.length : 0;
+
+      // 성장률은 fairprice 테이블에서 가져오기 (EPS 성장률 직접 계산 코드 대체)
+      const epsGrowthRate = fairpriceInfo.growthrate; // 이미 계산된 성장률 사용
 
       // 주식수 계산
       let sharesOutstanding = 0;
@@ -593,9 +607,8 @@ export async function fetchEnhancedGrahamStocks(): Promise<StockDataResult<Enhan
         continue;
       }
 
-      // BPS 계산 (주당 순자산가치)
-      const equity = safeNumber(rawStockData['2024_equity']);
-      const bps = equity / sharesOutstanding;
+      // BPS 사용 (직접 필드 사용)
+      const bps = safeNumber(rawStockData['2024_bps']);
 
       // 기존 그레이엄 가격 계산
       const grahamPrice = ((avgEps * 8 + bps) / 2) * 0.67;
@@ -603,10 +616,9 @@ export async function fetchEnhancedGrahamStocks(): Promise<StockDataResult<Enhan
       // NCAV 계산
       const currentAssets = safeNumber(rawStockData['2024_current_assets']);
       const currentLiabilities = safeNumber(rawStockData['2024_current_liabilities']);
-      const nonCurrentLiabilities = safeNumber(rawStockData['2024_non_current_liabilities']);
 
       // 회사 전체 NCAV 계산
-      const totalNCAV = currentAssets - (currentLiabilities + nonCurrentLiabilities);
+      const totalNCAV = currentAssets - currentLiabilities;
 
       // 주당 NCAV 계산
       const ncavPerShare = totalNCAV / sharesOutstanding;
@@ -616,37 +628,47 @@ export async function fetchEnhancedGrahamStocks(): Promise<StockDataResult<Enhan
       // 수정 그레이엄 가격 계산
       const modifiedGrahamPrice = ((avgEps * 8 + nonNegativeNcav) / 2) * 0.67;
 
-      // 추가 지표 계산
+      // 추가 지표 계산 (직접 필드 사용)
       const marketCap = safeNumber(rawStockData['market_cap']);
       const revenue = safeNumber(rawStockData['2024_revenue']);
 
-      // EPS 성장률 계산 (3년간)
-      let epsGrowthRate = 0;
-      if (eps2022 > 0 && eps2024 > 0) {
-        epsGrowthRate = ((eps2024 - eps2022) / eps2022) * 100;
-      }
+      // PBR 직접 사용
+      const currentPbr = safeNumber(rawStockData['2024_pbr']);
 
-      // PBR 계산
-      const currentPbr = bps > 0 ? currentPrice / bps : 0;
-
-      // 수익성 확인 (3년간 적자 없음)
+      // 수익성 확인 (5년간 적자 없음)
+      const netIncome2020 = safeNumber(rawStockData['2020_net_income']);
+      const netIncome2021 = safeNumber(rawStockData['2021_net_income']);
       const netIncome2022 = safeNumber(rawStockData['2022_net_income']);
       const netIncome2023 = safeNumber(rawStockData['2023_net_income']);
       const netIncome2024 = safeNumber(rawStockData['2024_net_income']);
-      const hasProfitForAllYears = netIncome2022 > 0 && netIncome2023 > 0 && netIncome2024 > 0;
 
-      // 연속 배당 확인
-      const consecutiveDividend =
-        safeNumber(rawStockData['2022_dividend']) > 0 &&
-        safeNumber(rawStockData['2023_dividend']) > 0 &&
-        safeNumber(rawStockData['2024_dividend']) > 0;
+      // 최소 4년 이상 수익이 있는지 확인 (5년 중 4년 이상)
+      const positiveIncomeCount = [
+        netIncome2020,
+        netIncome2021,
+        netIncome2022,
+        netIncome2023,
+        netIncome2024,
+      ].filter((income) => income > 0).length;
+      const hasProfitForMostYears = positiveIncomeCount >= 4;
+
+      // 배당을 확인하는 로직 변경: 5년 연속 배당에서 4회 이상 배당으로 변경
+      const dividendYears = [
+        rawStockData['2020_dividend'] !== null && safeNumber(rawStockData['2020_dividend']) > 0,
+        rawStockData['2021_dividend'] !== null && safeNumber(rawStockData['2021_dividend']) > 0,
+        rawStockData['2022_dividend'] !== null && safeNumber(rawStockData['2022_dividend']) > 0,
+        rawStockData['2023_dividend'] !== null && safeNumber(rawStockData['2023_dividend']) > 0,
+        rawStockData['2024_dividend'] !== null && safeNumber(rawStockData['2024_dividend']) > 0,
+      ];
+      const dividendYearsCount = dividendYears.filter(Boolean).length;
+      const hasDividendForMostYears = dividendYearsCount >= 4;
 
       // 7가지 기준 체크
       const meetsSizeCriteria = marketCap >= 50000000000 && revenue >= 50000000000; // 500억 이상
       const meetsDebtCriteria = isDebtRatioAcceptable(debtInfo.subindustry, debtInfo.debtratio);
-      const meetsDividendCriteria = consecutiveDividend;
-      const meetsProfitCriteria = hasProfitForAllYears;
-      const meetsGrowthCriteria = epsGrowthRate >= 20;
+      const meetsDividendCriteria = hasDividendForMostYears; // 변경: 연속 배당에서 4회 이상으로 변경
+      const meetsProfitCriteria = hasProfitForMostYears;
+      const meetsGrowthCriteria = epsGrowthRate >= 10; // 변경: 20%에서 10%로 기준 완화
       const meetsPbrCriteria =
         debtInfo.subindustry === '은행' ||
         debtInfo.subindustry === '손해보험' ||
@@ -684,7 +706,8 @@ export async function fetchEnhancedGrahamStocks(): Promise<StockDataResult<Enhan
           current_price: currentPrice,
           dividend_yield: perInfo.dividend,
           graham_price: grahamPrice,
-          consecutive_dividend: consecutiveDividend,
+          consecutive_dividend: hasDividendForMostYears,
+          //dividend_years_count: dividendYearsCount, // 새로운 필드: 배당 연도 수
           bps: bps,
           avg_eps: avgEps,
           ncav: ncavPerShare,
@@ -706,7 +729,7 @@ export async function fetchEnhancedGrahamStocks(): Promise<StockDataResult<Enhan
       }
     }
 
-    // 7. 산업군과 하위 산업군 목록 생성
+    // 8. 산업군과 하위 산업군 목록 생성
     console.log('산업군 및 하위 산업군 목록 생성 중...');
     const uniqueIndustries = Array.from(
       new Set(enhancedGrahamStocks.map((stock) => stock.industry))
@@ -732,7 +755,7 @@ export async function fetchEnhancedGrahamStocks(): Promise<StockDataResult<Enhan
   }
 }
 
-// 고배당 가치주 데이터 가져오기 (Flavor Stocks)
+// 고배당 가치주 데이터 가져오기 (Flavor Stocks) (테이블명 및 5년 데이터 활용)
 export async function fetchFlavorStocks(): Promise<StockDataResult<FlavorStock>> {
   try {
     console.log('=== 고배당 가치주 데이터 가져오기 시작 ===');
@@ -761,15 +784,15 @@ export async function fetchFlavorStocks(): Promise<StockDataResult<FlavorStock>>
 
     // 2. 자산 데이터 배치로 가져오기
     const assetsData = await fetchDataInBatches<any>(
-      'stock_raw_data',
+      'stock_naver_data',
       'stock_code, 2024_assets',
       stockCodes
     );
 
     // 2-1. 연속 배당 확인을 위한 데이터 가져오기
     const dividendRawData = await fetchDataInBatches<any>(
-      'stock_raw_data',
-      'stock_code, 2022_dividend, 2023_dividend, 2024_dividend',
+      'stock_naver_data',
+      'stock_code, 2020_dividend, 2021_dividend, 2022_dividend, 2023_dividend, 2024_dividend',
       stockCodes
     );
 
@@ -807,7 +830,7 @@ export async function fetchFlavorStocks(): Promise<StockDataResult<FlavorStock>>
 
     // 5. 산업 정보 배치로 가져오기
     const industryInfo = await fetchDataInBatches<any>(
-      'stock_checklist',
+      'stock_naver_checklist',
       'stock_code, industry, subindustry',
       filteredCodes
     );
@@ -832,12 +855,7 @@ export async function fetchFlavorStocks(): Promise<StockDataResult<FlavorStock>>
 
     // 연속 배당 확인 맵 생성
     const consecutiveDividendMap = new Map(
-      dividendRawData.map((item) => [
-        item.stock_code,
-        safeNumber(item['2022_dividend']) > 0 &&
-          safeNumber(item['2023_dividend']) > 0 &&
-          safeNumber(item['2024_dividend']) > 0,
-      ])
+      dividendRawData.map((item) => [item.stock_code, hasConsecutiveDividend(item)])
     );
 
     // 통합 맵 생성
@@ -875,7 +893,7 @@ export async function fetchFlavorStocks(): Promise<StockDataResult<FlavorStock>>
         current_price: item.current_price || 0,
         dividend_yield: dividendAssetsMap.get(item.stock_code)?.dividend || 0,
         assets: dividendAssetsMap.get(item.stock_code)?.assets || 0,
-        consecutive_dividend: consecutiveDividendMap.get(item.stock_code) || false, // 연속 배당 정보 추가
+        consecutive_dividend: consecutiveDividendMap.get(item.stock_code) || false,
       }));
 
     // 8. 산업군과 하위 산업군 목록 생성
@@ -904,20 +922,18 @@ export async function fetchFlavorStocks(): Promise<StockDataResult<FlavorStock>>
   }
 }
 
-// 비즈니스 퀄리티 주식 데이터 가져오기
+// 비즈니스 퀄리티 주식 데이터 가져오기 (테이블명 및 5년 데이터 활용)
 export async function fetchQualityStocks(): Promise<StockDataResult<QualityStock>> {
   try {
     console.log('=== 비즈니스 퀄리티 주식 데이터 가져오기 시작 ===');
 
-    // 1. 재무 데이터 페이지네이션으로 가져오기
+    // 1. 재무 데이터 페이지네이션으로 가져오기 (5년 데이터 활용)
     const rawData = await fetchAllDataWithPagination<any>(
-      'stock_raw_data',
+      'stock_naver_data',
       `stock_code, 
-      2022_net_income, 2023_net_income, 2024_net_income,
-      2022_equity, 2023_equity, 2024_equity,
-      2022_operating_income, 2023_operating_income, 2024_operating_income,
-      2022_revenue, 2023_revenue, 2024_revenue,
-      2022_dividend, 2023_dividend, 2024_dividend` // 배당 데이터 필드 추가
+      2020_roe, 2021_roe, 2022_roe, 2023_roe, 2024_roe,
+      2020_operating_margin, 2021_operating_margin, 2022_operating_margin, 2023_operating_margin, 2024_operating_margin,
+      2020_dividend, 2021_dividend, 2022_dividend, 2023_dividend, 2024_dividend`
     );
 
     if (!rawData || rawData.length === 0) {
@@ -926,34 +942,28 @@ export async function fetchQualityStocks(): Promise<StockDataResult<QualityStock
 
     console.log(`재무 데이터 가져오기 완료: ${rawData.length}개 종목`);
 
-    // 2. 각 종목별로 ROE와 영업이익률 계산 및 필터링
+    // 2. 각 종목별로 ROE와 영업이익률 계산 및 필터링 (직접 필드 사용)
     console.log('ROE와 영업이익률 계산 및 필터링 중...');
     const qualityStocksMap = new Map();
 
     rawData.forEach((stock) => {
-      // ROE 계산 (당기순이익 ÷ 자본총계)
-      const roeArray = [];
-      if (stock['2022_net_income'] && stock['2022_equity'] && stock['2022_equity'] !== 0) {
-        roeArray.push((stock['2022_net_income'] / stock['2022_equity']) * 100);
-      }
-      if (stock['2023_net_income'] && stock['2023_equity'] && stock['2023_equity'] !== 0) {
-        roeArray.push((stock['2023_net_income'] / stock['2023_equity']) * 100);
-      }
-      if (stock['2024_net_income'] && stock['2024_equity'] && stock['2024_equity'] !== 0) {
-        roeArray.push((stock['2024_net_income'] / stock['2024_equity']) * 100);
-      }
+      // ROE 계산 (직접 필드 사용)
+      const roeArray = [
+        safeNumber(stock['2020_roe']),
+        safeNumber(stock['2021_roe']),
+        safeNumber(stock['2022_roe']),
+        safeNumber(stock['2023_roe']),
+        safeNumber(stock['2024_roe']),
+      ].filter((roe) => roe > 0);
 
-      // 영업이익률 계산 (영업이익 ÷ 매출)
-      const marginArray = [];
-      if (stock['2022_operating_income'] && stock['2022_revenue'] && stock['2022_revenue'] !== 0) {
-        marginArray.push((stock['2022_operating_income'] / stock['2022_revenue']) * 100);
-      }
-      if (stock['2023_operating_income'] && stock['2023_revenue'] && stock['2023_revenue'] !== 0) {
-        marginArray.push((stock['2023_operating_income'] / stock['2023_revenue']) * 100);
-      }
-      if (stock['2024_operating_income'] && stock['2024_revenue'] && stock['2024_revenue'] !== 0) {
-        marginArray.push((stock['2024_operating_income'] / stock['2024_revenue']) * 100);
-      }
+      // 영업이익률 계산 (직접 필드 사용)
+      const marginArray = [
+        safeNumber(stock['2020_operating_margin']),
+        safeNumber(stock['2021_operating_margin']),
+        safeNumber(stock['2022_operating_margin']),
+        safeNumber(stock['2023_operating_margin']),
+        safeNumber(stock['2024_operating_margin']),
+      ].filter((margin) => margin > 0);
 
       // 평균 계산
       const avgRoe =
@@ -961,18 +971,15 @@ export async function fetchQualityStocks(): Promise<StockDataResult<QualityStock
       const avgMargin =
         marginArray.length > 0 ? marginArray.reduce((a, b) => a + b, 0) / marginArray.length : 0;
 
-      // 연속 배당 여부 체크 추가
-      const consecutiveDividend =
-        safeNumber(stock['2022_dividend']) > 0 &&
-        safeNumber(stock['2023_dividend']) > 0 &&
-        safeNumber(stock['2024_dividend']) > 0;
+      // 5년 연속 배당 여부 체크
+      const consecutiveDividend = hasConsecutiveDividend(stock);
 
       // 조건에 맞는 종목만 저장 (ROE >= 10%, 영업이익률 >= 15%)
       if (avgRoe >= 10 && avgMargin >= 15) {
         qualityStocksMap.set(stock.stock_code, {
           avg_roe: avgRoe,
           avg_operating_margin: avgMargin,
-          consecutive_dividend: consecutiveDividend, // 연속 배당 정보 추가
+          consecutive_dividend: consecutiveDividend,
         });
       }
     });
@@ -1013,7 +1020,7 @@ export async function fetchQualityStocks(): Promise<StockDataResult<QualityStock
 
     // 6. 산업 정보 배치로 가져오기
     const industryInfo = await fetchDataInBatches<any>(
-      'stock_checklist',
+      'stock_naver_checklist',
       'stock_code, industry, subindustry',
       perFilteredCodes
     );
@@ -1042,7 +1049,7 @@ export async function fetchQualityStocks(): Promise<StockDataResult<QualityStock
 
     // 8. 모든 조건을 만족하는 종목 데이터 구성
     console.log('최종 데이터 구성 중...');
-    const QualityStocks: QualityStock[] = stockInfo
+    const qualityStocks: QualityStock[] = stockInfo
       .filter((item) => perFilteredCodes.includes(item.stock_code))
       .map((item) => {
         const qualityData = qualityStocksMap.get(item.stock_code);
@@ -1058,25 +1065,25 @@ export async function fetchQualityStocks(): Promise<StockDataResult<QualityStock
           dividend_yield: perData?.dividend || 0,
           avg_roe: qualityData?.avg_roe || 0,
           avg_operating_margin: qualityData?.avg_operating_margin || 0,
-          consecutive_dividend: qualityData?.consecutive_dividend || false, // 연속 배당 여부 추가
+          consecutive_dividend: qualityData?.consecutive_dividend || false,
         };
       });
 
     // 9. 산업군과 하위 산업군 목록 생성
     console.log('산업군 및 하위 산업군 목록 생성 중...');
     const uniqueIndustries = Array.from(
-      new Set(QualityStocks.map((stock) => stock.industry))
+      new Set(qualityStocks.map((stock) => stock.industry))
     ).sort();
 
     const uniqueSubIndustries = Array.from(
-      new Set(QualityStocks.map((stock) => stock.subindustry))
+      new Set(qualityStocks.map((stock) => stock.subindustry))
     ).sort();
 
-    console.log(`최종 필터링 후 종목 수: ${QualityStocks.length}`);
+    console.log(`최종 필터링 후 종목 수: ${qualityStocks.length}`);
 
     // 10. 최종 결과 반환
     return {
-      stocks: QualityStocks,
+      stocks: qualityStocks,
       industries: uniqueIndustries,
       subIndustries: uniqueSubIndustries,
       error: null,
@@ -1089,7 +1096,7 @@ export async function fetchQualityStocks(): Promise<StockDataResult<QualityStock
   }
 }
 
-// fetchSrimStocks 함수 구현 (수정 버전)
+// fetchSrimStocks 함수 구현 (테이블명 및 5년 데이터 활용)
 export async function fetchSrimStocks(): Promise<StockDataResult<SrimStock>> {
   try {
     console.log('=== S-RIM 기반 주식 데이터 가져오기 시작 ===');
@@ -1104,10 +1111,10 @@ export async function fetchSrimStocks(): Promise<StockDataResult<SrimStock>> {
     const validStockCodes = acceptableDebtStocks.map((item) => item.stock_code);
     console.log(`부채비율 조건을 충족하는 종목 수: ${validStockCodes.length}`);
 
-    // 2. 부채비율 조건을 충족하는 종목에 대해서만 stock_fairprice 테이블에서 필요한 데이터 조회
+    // 2. 부채비율 조건을 충족하는 종목에 대해서만 stock_naver_fairprice 테이블에서 필요한 데이터 조회
     const fairpriceData = await fetchDataInBatches<any>(
-      'stock_fairprice',
-      'stock_code, company_name, industry, subindustry, srimbase, srimdecline10pct, srimdecline20pct, latestroe',
+      'stock_naver_fairprice',
+      'stock_code, company_name, industry, subindustry, srimbase, srimdecline10pct, srimdecline20pct, weightedroe',
       validStockCodes
     );
 
@@ -1132,12 +1139,12 @@ export async function fetchSrimStocks(): Promise<StockDataResult<SrimStock>> {
       fairpriceStockCodes
     );
 
-    // 5. 연속 배당 확인과 영업이익 확인을 위한 데이터 배치로 가져오기
+    // 5. 연속 배당 확인과 영업이익 확인을 위한 데이터 배치로 가져오기 (5년 데이터 활용)
     const rawData = await fetchDataInBatches<any>(
-      'stock_raw_data',
+      'stock_naver_data',
       `stock_code, 
-      2022_dividend, 2023_dividend, 2024_dividend,
-      2022_operating_income, 2023_operating_income, 2024_operating_income`,
+      2020_dividend, 2021_dividend, 2022_dividend, 2023_dividend, 2024_dividend,
+      2020_operating_income, 2021_operating_income, 2022_operating_income, 2023_operating_income, 2024_operating_income`,
       fairpriceStockCodes
     );
 
@@ -1174,18 +1181,8 @@ export async function fetchSrimStocks(): Promise<StockDataResult<SrimStock>> {
         continue;
       }
 
-      // 영업이익 데이터 확인 및 음수 개수 카운트
-      const operatingIncome2022 = safeNumber(rawStockData['2022_operating_income']);
-      const operatingIncome2023 = safeNumber(rawStockData['2023_operating_income']);
-      const operatingIncome2024 = safeNumber(rawStockData['2024_operating_income']);
-
-      // 3년 중 2년 이상 영업이익이 음수인 기업 제외
-      let negativeOperatingIncomeCount = 0;
-      if (operatingIncome2022 < 0) negativeOperatingIncomeCount++;
-      if (operatingIncome2023 < 0) negativeOperatingIncomeCount++;
-      if (operatingIncome2024 < 0) negativeOperatingIncomeCount++;
-
-      if (negativeOperatingIncomeCount >= 2) {
+      // 5년 중 3년 이상 영업이익이 음수인 기업 제외
+      if (countNegativeOperatingIncomes(rawStockData) >= 3) {
         continue;
       }
 
@@ -1202,11 +1199,8 @@ export async function fetchSrimStocks(): Promise<StockDataResult<SrimStock>> {
       // 안전마진 계산
       const marginOfSafety = (srimBase - currentPrice) / srimBase;
 
-      // 연속 배당 확인
-      const consecutiveDividend =
-        safeNumber(rawStockData['2022_dividend']) > 0 &&
-        safeNumber(rawStockData['2023_dividend']) > 0 &&
-        safeNumber(rawStockData['2024_dividend']) > 0;
+      // 5년 연속 배당 확인
+      const consecutiveDividend = hasConsecutiveDividend(rawStockData);
 
       // 30% 이상 저평가된 종목만 추가
       if (marginOfSafety >= MIN_MARGIN_OF_SAFETY) {
@@ -1223,7 +1217,7 @@ export async function fetchSrimStocks(): Promise<StockDataResult<SrimStock>> {
           margin_of_safety: marginOfSafety * 100, // 백분율로 변환
           dividend_yield: dividendInfo.dividend || 0,
           consecutive_dividend: consecutiveDividend,
-          latestroe: safeNumber(fairpriceItem.latestroe),
+          weightedroe: safeNumber(fairpriceItem.weightedroe),
         });
       }
     }
@@ -1251,7 +1245,7 @@ export async function fetchSrimStocks(): Promise<StockDataResult<SrimStock>> {
   }
 }
 
-// fetchHowardStocks 함수 - 페이지네이션 적용 (수정된 버전)
+// fetchHowardStocks 함수 - 페이지네이션 적용 (테이블명 및 5년 데이터 활용)
 export async function fetchHowardStocks(): Promise<StockDataResult<HowardStock>> {
   try {
     console.log('=== 하워드 막스 내재가치 주식 데이터 가져오기 시작 ===');
@@ -1286,15 +1280,17 @@ export async function fetchHowardStocks(): Promise<StockDataResult<HowardStock>>
       stockCodes
     );
 
-    // 5. 재무 데이터 배치로 가져오기
+    // 5. 재무 데이터 배치로 가져오기 (5년 데이터 활용)
     const rawData = await fetchDataInBatches<any>(
-      'stock_raw_data',
+      'stock_naver_data',
       `stock_code,
       shares_outstanding,
+      2020_operating_cash_flow, 2020_capex, 2020_free_cash_flow, 2020_operating_income,
+      2021_operating_cash_flow, 2021_capex, 2021_free_cash_flow, 2021_operating_income,
       2022_operating_cash_flow, 2022_capex, 2022_free_cash_flow, 2022_operating_income,
       2023_operating_cash_flow, 2023_capex, 2023_free_cash_flow, 2023_operating_income,
       2024_operating_cash_flow, 2024_capex, 2024_free_cash_flow, 2024_operating_income,
-      2022_dividend, 2023_dividend, 2024_dividend`,
+      2020_dividend, 2021_dividend, 2022_dividend, 2023_dividend, 2024_dividend`,
       stockCodes
     );
 
@@ -1338,18 +1334,8 @@ export async function fetchHowardStocks(): Promise<StockDataResult<HowardStock>>
         continue;
       }
 
-      // 영업이익 데이터 확인 및 음수 개수 카운트
-      const operatingIncome2022 = safeNumber(rawStockData['2022_operating_income']);
-      const operatingIncome2023 = safeNumber(rawStockData['2023_operating_income']);
-      const operatingIncome2024 = safeNumber(rawStockData['2024_operating_income']);
-
-      // 3년 중 2년 이상 영업이익이 음수인 기업 제외
-      let negativeOperatingIncomeCount = 0;
-      if (operatingIncome2022 < 0) negativeOperatingIncomeCount++;
-      if (operatingIncome2023 < 0) negativeOperatingIncomeCount++;
-      if (operatingIncome2024 < 0) negativeOperatingIncomeCount++;
-
-      if (negativeOperatingIncomeCount >= 2) {
+      // 5년 중 3년 이상 영업이익이 음수인 기업 제외
+      if (countNegativeOperatingIncomes(rawStockData) >= 3) {
         continue;
       }
 
@@ -1367,42 +1353,39 @@ export async function fetchHowardStocks(): Promise<StockDataResult<HowardStock>>
         continue;
       }
 
-      // FCF 계산 (없거나 0이면 영업현금흐름 - 자본지출 방식 사용)
-      let fcf2022 = safeNumber(rawStockData['2022_free_cash_flow']);
-      let fcf2023 = safeNumber(rawStockData['2023_free_cash_flow']);
-      let fcf2024 = safeNumber(rawStockData['2024_free_cash_flow']);
+      // FCF 계산 (직접 필드 사용 우선)
+      const fcfValues = [
+        safeNumber(rawStockData['2020_free_cash_flow']),
+        safeNumber(rawStockData['2021_free_cash_flow']),
+        safeNumber(rawStockData['2022_free_cash_flow']),
+        safeNumber(rawStockData['2023_free_cash_flow']),
+        safeNumber(rawStockData['2024_free_cash_flow']),
+      ];
 
-      // FCF가 null이거나 0인 경우 영업현금흐름 - 자본지출로 계산
-      if (fcf2022 === 0) {
-        const ocf2022 = safeNumber(rawStockData['2022_operating_cash_flow']);
-        const capex2022 = safeNumber(rawStockData['2022_capex']);
-        fcf2022 = ocf2022 - capex2022;
+      // FCF 값이 0인 경우 영업현금흐름 - 자본지출로 계산
+      for (let i = 0; i < 5; i++) {
+        const year = 2020 + i;
+        if (fcfValues[i] === 0) {
+          const ocf = safeNumber(rawStockData[`${year}_operating_cash_flow`]);
+          const capex = safeNumber(rawStockData[`${year}_capex`]);
+          fcfValues[i] = ocf - capex;
+        }
       }
 
-      if (fcf2023 === 0) {
-        const ocf2023 = safeNumber(rawStockData['2023_operating_cash_flow']);
-        const capex2023 = safeNumber(rawStockData['2023_capex']);
-        fcf2023 = ocf2023 - capex2023;
-      }
-
-      if (fcf2024 === 0) {
-        const ocf2024 = safeNumber(rawStockData['2024_operating_cash_flow']);
-        const capex2024 = safeNumber(rawStockData['2024_capex']);
-        fcf2024 = ocf2024 - capex2024;
-      }
-
-      // FCF 정규화 (중앙값 방식)
-      const fcfValues = [fcf2022, fcf2023, fcf2024].filter((fcf) => fcf !== 0);
-      if (fcfValues.length === 0) {
+      // 유효한 FCF 값 필터링
+      const validFcfValues = fcfValues.filter((fcf) => fcf !== 0);
+      if (validFcfValues.length === 0) {
         continue;
       }
 
       // 정렬 후 중앙값 가져오기
-      fcfValues.sort((a, b) => a - b);
+      validFcfValues.sort((a, b) => a - b);
       const fcfMedian =
-        fcfValues.length % 2 === 0
-          ? (fcfValues[fcfValues.length / 2 - 1] + fcfValues[fcfValues.length / 2]) / 2
-          : fcfValues[Math.floor(fcfValues.length / 2)];
+        validFcfValues.length % 2 === 0
+          ? (validFcfValues[validFcfValues.length / 2 - 1] +
+              validFcfValues[validFcfValues.length / 2]) /
+            2
+          : validFcfValues[Math.floor(validFcfValues.length / 2)];
 
       // 주당 FCF 계산
       const fcfPerShare = fcfMedian / sharesOutstanding;
@@ -1443,11 +1426,8 @@ export async function fetchHowardStocks(): Promise<StockDataResult<HowardStock>>
       const marginOfSafety =
         baseIntrinsicValue > 0 ? (baseIntrinsicValue - currentPrice) / baseIntrinsicValue : 0;
 
-      // 연속 배당 확인
-      const consecutiveDividend =
-        safeNumber(rawStockData['2022_dividend']) > 0 &&
-        safeNumber(rawStockData['2023_dividend']) > 0 &&
-        safeNumber(rawStockData['2024_dividend']) > 0;
+      // 5년 연속 배당 확인
+      const consecutiveDividend = hasConsecutiveDividend(rawStockData);
 
       // 조건 확인: 현재가 < 기본 시나리오 내재가치 & 안전마진 >= 30%
       if (currentPrice < baseIntrinsicValue && marginOfSafety >= MIN_MARGIN_OF_SAFETY) {
