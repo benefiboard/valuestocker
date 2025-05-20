@@ -56,7 +56,7 @@ export default function ProfitCalculatorPage() {
   // 드롭다운 옵션
   const discountRateOptions = [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
   const sustainableYearsOptions = Array.from({ length: 16 }, (_, i) => i + 5); // 5-20년
-  const settingROEOptions = Array.from({ length: 16 }, (_, i) => i + 5); // 5-20%
+  const settingROEOptions = Array.from({ length: 20 }, (_, i) => i + 1); // 1-20%
 
   // 회사 선택 핸들러
   const handleCompanySelect = async (company: CompanyInfo) => {
@@ -335,7 +335,14 @@ export default function ProfitCalculatorPage() {
                     >
                       {settingROEOptions.map((roe) => (
                         <option key={roe} value={roe}>
-                          {roe}% {roe >= 15 ? '(우수)' : roe >= 10 ? '(양호)' : '(보통)'}
+                          {roe}%{' '}
+                          {roe >= 15
+                            ? '(우수)'
+                            : roe >= 10
+                            ? '(양호)'
+                            : roe >= 5
+                            ? '(보통)'
+                            : '(저조)'}
                         </option>
                       ))}
                     </select>
@@ -590,7 +597,14 @@ export default function ProfitCalculatorPage() {
                   >
                     {settingROEOptions.map((roe) => (
                       <option key={roe} value={roe}>
-                        {roe}% {roe >= 15 ? '(우수)' : roe >= 10 ? '(양호)' : '(보통)'}
+                        {roe}%{' '}
+                        {roe >= 15
+                          ? '(우수)'
+                          : roe >= 10
+                          ? '(양호)'
+                          : roe >= 5
+                          ? '(보통)'
+                          : '(저조)'}
                       </option>
                     ))}
                   </select>

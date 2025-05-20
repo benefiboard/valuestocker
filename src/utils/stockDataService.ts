@@ -79,6 +79,28 @@ export interface HowardStock {
   discount_rate: number; // 할인율 (%)
   margin_of_safety: number; // 안전마진 (%)
   consecutive_dividend: boolean; // 5년 연속 배당 여부
+  growthrate: number; // 성장률
+  net_current_asset_value: number; // 순자산가치
+  market_cap: number; // 시가총액
+  market_cap_to_intrinsic_ratio: number; // 시가총액/내재가치 비율
+}
+
+export interface ProfitStock {
+  stock_code: string;
+  company_name: string;
+  industry: string;
+  subindustry: string;
+  current_price: number;
+  dividend_yield: number;
+  fcf_median: number; // 중앙값 FCF
+  fcf_per_share: number; // 주당 FCF
+  base_intrinsic_value: number; // 기본 시나리오 내재가치
+  optimistic_intrinsic_value: number; // 낙관 시나리오 내재가치
+  conservative_intrinsic_value: number; // 보수 시나리오 내재가치
+  discount_rate: number; // 할인율 (%)
+  margin_of_safety: number; // 안전마진 (%)
+  consecutive_dividend: boolean; // 5년 연속 배당 여부
+  growthrate: number; // 성장률
 }
 
 export interface LynchStock {
@@ -317,10 +339,13 @@ export async function fetchLynchStocks(): Promise<StockDataResult<LynchStock>> {
       return emptyResult<LynchStock>('현재 주식 데이터를 찾을 수 없습니다.');
     }
 
-    // PEG가 0 초과인 종목만 필터링
-    const pegStockData = currentData.filter((item) => safeNumber(item.peg) > 0);
+    // PEG가 0초과 1이하인 종목만 필터링
+    const pegStockData = currentData.filter((item) => {
+      const peg = safeNumber(item.peg);
+      return peg > 0 && peg <= 1;
+    });
     const pegStockCodes = pegStockData.map((item) => item.stock_code);
-    console.log(`PEG > 0인 종목 수: ${pegStockCodes.length}`);
+    console.log(`0 < PEG ≤ 1인 종목 수: ${pegStockCodes.length}`);
 
     // 3. 필요한 추가 데이터 가져오기
     const stockInfo = await fetchDataInBatches<any>(
@@ -1246,11 +1271,12 @@ export async function fetchSrimStocks(): Promise<StockDataResult<SrimStock>> {
 }
 
 // fetchHowardStocks 함수 - 페이지네이션 적용 (테이블명 및 5년 데이터 활용)
+// fetchHowardStocks 함수 - 순자산가치 기반 가치주 계산으로 수정
 export async function fetchHowardStocks(): Promise<StockDataResult<HowardStock>> {
   try {
-    console.log('=== 하워드 막스 내재가치 주식 데이터 가져오기 시작 ===');
+    console.log('=== 순자산가치 기반 가치주 데이터 가져오기 시작 ===');
 
-    // 1. 산업별 성장률 데이터 불러오기
+    // 1. 산업별 성장률 데이터 불러오기 (참고용으로 유지)
     const industryData = (await import('@/lib/industry-DATA.json').then(
       (module) => module.default
     )) as IndustryData[];
@@ -1280,7 +1306,220 @@ export async function fetchHowardStocks(): Promise<StockDataResult<HowardStock>>
       stockCodes
     );
 
-    // 5. 재무 데이터 배치로 가져오기 (5년 데이터 활용)
+    // 5. 재무 데이터 배치로 가져오기 (5년 데이터 활용 - FCF 및 자산/부채 데이터)
+    const rawData = await fetchDataInBatches<any>(
+      'stock_naver_data',
+      `stock_code,
+      shares_outstanding,
+      2020_operating_cash_flow, 2020_capex, 2020_free_cash_flow, 2020_operating_income,
+      2021_operating_cash_flow, 2021_capex, 2021_free_cash_flow, 2021_operating_income,
+      2022_operating_cash_flow, 2022_capex, 2022_free_cash_flow, 2022_operating_income,
+      2023_operating_cash_flow, 2023_capex, 2023_free_cash_flow, 2023_operating_income,
+      2024_operating_cash_flow, 2024_capex, 2024_free_cash_flow, 2024_operating_income,
+      2024_shares_outstanding,
+      2020_dividend, 2021_dividend, 2022_dividend, 2023_dividend, 2024_dividend`,
+      stockCodes
+    );
+
+    // 6. 순자산가치 계산을 위한 데이터 가져오기 (stock_raw_data 테이블에서)
+    console.log('순자산가치 계산을 위한 데이터 가져오는 중...');
+    const netAssetData = await fetchDataInBatches<any>(
+      'stock_raw_data',
+      'stock_code, 2024_current_assets, 2024_current_liabilities',
+      stockCodes
+    );
+
+    // 7. 성장률 데이터 배치로 가져오기 (참고용으로 유지)
+    console.log('성장률 데이터 불러오는 중...');
+    const growthData = await fetchDataInBatches<any>(
+      'stock_naver_fairprice',
+      'stock_code, growthrate',
+      stockCodes
+    );
+
+    // 8. 데이터 맵 생성 - 캐시된 부채비율 데이터 활용
+    console.log('데이터 맵 생성 중...');
+    const stockMap = new Map(
+      acceptableDebtStocks.map((item) => [
+        item.stock_code,
+        {
+          stock_code: item.stock_code,
+          company_name: item.company_name,
+          industry: item.industry,
+          subindustry: item.subindustry,
+          debtratio: item.debtratio,
+        },
+      ])
+    );
+
+    const priceMap = new Map(
+      priceData.map((item) => [item.stock_code, safeNumber(item.current_price)])
+    );
+    const dividendMap = new Map(
+      dividendData.map((item) => [item.stock_code, safeNumber(item.current_dividend)])
+    );
+    const rawDataMap = new Map(rawData.map((item) => [item.stock_code, item]));
+    const netAssetMap = new Map(netAssetData.map((item) => [item.stock_code, item]));
+
+    // 성장률 맵 생성 (참고용으로 유지)
+    const growthRateMap = new Map(
+      growthData.map((item) => [item.stock_code, safeNumber(item.growthrate)])
+    );
+
+    // 9. 순자산가치 기반 내재가치 계산 및 종목 필터링
+    console.log('순자산가치 기반 내재가치 계산 및 종목 필터링 중...');
+    const howardStocks: HowardStock[] = [];
+
+    for (const stockCode of stockCodes) {
+      const stockInfo = stockMap.get(stockCode);
+      const currentPrice = priceMap.get(stockCode);
+      const dividendYield = dividendMap.get(stockCode);
+      const rawStockData = rawDataMap.get(stockCode);
+      const netAssetData = netAssetMap.get(stockCode);
+      const growthRate = growthRateMap.get(stockCode) || 0;
+
+      // 필요한 모든 데이터가 있는지 확인
+      if (!stockInfo || !currentPrice || !rawStockData || !netAssetData) {
+        continue;
+      }
+
+      // 2024년 유동자산과 유동부채 데이터 확인
+      const currentAssets = safeNumber(netAssetData['2024_current_assets']);
+      const currentLiabilities = safeNumber(netAssetData['2024_current_liabilities']);
+
+      // 순자산 또는 자산/부채 데이터가 없으면 제외
+      if (currentAssets <= 0 || currentLiabilities < 0) {
+        continue;
+      }
+
+      // 발행주식수 계산
+      let sharesOutstanding = 0;
+      // 2024년 발행주식수를 우선 사용
+      if (rawStockData['2024_shares_outstanding']) {
+        if (typeof rawStockData['2024_shares_outstanding'] === 'string') {
+          sharesOutstanding = Number(rawStockData['2024_shares_outstanding'].replace(/,/g, ''));
+        } else {
+          sharesOutstanding = Number(rawStockData['2024_shares_outstanding']);
+        }
+      }
+      // 없을 경우 기존 shares_outstanding 필드 사용
+      else if (rawStockData['shares_outstanding']) {
+        if (typeof rawStockData['shares_outstanding'] === 'string') {
+          sharesOutstanding = Number(rawStockData['shares_outstanding'].replace(/,/g, ''));
+        } else {
+          sharesOutstanding = Number(rawStockData['shares_outstanding']);
+        }
+      }
+
+      if (isNaN(sharesOutstanding) || sharesOutstanding <= 0) {
+        continue;
+      }
+
+      // 순자산가치 계산 (유동자산 - 유동부채)
+      const netCurrentAssetValue = currentAssets - currentLiabilities;
+
+      // 시가총액 계산 (현재가 × 발행주식수)
+      const marketCap = currentPrice * sharesOutstanding;
+
+      // 내재가치 대비 시가총액 비율 계산 (낮을수록 저평가)
+      const marketCapToIntrinsicRatio = marketCap / netCurrentAssetValue;
+
+      // 안전마진 계산 (1 - 시가총액/내재가치) * 100%
+      const marginOfSafety =
+        netCurrentAssetValue > 0 ? (1 - marketCap / netCurrentAssetValue) * 100 : 0;
+
+      // 내재가치 기준 주당 가치 계산
+      const intrinsicValuePerShare = netCurrentAssetValue / sharesOutstanding;
+
+      // 5년 연속 배당 확인
+      const consecutiveDividend = hasConsecutiveDividend(rawStockData);
+
+      // 조건 확인: 내재가치 > 시가총액 (즉, 안전마진이 양수)
+      if (netCurrentAssetValue > marketCap) {
+        howardStocks.push({
+          stock_code: stockCode,
+          company_name: stockInfo.company_name,
+          industry: stockInfo.industry || '미분류',
+          subindustry: stockInfo.subindustry || '미분류',
+          current_price: currentPrice,
+          dividend_yield: dividendYield || 0,
+          fcf_median: 0, // 사용하지 않음
+          fcf_per_share: 0, // 사용하지 않음
+          growthrate: growthRate,
+          base_intrinsic_value: intrinsicValuePerShare, // 주당 순자산가치로 변경
+          net_current_asset_value: netCurrentAssetValue, // 순자산가치 추가
+          market_cap: marketCap, // 시가총액 추가
+          market_cap_to_intrinsic_ratio: marketCapToIntrinsicRatio, // 시가총액/내재가치 비율 추가
+          optimistic_intrinsic_value: intrinsicValuePerShare * 1.2, // 낙관적 시나리오 (20% 추가)
+          conservative_intrinsic_value: intrinsicValuePerShare * 0.8, // 보수적 시나리오 (20% 할인)
+          discount_rate: 10, // 기본 10%로 설정 (참고용으로 유지)
+          margin_of_safety: marginOfSafety, // 안전마진
+          consecutive_dividend: consecutiveDividend,
+        });
+      }
+    }
+
+    // 10. 산업군과 하위 산업군 목록 생성
+    console.log('산업군 및 하위 산업군 목록 생성 중...');
+    const uniqueIndustries = Array.from(
+      new Set(howardStocks.map((stock) => stock.industry))
+    ).sort();
+    const uniqueSubIndustries = Array.from(
+      new Set(howardStocks.map((stock) => stock.subindustry))
+    ).sort();
+
+    console.log(`최종 필터링 후 종목 수: ${howardStocks.length}`);
+
+    return {
+      stocks: howardStocks,
+      industries: uniqueIndustries,
+      subIndustries: uniqueSubIndustries,
+      error: null,
+    };
+  } catch (err) {
+    console.error('데이터 가져오기 오류:', err);
+    return emptyResult<HowardStock>(
+      err instanceof Error ? err.message : '데이터를 가져오는 중 오류가 발생했습니다.'
+    );
+  }
+}
+
+// 수익기반 내재가치 주식 데이터 가져오기 (테이블명 및 5년 데이터 활용)
+export async function fetchProfitStocks(): Promise<StockDataResult<ProfitStock>> {
+  try {
+    console.log('=== 수익기반 내재가치 주식 데이터 가져오기 시작 ===');
+
+    // 1. 산업별 성장률 데이터 불러오기 (대체 성장률로 사용 가능하도록 유지)
+    const industryData = (await import('@/lib/industry-DATA.json').then(
+      (module) => module.default
+    )) as IndustryData[];
+
+    // 2. 캐시된 JSON 파일에서 부채비율 조건을 충족하는 종목 데이터 가져오기
+    console.log('캐시된 부채비율 데이터 불러오는 중...');
+    const acceptableDebtStocks = await getAcceptableDebtStocks();
+
+    if (!acceptableDebtStocks || acceptableDebtStocks.length === 0) {
+      return emptyResult<ProfitStock>('부채비율 조건을 충족하는 종목이 없습니다.');
+    }
+
+    const stockCodes = acceptableDebtStocks.map((item) => item.stock_code);
+    console.log(`부채비율 조건 충족 종목 수: ${stockCodes.length}`);
+
+    // 3. 현재가 데이터 배치로 가져오기
+    const priceData = await fetchDataInBatches<any>(
+      'stock_price',
+      'stock_code, current_price',
+      stockCodes
+    );
+
+    // 4. 배당률 정보 배치로 가져오기
+    const dividendData = await fetchDataInBatches<any>(
+      'stock_current',
+      'stock_code, current_dividend',
+      stockCodes
+    );
+
+    // 5. 재무 데이터 배치로 가져오기 (5년 데이터 활용 - FCF 용)
     const rawData = await fetchDataInBatches<any>(
       'stock_naver_data',
       `stock_code,
@@ -1294,7 +1533,23 @@ export async function fetchHowardStocks(): Promise<StockDataResult<HowardStock>>
       stockCodes
     );
 
-    // 6. 데이터 맵 생성 - 캐시된 부채비율 데이터 활용
+    // 6. 성장률 데이터 배치로 가져오기
+    console.log('성장률 데이터와 내재가치 불러오는 중...');
+    const fairPriceData = await fetchDataInBatches<any>(
+      'stock_naver_fairprice',
+      'stock_code, growthrate, profitbasedprice',
+      stockCodes
+    );
+
+    // 7. 내재가치 데이터 가져오기 (profitBasedPrice) - 새로 추가
+    // console.log('내재가치 데이터 불러오는 중...');
+    // const fairPriceData = await fetchDataInBatches<any>(
+    //   'stock_naver_fairprice',
+    //   'stock_code, profitbasedprice',
+    //   stockCodes
+    // );
+
+    // 8. 데이터 맵 생성 - 캐시된 부채비율 데이터 활용
     console.log('데이터 맵 생성 중...');
     const stockMap = new Map(
       acceptableDebtStocks.map((item) => [
@@ -1317,10 +1572,19 @@ export async function fetchHowardStocks(): Promise<StockDataResult<HowardStock>>
     );
     const rawDataMap = new Map(rawData.map((item) => [item.stock_code, item]));
 
-    // 7. 하워드 막스 내재가치 계산 및 종목 필터링
+    // 성장률 맵 생성
+    const growthRateMap = new Map(
+      fairPriceData.map((item) => [item.stock_code, safeNumber(item.growthrate)])
+    );
+
+    // 내재가치 맵 생성 - 새로 추가
+    const fairPriceMap = new Map(
+      fairPriceData.map((item) => [item.stock_code, safeNumber(item.profitbasedprice)])
+    );
+
+    // 9. 하워드 막스 내재가치 계산 및 종목 필터링
     console.log('하워드 막스 내재가치 계산 및 종목 필터링 중...');
-    const howardStocks: HowardStock[] = [];
-    const DISCOUNT_RATE = 0.1; // 기본 할인율 10%로 변경
+    const profitStocks: ProfitStock[] = [];
     const MIN_MARGIN_OF_SAFETY = 0.3; // 30% 안전마진
 
     for (const stockCode of stockCodes) {
@@ -1328,9 +1592,18 @@ export async function fetchHowardStocks(): Promise<StockDataResult<HowardStock>>
       const currentPrice = priceMap.get(stockCode);
       const dividendYield = dividendMap.get(stockCode);
       const rawStockData = rawDataMap.get(stockCode);
+      const growthRate = growthRateMap.get(stockCode) || 0;
+
+      // 새로 추가: 내재가치 가져오기
+      const profitBasedPrice = fairPriceMap.get(stockCode) || 0;
 
       // 필요한 모든 데이터가 있는지 확인
-      if (!stockInfo || !currentPrice || !rawStockData) {
+      if (!stockInfo || !currentPrice || !rawStockData || profitBasedPrice <= 0) {
+        continue;
+      }
+
+      // 성장률이 0 이하인 종목은 제외
+      if (growthRate <= 0) {
         continue;
       }
 
@@ -1353,7 +1626,7 @@ export async function fetchHowardStocks(): Promise<StockDataResult<HowardStock>>
         continue;
       }
 
-      // FCF 계산 (직접 필드 사용 우선)
+      // FCF 계산 (직접 필드 사용 우선) - FCF 중앙값은 계속 계산 (필요할 수 있으므로)
       const fcfValues = [
         safeNumber(rawStockData['2020_free_cash_flow']),
         safeNumber(rawStockData['2021_free_cash_flow']),
@@ -1387,40 +1660,17 @@ export async function fetchHowardStocks(): Promise<StockDataResult<HowardStock>>
             2
           : validFcfValues[Math.floor(validFcfValues.length / 2)];
 
-      // 주당 FCF 계산
+      // 주당 FCF 계산 - 참고용으로 계산만 하고 UI에 표시하지 않을 예정
       const fcfPerShare = fcfMedian / sharesOutstanding;
 
-      // 산업별 성장률 데이터 찾기
-      let industryInfo = industryData.find((item) => item.industry === stockInfo.industry);
-      if (!industryInfo) {
-        // 해당 산업이 없으면 'etc' 카테고리 사용
-        industryInfo = industryData.find((item) => item.industry === 'etc')!;
-      }
+      // profitBasedPrice를 기준으로 내재가치 설정 - 변경된 부분
+      const baseIntrinsicValue = profitBasedPrice;
 
-      // 시나리오별 성장률 설정 (영구성장률은 사용하지 않음)
-      const baseGrowthRate = industryInfo.minGrowthRate / 100;
-      const optimisticGrowthRate = industryInfo.maxGrowthRate / 100;
-      const conservativeGrowthRate = Math.max(0.01, (industryInfo.minGrowthRate - 1) / 100); // 최소 1%
+      // 보수적 내재가치는 기본값의 80% (20% 할인)
+      const conservativeIntrinsicValue = profitBasedPrice * 0.8;
 
-      // 시나리오별 할인율 설정
-      const baseDiscountRate = DISCOUNT_RATE; // 10%
-      const optimisticDiscountRate = 0.06; // 6%
-      const conservativeDiscountRate = 0.12; // 12%
-
-      // DCF 모델로 내재가치 계산 (5년만, 영구가치 없음)
-      const baseIntrinsicValue = calculateDCF5Year(fcfPerShare, baseGrowthRate, baseDiscountRate);
-
-      const optimisticIntrinsicValue = calculateDCF5Year(
-        fcfPerShare,
-        optimisticGrowthRate,
-        optimisticDiscountRate
-      );
-
-      const conservativeIntrinsicValue = calculateDCF5Year(
-        fcfPerShare,
-        conservativeGrowthRate,
-        conservativeDiscountRate
-      );
+      // 낙관적 내재가치는 기본값의 120% (20% 프리미엄)
+      const optimisticIntrinsicValue = profitBasedPrice * 1.2;
 
       // 안전마진 계산
       const marginOfSafety =
@@ -1431,7 +1681,7 @@ export async function fetchHowardStocks(): Promise<StockDataResult<HowardStock>>
 
       // 조건 확인: 현재가 < 기본 시나리오 내재가치 & 안전마진 >= 30%
       if (currentPrice < baseIntrinsicValue && marginOfSafety >= MIN_MARGIN_OF_SAFETY) {
-        howardStocks.push({
+        profitStocks.push({
           stock_code: stockCode,
           company_name: stockInfo.company_name,
           industry: stockInfo.industry || '미분류',
@@ -1439,37 +1689,38 @@ export async function fetchHowardStocks(): Promise<StockDataResult<HowardStock>>
           current_price: currentPrice,
           dividend_yield: dividendYield || 0,
           fcf_median: fcfMedian,
-          fcf_per_share: fcfPerShare,
+          fcf_per_share: fcfPerShare, // UI에서 보여주지 않지만 데이터는 유지
+          growthrate: growthRate,
           base_intrinsic_value: baseIntrinsicValue,
           optimistic_intrinsic_value: optimisticIntrinsicValue,
           conservative_intrinsic_value: conservativeIntrinsicValue,
-          discount_rate: DISCOUNT_RATE * 100,
+          discount_rate: 10, // 기본 10%로 설정
           margin_of_safety: marginOfSafety * 100,
           consecutive_dividend: consecutiveDividend,
         });
       }
     }
 
-    // 8. 산업군과 하위 산업군 목록 생성
+    // 10. 산업군과 하위 산업군 목록 생성
     console.log('산업군 및 하위 산업군 목록 생성 중...');
     const uniqueIndustries = Array.from(
-      new Set(howardStocks.map((stock) => stock.industry))
+      new Set(profitStocks.map((stock) => stock.industry))
     ).sort();
     const uniqueSubIndustries = Array.from(
-      new Set(howardStocks.map((stock) => stock.subindustry))
+      new Set(profitStocks.map((stock) => stock.subindustry))
     ).sort();
 
-    console.log(`최종 필터링 후 종목 수: ${howardStocks.length}`);
+    console.log(`최종 필터링 후 종목 수: ${profitStocks.length}`);
 
     return {
-      stocks: howardStocks,
+      stocks: profitStocks,
       industries: uniqueIndustries,
       subIndustries: uniqueSubIndustries,
       error: null,
     };
   } catch (err) {
     console.error('데이터 가져오기 오류:', err);
-    return emptyResult<HowardStock>(
+    return emptyResult<ProfitStock>(
       err instanceof Error ? err.message : '데이터를 가져오는 중 오류가 발생했습니다.'
     );
   }

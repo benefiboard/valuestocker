@@ -71,7 +71,8 @@ const Dropdown = ({ title, items, isOpen, toggle, closeMenu }: DropdownProps) =>
 const Navigation = () => {
   // 드롭다운 상태 관리
   const [strategyDropdown, setStrategyDropdown] = useState(false);
-  const [toolsDropdown, setToolsDropdown] = useState(false);
+  const [mastersStrategyDropdown, setMastersStrategyDropdown] = useState(false);
+  const [practicalStrategyDropdown, setPracticalStrategyDropdown] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // 현재 경로 확인
@@ -82,19 +83,29 @@ const Navigation = () => {
   // 모든 드롭다운 닫기
   const closeAllDropdowns = () => {
     setStrategyDropdown(false);
-    setToolsDropdown(false);
+    setMastersStrategyDropdown(false);
+    setPracticalStrategyDropdown(false);
   };
 
   // 전략 드롭다운 토글
   const toggleStrategyDropdown = () => {
-    setToolsDropdown(false); // 다른 드롭다운 닫기
+    setMastersStrategyDropdown(false);
+    setPracticalStrategyDropdown(false);
     setStrategyDropdown(!strategyDropdown);
   };
 
-  // 도구 드롭다운 토글
-  const toggleToolsDropdown = () => {
-    setStrategyDropdown(false); // 다른 드롭다운 닫기
-    setToolsDropdown(!toolsDropdown);
+  // 대가들의 전략 드롭다운 토글
+  const toggleMastersStrategyDropdown = () => {
+    setStrategyDropdown(false);
+    setPracticalStrategyDropdown(false);
+    setMastersStrategyDropdown(!mastersStrategyDropdown);
+  };
+
+  // 실용투자 전략 드롭다운 토글
+  const togglePracticalStrategyDropdown = () => {
+    setStrategyDropdown(false);
+    setMastersStrategyDropdown(false);
+    setPracticalStrategyDropdown(!practicalStrategyDropdown);
   };
 
   // 경로 변경 시 모든 메뉴 닫기
@@ -110,18 +121,23 @@ const Navigation = () => {
     { label: '수익가치 계산', href: '/profit-calculator' },
   ];
 
-  // 분석 도구 드롭다운 아이템
-  const toolsItems: NavItem[] = [
+  // 대가들의 전략 드롭다운 아이템
+  const mastersStrategyItems: NavItem[] = [
     { label: '벤자민 그레이엄 전략', href: '/graham' },
-    { label: '고배당 가치주 전략', href: '/flavor' },
-    { label: 'S-RIM 내재가치 전략', href: '/s-rim' },
-    { label: '비즈니스 퀄리티 전략', href: '/quality' },
     { label: '피터 린치 PEG 전략', href: '/lynch' },
     { label: '하워드 막스 내재가치', href: '/howard' },
   ];
 
+  // 실용투자 전략 드롭다운 아이템
+  const practicalStrategyItems: NavItem[] = [
+    { label: '고배당 가치주 전략', href: '/flavor' },
+    { label: '비즈니스 퀄리티 전략', href: '/quality' },
+    { label: 'S-RIM 내재가치 전략', href: '/s-rim' },
+    { label: '수익가치 전략', href: '/profit' },
+  ];
+
   // 모든 네비게이션 아이템 합치기
-  const allNavigationItems = [...strategyItems, ...toolsItems];
+  const allNavigationItems = [...strategyItems, ...mastersStrategyItems, ...practicalStrategyItems];
 
   // 현재 페이지에 해당하는 label 찾기
   const currentPageLabel =
@@ -162,10 +178,17 @@ const Navigation = () => {
             closeMenu={closeAllDropdowns}
           />
           <Dropdown
-            title="분석 도구"
-            items={toolsItems}
-            isOpen={toolsDropdown}
-            toggle={toggleToolsDropdown}
+            title="대가들의 전략"
+            items={mastersStrategyItems}
+            isOpen={mastersStrategyDropdown}
+            toggle={toggleMastersStrategyDropdown}
+            closeMenu={closeAllDropdowns}
+          />
+          <Dropdown
+            title="실용투자 전략"
+            items={practicalStrategyItems}
+            isOpen={practicalStrategyDropdown}
+            toggle={togglePracticalStrategyDropdown}
             closeMenu={closeAllDropdowns}
           />
           <Link
@@ -236,11 +259,27 @@ const Navigation = () => {
             </div>
           </div>
 
-          {/* 분석 도구 메뉴 그룹 */}
+          {/* 대가들의 전략 메뉴 그룹 */}
           <div className="px-6 py-4 border-b border-gray-100">
-            <h3 className="font-medium text-gray-800 mb-3">분석 도구</h3>
+            <h3 className="font-medium text-gray-800 mb-3">대가들의 전략</h3>
             <div className="grid grid-cols-1 gap-2 pl-3">
-              {toolsItems.map((item, index) => (
+              {mastersStrategyItems.map((item, index) => (
+                <Link
+                  key={index}
+                  href={item.href}
+                  className="block text-gray-600 hover:text-emerald-700 py-1 transition-colors"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* 실용투자 전략 메뉴 그룹 */}
+          <div className="px-6 py-4 border-b border-gray-100">
+            <h3 className="font-medium text-gray-800 mb-3">실용투자 전략</h3>
+            <div className="grid grid-cols-1 gap-2 pl-3">
+              {practicalStrategyItems.map((item, index) => (
                 <Link
                   key={index}
                   href={item.href}

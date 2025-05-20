@@ -1,9 +1,6 @@
-//src/app/lynch/page.tsx
-
 'use client';
 
 import { useState, useEffect } from 'react';
-import { LynchStock, fetchLynchStocks } from '@/utils/stockDataService';
 import Link from 'next/link';
 import { formatNumber } from '../../utils/stockUtils';
 import {
@@ -28,6 +25,7 @@ import {
   X,
 } from 'lucide-react';
 import { StockLinkButtons } from '../../components/StockLinkButtons';
+import { fetchProfitStocks, ProfitStock } from '@/utils/stockDataService';
 
 // 정렬 타입 정의
 type SortField =
@@ -35,35 +33,32 @@ type SortField =
   | 'industry'
   | 'subindustry'
   | 'current_price'
-  | 'current_per'
-  | 'peg'
-  | 'growth_rate'
-  | 'average_eps'
-  | 'margin_of_safety'
   | 'dividend_yield'
+  | 'fcf_median'
+  | 'fcf_per_share'
+  | 'base_intrinsic_value'
+  | 'optimistic_intrinsic_value'
+  | 'conservative_intrinsic_value'
+  | 'margin_of_safety'
   | 'consecutive_dividend';
 
 type SortDirection = 'asc' | 'desc';
 type ViewMode = 'card' | 'table' | 'mobileTable';
 
-export default function LynchPage() {
+export default function ProfitPage() {
   // 상태 관리
-  const [stocks, setStocks] = useState<LynchStock[]>([]);
-  const [filteredStocks, setFilteredStocks] = useState<LynchStock[]>([]);
+  const [stocks, setStocks] = useState<ProfitStock[]>([]);
+  const [filteredStocks, setFilteredStocks] = useState<ProfitStock[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
-  const [sortField, setSortField] = useState<SortField>('peg');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [sortField, setSortField] = useState<SortField>('margin_of_safety');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [industryFilter, setIndustryFilter] = useState<string>('');
   const [subIndustryFilter, setSubIndustryFilter] = useState<string>('');
   const [safetyMinFilter, setSafetyMinFilter] = useState<number | ''>('');
   const [safetyMaxFilter, setSafetyMaxFilter] = useState<number | ''>('');
   const [dividendMinFilter, setDividendMinFilter] = useState<number | ''>('');
   const [dividendMaxFilter, setDividendMaxFilter] = useState<number | ''>('');
-  const [growthMinFilter, setGrowthMinFilter] = useState<number | ''>('');
-  const [growthMaxFilter, setGrowthMaxFilter] = useState<number | ''>('');
-  const [pegMinFilter, setPegMinFilter] = useState<number | ''>('');
-  const [pegMaxFilter, setPegMaxFilter] = useState<number | ''>('');
   const [consecutiveDividendFilter, setConsecutiveDividendFilter] = useState<boolean | null>(null);
   const [industries, setIndustries] = useState<string[]>([]);
   const [subIndustries, setSubIndustries] = useState<string[]>([]);
@@ -76,7 +71,6 @@ export default function LynchPage() {
   // 모바일 필터 아코디언 상태
   const [industryFilterOpen, setIndustryFilterOpen] = useState(true);
   const [safetyFilterOpen, setSafetyFilterOpen] = useState(false);
-  const [growthFilterOpen, setGrowthFilterOpen] = useState(false);
   const [dividendFilterOpen, setDividendFilterOpen] = useState(false);
   const [sortFilterOpen, setSortFilterOpen] = useState(false);
 
@@ -87,8 +81,8 @@ export default function LynchPage() {
     const loadStockData = async () => {
       setLoading(true);
 
-      // 피터 린치 PEG 기반 종목 데이터 가져오기
-      const result = await fetchLynchStocks();
+      // 수익기반 내재가치 종목 데이터 가져오기
+      const result = await fetchProfitStocks();
 
       if (result.error) {
         setError(result.error);
@@ -143,21 +137,12 @@ export default function LynchPage() {
       filtered = filtered.filter((stock) => stock.subindustry === subIndustryFilter);
     }
 
-    // PEG 범위 필터
-    if (typeof pegMinFilter === 'number' && pegMinFilter > 0) {
-      filtered = filtered.filter((stock) => stock.peg >= pegMinFilter);
-    }
-
-    if (typeof pegMaxFilter === 'number' && pegMaxFilter > 0) {
-      filtered = filtered.filter((stock) => stock.peg <= pegMaxFilter);
-    }
-
     // 안전마진 범위 필터
-    if (typeof safetyMinFilter === 'number') {
+    if (typeof safetyMinFilter === 'number' && safetyMinFilter > 0) {
       filtered = filtered.filter((stock) => stock.margin_of_safety >= safetyMinFilter);
     }
 
-    if (typeof safetyMaxFilter === 'number') {
+    if (typeof safetyMaxFilter === 'number' && safetyMaxFilter > 0) {
       filtered = filtered.filter((stock) => stock.margin_of_safety <= safetyMaxFilter);
     }
 
@@ -168,15 +153,6 @@ export default function LynchPage() {
 
     if (typeof dividendMaxFilter === 'number' && dividendMaxFilter > 0) {
       filtered = filtered.filter((stock) => stock.dividend_yield <= dividendMaxFilter);
-    }
-
-    // 성장률 범위 필터
-    if (typeof growthMinFilter === 'number' && growthMinFilter > 0) {
-      filtered = filtered.filter((stock) => stock.growth_rate >= growthMinFilter);
-    }
-
-    if (typeof growthMaxFilter === 'number' && growthMaxFilter > 0) {
-      filtered = filtered.filter((stock) => stock.growth_rate <= growthMaxFilter);
     }
 
     // 연속 배당 필터
@@ -217,14 +193,10 @@ export default function LynchPage() {
     stocks,
     industryFilter,
     subIndustryFilter,
-    pegMinFilter,
-    pegMaxFilter,
     safetyMinFilter,
     safetyMaxFilter,
     dividendMinFilter,
     dividendMaxFilter,
-    growthMinFilter,
-    growthMaxFilter,
     consecutiveDividendFilter,
     sortField,
     sortDirection,
@@ -280,13 +252,9 @@ export default function LynchPage() {
     setSafetyMaxFilter('');
     setDividendMinFilter('');
     setDividendMaxFilter('');
-    setGrowthMinFilter('');
-    setGrowthMaxFilter('');
-    setPegMinFilter('');
-    setPegMaxFilter('');
     setConsecutiveDividendFilter(null);
-    setSortField('peg');
-    setSortDirection('asc');
+    setSortField('margin_of_safety');
+    setSortDirection('desc');
   };
 
   // 페이지네이션 계산
@@ -314,30 +282,6 @@ export default function LynchPage() {
     );
   };
 
-  // PEG 기반 평가 렌더링 함수
-  const renderPegEvaluation = (peg: number) => {
-    const margin = (1 - peg) * 100;
-
-    if (margin >= 10) {
-      return (
-        <span className="text-xs font-medium text-emerald-600">{margin.toFixed(1)}% 저평가</span>
-      );
-    } else if (margin >= -10) {
-      return (
-        <span className="text-xs font-medium text-gray-600">
-          적정가 ({margin > 0 ? '+' : ''}
-          {margin.toFixed(1)}%)
-        </span>
-      );
-    } else {
-      return (
-        <span className="text-xs font-medium text-red-600">
-          {Math.abs(margin).toFixed(1)}% 고평가
-        </span>
-      );
-    }
-  };
-
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 px-4 sm:px-6 py-4 sm:py-6">
       {/* 헤더 - 글래스모픽 스타일 */}
@@ -353,7 +297,7 @@ export default function LynchPage() {
             <div className="p-2 bg-emerald-50 rounded-full mr-3">
               <BarChart4 className="text-emerald-600 w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            피터 린치 PEG 기반 종목
+            수익기반 내재가치 종목
           </h1>
         </div>
       </header> */}
@@ -371,7 +315,7 @@ export default function LynchPage() {
                   <Info className="w-5 h-5 text-emerald-600" />
                 </div>
                 <h2 className="text-base sm:text-lg font-semibold text-gray-800">
-                  피터 린치의 PEG 투자 원칙
+                  수익기반 내재가치 원칙
                 </h2>
               </div>
               <div
@@ -394,36 +338,36 @@ export default function LynchPage() {
             >
               <div className="p-4 sm:p-5 pt-0 border-t border-gray-100">
                 <p className="text-sm sm:text-base text-gray-700 mb-3">
-                  피터 린치의 PEG(Price/Earnings to Growth) 기반 종목 리스트입니다:
+                  수익기반 접근법에 따른 종목 리스트입니다:
                 </p>
                 <ul className="list-disc pl-5 text-sm sm:text-base text-gray-700 space-y-2">
                   <li>
-                    <strong className="text-emerald-700">PEG 비율</strong> - PER를 EPS 성장률로 나눈
-                    값으로, 성장성 대비 주가의 적정성을 판단
+                    <strong className="text-emerald-700">수익기반 기반 모델</strong> - ROE와 BPS를
+                    기반으로 기업 내재가치 산출
                   </li>
                   <li>
-                    <strong className="text-emerald-700">PEG = 1.0</strong> - 피터 린치는 PEG가 1.0
-                    이하인 주식을 매력적으로 평가
+                    <strong className="text-emerald-700">가중평균 ROE 활용</strong> - 최근 3년간의
+                    ROE를 가중 평균하여 지속가능한 수익력 반영
                   </li>
                   <li>
-                    <strong className="text-emerald-700">저평가 기준</strong> - PEG가 0.9 이하면 10%
-                    이상 저평가로 판단
+                    <strong className="text-emerald-700">10% 할인율 적용</strong> - 투자자
+                    요구수익률 기준으로 미래 수익 할인
                   </li>
                   <li>
-                    <strong className="text-emerald-700">적정가 범위</strong> - PEG가 0.9~1.1 사이인
-                    종목은 적정가 수준
+                    <strong className="text-emerald-700">시나리오 분석</strong> - 기본/보수/낙관 세
+                    가지 시나리오로 내재가치 범위 제시
                   </li>
                   <li>
-                    <strong className="text-emerald-700">고평가 기준</strong> - PEG가 1.1 초과하면
-                    고평가 종목으로 분류
+                    <strong className="text-emerald-700">보수적 추정</strong> - 보수 시나리오는 기본
+                    내재가치의 80%로 계산 (20% 할인)
                   </li>
                   <li>
-                    <strong className="text-emerald-700">성장률 기반 투자</strong> - 합리적인
-                    가격에서 높은 성장성을 가진 기업 선별
+                    <strong className="text-emerald-700">최소 30% 안전마진</strong> - 기본 내재가치
+                    대비 30% 이상 저평가된 종목만 표시
                   </li>
                   <li>
                     <strong className="text-emerald-700">연속 배당 여부 표시</strong> - 3년 연속
-                    배당금 지급 체크
+                    배당금 지급 여부 확인
                   </li>
                 </ul>
               </div>
@@ -511,40 +455,10 @@ export default function LynchPage() {
                     </select>
                   </div>
 
-                  {/* PEG 범위 필터 */}
-                  <div className="mb-3">
-                    <label className="block font-medium text-gray-700 mb-1 text-sm">PEG 범위</label>
-                    <div className="flex space-x-2">
-                      <input
-                        type="number"
-                        value={pegMinFilter}
-                        onChange={(e) =>
-                          setPegMinFilter(e.target.value === '' ? '' : Number(e.target.value))
-                        }
-                        placeholder="최소"
-                        min="0"
-                        step="0.1"
-                        className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
-                      />
-                      <span className="self-center text-gray-400 text-sm">~</span>
-                      <input
-                        type="number"
-                        value={pegMaxFilter}
-                        onChange={(e) =>
-                          setPegMaxFilter(e.target.value === '' ? '' : Number(e.target.value))
-                        }
-                        placeholder="최대"
-                        min="0"
-                        step="0.1"
-                        className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
-                      />
-                    </div>
-                  </div>
-
-                  {/* 평가 범위 필터 (기존 안전마진) */}
+                  {/* 안전마진 범위 필터 추가 */}
                   <div className="mb-3">
                     <label className="block font-medium text-gray-700 mb-1 text-sm">
-                      평가 범위 (%)
+                      안전마진 범위 (%)
                     </label>
                     <div className="flex space-x-2">
                       <input
@@ -554,6 +468,7 @@ export default function LynchPage() {
                           setSafetyMinFilter(e.target.value === '' ? '' : Number(e.target.value))
                         }
                         placeholder="최소"
+                        min="0"
                         step="1"
                         className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                       />
@@ -565,37 +480,6 @@ export default function LynchPage() {
                           setSafetyMaxFilter(e.target.value === '' ? '' : Number(e.target.value))
                         }
                         placeholder="최대"
-                        step="1"
-                        className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
-                      />
-                    </div>
-                  </div>
-
-                  {/* 성장률 범위 필터 추가 */}
-                  <div className="mb-3">
-                    <label className="block font-medium text-gray-700 mb-1 text-sm">
-                      성장률 범위 (%)
-                    </label>
-                    <div className="flex space-x-2">
-                      <input
-                        type="number"
-                        value={growthMinFilter}
-                        onChange={(e) =>
-                          setGrowthMinFilter(e.target.value === '' ? '' : Number(e.target.value))
-                        }
-                        placeholder="최소"
-                        min="0"
-                        step="1"
-                        className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
-                      />
-                      <span className="self-center text-gray-400 text-sm">~</span>
-                      <input
-                        type="number"
-                        value={growthMaxFilter}
-                        onChange={(e) =>
-                          setGrowthMaxFilter(e.target.value === '' ? '' : Number(e.target.value))
-                        }
-                        placeholder="최대"
                         min="0"
                         step="1"
                         className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
@@ -603,7 +487,7 @@ export default function LynchPage() {
                     </div>
                   </div>
 
-                  {/* 배당률 범위 필터 */}
+                  {/* 배당률 범위 필터 추가 */}
                   <div className="mb-3">
                     <label className="block font-medium text-gray-700 mb-1 text-sm">
                       배당률 범위 (%)
@@ -635,7 +519,7 @@ export default function LynchPage() {
                     </div>
                   </div>
 
-                  {/* 연속 배당 필터 */}
+                  {/* 연속 배당 필터 추가 */}
                   <div className="mb-3">
                     <label className="block font-medium text-gray-700 mb-1 text-sm">
                       연속 배당 여부
@@ -674,12 +558,12 @@ export default function LynchPage() {
                         onChange={(e) => setSortField(e.target.value as SortField)}
                         className="flex-1 border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                       >
-                        <option value="peg">PEG</option>
-                        <option value="margin_of_safety">평가 수준</option>
-                        <option value="growth_rate">성장률</option>
+                        <option value="margin_of_safety">안전마진</option>
                         <option value="current_price">현재가</option>
-                        <option value="current_per">현재 PER</option>
-                        <option value="average_eps">평균 EPS</option>
+                        <option value="base_intrinsic_value">기본 내재가치</option>
+                        <option value="optimistic_intrinsic_value">낙관 내재가치</option>
+                        <option value="conservative_intrinsic_value">보수 내재가치</option>
+                        {/* 주당 FCF 옵션 제거 */}
                         <option value="dividend_yield">배당률</option>
                         <option value="company_name">회사명</option>
                         <option value="industry">산업군</option>
@@ -752,44 +636,9 @@ export default function LynchPage() {
                   <div className="pb-3 border-b border-gray-100">
                     <h3 className="text-sm font-medium text-gray-700 mb-2">범위 필터</h3>
 
-                    {/* PEG 범위 - 수직 배치 */}
+                    {/* 안전마진 범위 - 수직 배치 */}
                     <div className="mb-3">
-                      <label className="text-xs text-gray-600 block mb-1">PEG 범위</label>
-                      <div className="flex flex-col space-y-2">
-                        <div className="flex items-center">
-                          <span className="w-10 text-xs text-gray-500">최소:</span>
-                          <input
-                            type="number"
-                            value={pegMinFilter}
-                            onChange={(e) =>
-                              setPegMinFilter(e.target.value === '' ? '' : Number(e.target.value))
-                            }
-                            placeholder="최소값"
-                            min="0"
-                            step="0.1"
-                            className="w-full rounded-lg border border-gray-300 p-1.5 text-sm"
-                          />
-                        </div>
-                        <div className="flex items-center">
-                          <span className="w-10 text-xs text-gray-500">최대:</span>
-                          <input
-                            type="number"
-                            value={pegMaxFilter}
-                            onChange={(e) =>
-                              setPegMaxFilter(e.target.value === '' ? '' : Number(e.target.value))
-                            }
-                            placeholder="최대값"
-                            min="0"
-                            step="0.1"
-                            className="w-full rounded-lg border border-gray-300 p-1.5 text-sm"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* 평가 범위 - 수직 배치 */}
-                    <div className="mb-3">
-                      <label className="text-xs text-gray-600 block mb-1">평가 범위 (%)</label>
+                      <label className="text-xs text-gray-600 block mb-1">안전마진 범위 (%)</label>
                       <div className="flex flex-col space-y-2">
                         <div className="flex items-center">
                           <span className="w-10 text-xs text-gray-500">최소:</span>
@@ -802,6 +651,7 @@ export default function LynchPage() {
                               )
                             }
                             placeholder="최소값"
+                            min="0"
                             className="w-full rounded-lg border border-gray-300 p-1.5 text-sm"
                           />
                         </div>
@@ -812,42 +662,6 @@ export default function LynchPage() {
                             value={safetyMaxFilter}
                             onChange={(e) =>
                               setSafetyMaxFilter(
-                                e.target.value === '' ? '' : Number(e.target.value)
-                              )
-                            }
-                            placeholder="최대값"
-                            className="w-full rounded-lg border border-gray-300 p-1.5 text-sm"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* 성장률 범위 - 수직 배치 */}
-                    <div className="mb-3">
-                      <label className="text-xs text-gray-600 block mb-1">성장률 범위 (%)</label>
-                      <div className="flex flex-col space-y-2">
-                        <div className="flex items-center">
-                          <span className="w-10 text-xs text-gray-500">최소:</span>
-                          <input
-                            type="number"
-                            value={growthMinFilter}
-                            onChange={(e) =>
-                              setGrowthMinFilter(
-                                e.target.value === '' ? '' : Number(e.target.value)
-                              )
-                            }
-                            placeholder="최소값"
-                            min="0"
-                            className="w-full rounded-lg border border-gray-300 p-1.5 text-sm"
-                          />
-                        </div>
-                        <div className="flex items-center">
-                          <span className="w-10 text-xs text-gray-500">최대:</span>
-                          <input
-                            type="number"
-                            value={growthMaxFilter}
-                            onChange={(e) =>
-                              setGrowthMaxFilter(
                                 e.target.value === '' ? '' : Number(e.target.value)
                               )
                             }
@@ -934,12 +748,11 @@ export default function LynchPage() {
                         onChange={(e) => setSortField(e.target.value as SortField)}
                         className="flex-1 rounded-lg border border-gray-300 p-2 text-sm"
                       >
-                        <option value="peg">PEG</option>
-                        <option value="margin_of_safety">평가 수준</option>
-                        <option value="growth_rate">성장률</option>
+                        <option value="margin_of_safety">안전마진</option>
                         <option value="current_price">현재가</option>
-                        <option value="current_per">현재 PER</option>
-                        <option value="average_eps">평균 EPS</option>
+                        <option value="base_intrinsic_value">기본 내재가치</option>
+                        <option value="conservative_intrinsic_value">보수 내재가치</option>
+                        {/* 주당 FCF 옵션 제거 */}
                         <option value="dividend_yield">배당률</option>
                         <option value="company_name">회사명</option>
                         <option value="industry">산업군</option>
@@ -1009,7 +822,7 @@ export default function LynchPage() {
               <div className="p-4 sm:p-5 border-b border-gray-200">
                 <div className="flex justify-between items-center">
                   <h2 className="text-lg sm:text-xl font-semibold text-gray-800 flex items-center">
-                    <span>피터 린치 PEG 기반 종목 리스트</span>
+                    <span>수익기반 내재가치 리스트</span>
                     <span className="ml-2 text-sm font-normal bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">
                       총 {filteredStocks.length}개 종목
                     </span>
@@ -1048,31 +861,22 @@ export default function LynchPage() {
                         <th
                           scope="col"
                           className="bg-gray-50 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
-                          onClick={() => toggleSort('peg')}
+                          onClick={() => toggleSort('base_intrinsic_value')}
                         >
                           <div className="flex items-center whitespace-nowrap">
-                            PEG
-                            {renderSortIcon('peg')}
+                            기본가치
+                            {renderSortIcon('base_intrinsic_value')}
                           </div>
                         </th>
+
                         <th
                           scope="col"
                           className="bg-gray-50 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
                           onClick={() => toggleSort('margin_of_safety')}
                         >
                           <div className="flex items-center whitespace-nowrap">
-                            평가
+                            안전마진
                             {renderSortIcon('margin_of_safety')}
-                          </div>
-                        </th>
-                        <th
-                          scope="col"
-                          className="bg-gray-50 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
-                          onClick={() => toggleSort('growth_rate')}
-                        >
-                          <div className="flex items-center whitespace-nowrap">
-                            성장률
-                            {renderSortIcon('growth_rate')}
                           </div>
                         </th>
                         <th
@@ -1123,15 +927,13 @@ export default function LynchPage() {
                           </td>
                           <td className="bg-gray-50 px-3 py-3 whitespace-nowrap">
                             <div className="text-xs font-semibold text-gray-900">
-                              {stock.peg.toFixed(2)}
+                              {formatNumber(stock.base_intrinsic_value)}원
                             </div>
                           </td>
-                          <td className="bg-gray-50 px-3 py-3 whitespace-nowrap">
-                            {renderPegEvaluation(stock.peg)}
-                          </td>
+
                           <td className="bg-gray-50 px-3 py-3 whitespace-nowrap">
                             <div className="text-xs text-gray-900">
-                              {stock.growth_rate > 0 ? stock.growth_rate.toFixed(1) + '%' : '-'}
+                              {stock.margin_of_safety.toFixed(1)}%
                             </div>
                           </td>
                           <td className="bg-gray-50 px-3 py-3 whitespace-nowrap">
@@ -1191,11 +993,22 @@ export default function LynchPage() {
                         <th
                           scope="col"
                           className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
-                          onClick={() => toggleSort('peg')}
+                          onClick={() => toggleSort('base_intrinsic_value')}
                         >
                           <div className="flex items-center">
-                            PEG
-                            {renderSortIcon('peg')}
+                            기본 내재가치
+                            {renderSortIcon('base_intrinsic_value')}
+                          </div>
+                        </th>
+
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
+                          onClick={() => toggleSort('conservative_intrinsic_value')}
+                        >
+                          <div className="flex items-center">
+                            보수 내재가치
+                            {renderSortIcon('conservative_intrinsic_value')}
                           </div>
                         </th>
                         <th
@@ -1204,40 +1017,11 @@ export default function LynchPage() {
                           onClick={() => toggleSort('margin_of_safety')}
                         >
                           <div className="flex items-center">
-                            평가 수준
+                            안전마진
                             {renderSortIcon('margin_of_safety')}
                           </div>
                         </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
-                          onClick={() => toggleSort('growth_rate')}
-                        >
-                          <div className="flex items-center">
-                            성장률
-                            {renderSortIcon('growth_rate')}
-                          </div>
-                        </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
-                          onClick={() => toggleSort('current_per')}
-                        >
-                          <div className="flex items-center">
-                            현재 PER
-                            {renderSortIcon('current_per')}
-                          </div>
-                        </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
-                          onClick={() => toggleSort('average_eps')}
-                        >
-                          <div className="flex items-center">
-                            평균 EPS
-                            {renderSortIcon('average_eps')}
-                          </div>
-                        </th>
+                        {/* 주당 FCF 열 제거됨 */}
                         <th
                           scope="col"
                           className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
@@ -1286,27 +1070,21 @@ export default function LynchPage() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-semibold text-gray-900">
-                              {stock.peg.toFixed(2)}
+                              {formatNumber(stock.base_intrinsic_value)}원
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {renderPegEvaluation(stock.peg)}
-                          </td>
+
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-900">
-                              {stock.growth_rate > 0 ? stock.growth_rate.toFixed(1) + '%' : '-'}
+                              {formatNumber(stock.conservative_intrinsic_value)}원
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-900">
-                              {stock.current_per > 0 ? stock.current_per.toFixed(2) : '-'}
+                              {stock.margin_of_safety.toFixed(1)}%
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">
-                              {stock.average_eps > 0 ? formatNumber(stock.average_eps) : '-'}
-                            </div>
-                          </td>
+                          {/* 주당 FCF 셀 제거됨 */}
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-semibold text-gray-900">
                               {stock.dividend_yield > 0
