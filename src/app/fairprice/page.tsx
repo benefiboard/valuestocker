@@ -1001,7 +1001,7 @@ export default function FairPricePage() {
               <hr className="mt-6" />
 
               {/* 페이지 하단 네비게이션 버튼 */}
-              <div className="mt-6 w-1/2 grid grid-cols-1 sm:grid-cols-2 gap-4 ">
+              <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <Link
                   href={`/checklist?stockCode=${selectedCompany?.stockCode}`}
                   className="w-full"
@@ -1031,7 +1031,37 @@ export default function FairPricePage() {
                   </button>
                 </Link>
 
-                {/* 네이버 증권 버튼 추가 */}
+                {/* 수익가치 계산 버튼 추가 */}
+                <Link
+                  href={`/profit-calculator?stockCode=${selectedCompany?.stockCode}`}
+                  className="w-full"
+                >
+                  <button className="w-full inline-flex items-center justify-center bg-emerald-600 text-white px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-emerald-700 transition-all duration-300 shadow-sm hover:shadow group relative overflow-hidden">
+                    {/* 버튼 배경 효과 */}
+                    <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-emerald-500 to-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                    {/* 버튼 텍스트 */}
+                    <span className="relative flex items-center">
+                      수익가치 계산
+                      <svg
+                        className="ml-2 w-4 h-4 sm:w-5 sm:h-5 transform group-hover:translate-x-1 transition-transform duration-300"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </span>
+                  </button>
+                </Link>
+
+                {/* 네이버 증권 버튼 */}
                 <a
                   href={`https://finance.naver.com/item/main.naver?code=${selectedCompany?.stockCode}`}
                   target="_blank"

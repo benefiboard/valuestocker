@@ -398,26 +398,84 @@ export default function ProfitCalculatorPage() {
                     <p className="text-xs text-gray-500 mt-1">내가 원하는 최소 수익률</p>
                   </div>
                 </div>
-
-                <button
-                  type="submit"
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 sm:py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center mt-3 shadow-sm hover:shadow group relative overflow-hidden"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 size={20} className="mr-3 animate-spin" />
-                      계산 중...
-                    </>
-                  ) : (
-                    <>
-                      <Calculator size={20} className="mr-3" />
-                      적정가격 계산하기
-                    </>
-                  )}
-                </button>
               </div>
             </form>
+
+            <hr className="mt-6" />
+
+            {/* 페이지 하단 네비게이션 버튼 */}
+            <div className="mt-6 grid grid-cols-3 gap-4">
+              <Link href={`/fairprice?stockCode=${selectedCompany?.stockCode}`} className="w-full">
+                <button className="w-full inline-flex items-center justify-center bg-emerald-600 text-white px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-emerald-700 transition-all duration-300 shadow-sm hover:shadow group relative overflow-hidden">
+                  <span className="relative flex items-center">
+                    적정가 계산
+                    <svg
+                      className="ml-2 w-4 h-4 sm:w-5 sm:h-5 transform group-hover:translate-x-1 transition-transform duration-300"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </span>
+                </button>
+              </Link>
+
+              <Link href={`/checklist?stockCode=${selectedCompany?.stockCode}`} className="w-full">
+                <button className="w-full inline-flex items-center justify-center bg-emerald-600 text-white px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-emerald-700 transition-all duration-300 shadow-sm hover:shadow group relative overflow-hidden">
+                  <span className="relative flex items-center">
+                    체크리스트
+                    <svg
+                      className="ml-2 w-4 h-4 sm:w-5 sm:h-5 transform group-hover:translate-x-1 transition-transform duration-300"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </span>
+                </button>
+              </Link>
+
+              <a
+                href={`https://finance.naver.com/item/main.naver?code=${selectedCompany?.stockCode}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full"
+              >
+                <button className="w-full inline-flex items-center justify-center bg-emerald-600 text-white px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-emerald-700 transition-all duration-300 shadow-sm hover:shadow group relative overflow-hidden">
+                  <span className="relative flex items-center">
+                    네이버증권
+                    <svg
+                      className="ml-2 w-4 h-4 sm:w-5 sm:h-5 transform group-hover:translate-x-1 transition-transform duration-300"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                      />
+                    </svg>
+                  </span>
+                </button>
+              </a>
+            </div>
           </div>
         ) : (
           <div className="bg-white rounded-2xl p-5 sm:px-6 shadow-md mb-6 flex justify-between items-center border border-gray-100">
@@ -786,7 +844,7 @@ export default function ProfitCalculatorPage() {
               <hr className="mt-6" />
 
               {/* 페이지 하단 네비게이션 버튼 */}
-              <div className="mt-6 grid grid-cols-2 gap-4">
+              <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <Link
                   href={`/fairprice?stockCode=${selectedCompany?.stockCode}`}
                   className="w-full"
@@ -794,6 +852,31 @@ export default function ProfitCalculatorPage() {
                   <button className="w-full inline-flex items-center justify-center bg-emerald-600 text-white px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-emerald-700 transition-all duration-300 shadow-sm hover:shadow group relative overflow-hidden">
                     <span className="relative flex items-center">
                       적정가 계산
+                      <svg
+                        className="ml-2 w-4 h-4 sm:w-5 sm:h-5 transform group-hover:translate-x-1 transition-transform duration-300"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </span>
+                  </button>
+                </Link>
+
+                <Link
+                  href={`/checklist?stockCode=${selectedCompany?.stockCode}`}
+                  className="w-full"
+                >
+                  <button className="w-full inline-flex items-center justify-center bg-emerald-600 text-white px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-emerald-700 transition-all duration-300 shadow-sm hover:shadow group relative overflow-hidden">
+                    <span className="relative flex items-center">
+                      체크리스트
                       <svg
                         className="ml-2 w-4 h-4 sm:w-5 sm:h-5 transform group-hover:translate-x-1 transition-transform duration-300"
                         fill="none"
