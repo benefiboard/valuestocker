@@ -176,6 +176,18 @@ export default function ProfitCalculatorPage() {
     await performSearch(stockCode);
   };
 
+  // 계산 버튼 클릭 핸들러 (타입 에러 해결을 위해 추가)
+  const handleCalculateClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    if (!selectedCompany) {
+      setError('회사를 검색하고 선택해주세요');
+      return;
+    }
+
+    const stockCode = selectedCompany.stockCode;
+    performSearch(stockCode);
+  };
+
   // 파라미터 변경 시 재계산
   const handleParamChange = (param: keyof ProfitCalculationParams, value: number) => {
     setProfitParams((prev) => ({
@@ -278,7 +290,7 @@ export default function ProfitCalculatorPage() {
                 )}
 
                 {/* 3단계 설명 박스 - 검색 폼에서만 보임 */}
-                <div className="bg-green-50 rounded-2xl p-6 border border-green-100">
+                {/* <div className="bg-green-50 rounded-2xl p-6 border border-green-100">
                   <h3 className="font-bold text-green-900 mb-3 text-lg">
                     💰 3단계로 적정가격 찾기
                   </h3>
@@ -320,7 +332,7 @@ export default function ProfitCalculatorPage() {
                       </div>
                     </div>
                   </div>
-                </div>
+                </div> */}
 
                 {/* 수익가치 파라미터 입력 */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -398,83 +410,66 @@ export default function ProfitCalculatorPage() {
                     <p className="text-xs text-gray-500 mt-1">내가 원하는 최소 수익률</p>
                   </div>
                 </div>
+
+                {/* 계산 버튼 추가 */}
+                <button
+                  onClick={handleCalculateClick}
+                  type="button"
+                  className="w-full mt-6 bg-emerald-600 hover:bg-emerald-700 text-white py-3 sm:py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center shadow-sm hover:shadow group relative overflow-hidden"
+                  disabled={loading || !selectedCompany}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 size={20} className="mr-3 animate-spin" />
+                      계산 중...
+                    </>
+                  ) : (
+                    <>
+                      <Calculator size={20} className="mr-3" />
+                      적정가격 계산하기
+                    </>
+                  )}
+                </button>
               </div>
             </form>
 
-            <hr className="mt-6" />
+            {/* 3단계 설명 박스 - 검색 폼에서만 보임 */}
+            <div className="bg-green-50 rounded-2xl p-6 border border-green-100 mt-6">
+              <h3 className="font-bold text-green-900 mb-3 text-lg">💰 3단계로 적정가격 찾기</h3>
 
-            {/* 페이지 하단 네비게이션 버튼 */}
-            <div className="mt-6 grid grid-cols-3 gap-4">
-              <Link href={`/fairprice?stockCode=${selectedCompany?.stockCode}`} className="w-full">
-                <button className="w-full inline-flex items-center justify-center bg-emerald-600 text-white px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-emerald-700 transition-all duration-300 shadow-sm hover:shadow group relative overflow-hidden">
-                  <span className="relative flex items-center">
-                    적정가 계산
-                    <svg
-                      className="ml-2 w-4 h-4 sm:w-5 sm:h-5 transform group-hover:translate-x-1 transition-transform duration-300"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
+              <div className="space-y-3">
+                <div className="flex items-start">
+                  <span className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 flex-shrink-0">
+                    1
                   </span>
-                </button>
-              </Link>
+                  <div>
+                    <p className="font-medium text-green-800">기업이 얼마나 버나요?</p>
+                    <p className="text-sm text-green-700">자기자본 대비 수익률(ROE)을 입력하세요</p>
+                  </div>
+                </div>
 
-              <Link href={`/checklist?stockCode=${selectedCompany?.stockCode}`} className="w-full">
-                <button className="w-full inline-flex items-center justify-center bg-emerald-600 text-white px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-emerald-700 transition-all duration-300 shadow-sm hover:shadow group relative overflow-hidden">
-                  <span className="relative flex items-center">
-                    체크리스트
-                    <svg
-                      className="ml-2 w-4 h-4 sm:w-5 sm:h-5 transform group-hover:translate-x-1 transition-transform duration-300"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
+                <div className="flex items-start">
+                  <span className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 flex-shrink-0">
+                    2
                   </span>
-                </button>
-              </Link>
+                  <div>
+                    <p className="font-medium text-green-800">얼마나 오래 버나요?</p>
+                    <p className="text-sm text-green-700">
+                      이 수익이 지속될 기간을 예상하세요 (보통 5-10년)
+                    </p>
+                  </div>
+                </div>
 
-              <a
-                href={`https://finance.naver.com/item/main.naver?code=${selectedCompany?.stockCode}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full"
-              >
-                <button className="w-full inline-flex items-center justify-center bg-emerald-600 text-white px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-emerald-700 transition-all duration-300 shadow-sm hover:shadow group relative overflow-hidden">
-                  <span className="relative flex items-center">
-                    네이버증권
-                    <svg
-                      className="ml-2 w-4 h-4 sm:w-5 sm:h-5 transform group-hover:translate-x-1 transition-transform duration-300"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                      />
-                    </svg>
+                <div className="flex items-start">
+                  <span className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 flex-shrink-0">
+                    3
                   </span>
-                </button>
-              </a>
+                  <div>
+                    <p className="font-medium text-green-800">내가 원하는 수익률은?</p>
+                    <p className="text-sm text-green-700">최소한 얻고 싶은 연 수익률을 정하세요</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         ) : (
