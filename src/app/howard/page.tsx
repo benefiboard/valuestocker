@@ -298,7 +298,7 @@ export default function HowardPage() {
                   <Info className="w-5 h-5 text-emerald-600" />
                 </div>
                 <h2 className="text-base sm:text-lg font-semibold text-gray-800">
-                  순자산가치 기반 가치주 선별
+                  하워드 막스의 순자산가치 접근법
                 </h2>
               </div>
               <div
@@ -321,7 +321,7 @@ export default function HowardPage() {
             >
               <div className="p-4 sm:p-5 pt-0 border-t border-gray-100">
                 <p className="text-sm sm:text-base text-gray-700 mb-3">
-                  순자산가치에 기반한 가치투자 접근법을 사용하여 종목을 선별합니다:
+                  하워드 막스의 순자산가치 접근법을 사용하여 종목을 선별합니다:
                 </p>
                 <ul className="list-disc pl-5 text-sm sm:text-base text-gray-700 space-y-2">
                   <li>
@@ -620,7 +620,7 @@ export default function HowardPage() {
               <div className="p-4 sm:p-5 border-b border-gray-200">
                 <div className="flex justify-between items-center">
                   <h2 className="text-lg sm:text-xl font-semibold text-gray-800 flex items-center">
-                    <span>순자산가치 기반 가치주 리스트</span>
+                    <span>하워드 막스의 순자산가치 기반 가치주 리스트</span>
                     <span className="ml-2 text-sm font-normal bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">
                       총 {filteredStocks.length}개 종목
                     </span>

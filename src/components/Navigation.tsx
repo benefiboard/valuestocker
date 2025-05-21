@@ -169,7 +169,7 @@ const Navigation = () => {
         </div>
 
         {/* 데스크탑 메뉴 */}
-        <div className="hidden md:flex items-center space-x-4">
+        <div className="hidden xl:flex items-center space-x-4">
           <Dropdown
             title="투자 전략"
             items={strategyItems}
@@ -211,7 +211,7 @@ const Navigation = () => {
         </div>
 
         {/* 모바일 햄버거 메뉴 버튼 */}
-        <div className="flex items-center gap-2 md:hidden">
+        <div className="flex items-center gap-2 xl:hidden">
           {/* 메인 페이지에서만 시작하기 버튼 표시 */}
 
           <Link href="/">
@@ -230,7 +230,7 @@ const Navigation = () => {
 
         {/* 데스크탑에서 메인 페이지일 때만 시작하기 버튼 표시 */}
         {isHomePage && (
-          <div className="hidden md:block">
+          <div className="hidden xl:block">
             <Link href="/fairprice">
               <button className="bg-emerald-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-emerald-700 transition-colors shadow-sm hover:shadow">
                 시작하기
@@ -242,7 +242,11 @@ const Navigation = () => {
 
       {/* 모바일 드롭다운 메뉴 - 네비게이션 바 아래에 표시 */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-b border-gray-200 shadow-md">
+        <div
+          className={`${
+            mobileMenuOpen ? 'block' : 'hidden'
+          } xl:hidden bg-white border-b border-gray-200 shadow-md`}
+        >
           {/* 투자 전략 메뉴 그룹 */}
           <div className="px-6 py-4 border-b border-gray-100">
             <h3 className="font-medium text-gray-800 mb-3">투자 전략</h3>

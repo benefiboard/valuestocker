@@ -1,7 +1,5 @@
 // src/app/page.tsx
-'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import {
   BarChart4,
@@ -15,6 +13,7 @@ import {
   ChevronRight,
   Landmark,
   ChevronDown,
+  Calculator,
 } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 
@@ -47,43 +46,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 이미지 섹션 - 앱 목업 */}
-        {/* <div className="w-full py-16 bg-white flex justify-center px-6">
-          <div className="relative max-w-4xl w-full h-[500px] rounded-2xl overflow-hidden bg-gradient-to-r from-emerald-500/10 to-emerald-500/5 flex items-center justify-center shadow-lg">
-            <div className="absolute inset-0 bg-[url('/images/pattern-dots.svg')] opacity-10"></div>
-            <div className="relative z-10 grid grid-cols-2 gap-6 p-8">
-              <div className="col-span-1 bg-white p-5 rounded-xl shadow-lg transform hover:-translate-y-2 transition-all duration-300">
-                <div className="p-3 bg-emerald-50 rounded-full w-12 h-12 flex items-center justify-center mb-4">
-                  <BarChart4 className="text-emerald-500 h-6 w-6" />
-                </div>
-                <h3 className="text-lg font-bold mb-2">적정가치 계산</h3>
-                <p className="text-gray-600 text-sm">다양한 모델로 기업의 내재가치를 분석</p>
-              </div>
-              <div className="col-span-1 bg-white p-5 rounded-xl shadow-lg transform hover:-translate-y-2 transition-all duration-300">
-                <div className="p-3 bg-emerald-50 rounded-full w-12 h-12 flex items-center justify-center mb-4">
-                  <Landmark className="text-emerald-500 h-6 w-6" />
-                </div>
-                <h3 className="text-lg font-bold mb-2">재무제표 분석</h3>
-                <p className="text-gray-600 text-sm">기업의 재무 건전성과 성장성 파악</p>
-              </div>
-              <div className="col-span-1 bg-white p-5 rounded-xl shadow-lg transform hover:-translate-y-2 transition-all duration-300">
-                <div className="p-3 bg-emerald-50 rounded-full w-12 h-12 flex items-center justify-center mb-4">
-                  <LineChart className="text-emerald-500 h-6 w-6" />
-                </div>
-                <h3 className="text-lg font-bold mb-2">투자 성과 추적</h3>
-                <p className="text-gray-600 text-sm">포트폴리오 모니터링과 성과 분석</p>
-              </div>
-              <div className="col-span-1 bg-white p-5 rounded-xl shadow-lg transform hover:-translate-y-2 transition-all duration-300">
-                <div className="p-3 bg-emerald-50 rounded-full w-12 h-12 flex items-center justify-center mb-4">
-                  <Search className="text-emerald-500 h-6 w-6" />
-                </div>
-                <h3 className="text-lg font-bold mb-2">종목 스크리닝</h3>
-                <p className="text-gray-600 text-sm">다양한 조건으로 저평가 기업 발굴</p>
-              </div>
-            </div>
-          </div>
-        </div> */}
-
         {/* 주요 기능 섹션 */}
         <div className="w-full py-24 px-6 md:px-16 bg-white">
           <div className="max-w-6xl mx-auto">
@@ -96,7 +58,7 @@ export default function Home() {
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+            <div className="grid grid-cols-1  sm:grid-cols-2 lg:grid-cols-3  gap-12">
               {/* 기능 1 */}
               <div className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
                 <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mb-6">
@@ -136,7 +98,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 투자 전략 섹션 */}
+        {/* 투자 전략 섹션 - 수정된 부분 */}
         <div className="w-full py-24 px-6 md:px-16 bg-emerald-50">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16">
@@ -144,255 +106,317 @@ export default function Home() {
                 투자 전략
               </span>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                검증된 투자 전략
+                검증된 투자 접근법
               </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-                전설적인 투자자들의 성공 철학을 기반으로 한 체계적인 투자 접근법
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                전설적인 투자자들의 성공 철학과 실용적인 가치투자 전략을 기반으로 한 체계적인 접근법
               </p>
+            </div>
 
-              {/* 새로 추가된 안내 문구와 화살표 */}
-              <div className="flex flex-col items-center animate-pulse">
-                <p className="text-lg font-medium text-emerald-700 mb-3">
-                  아래 6가지 전략 중 하나를 선택하여 자세히 알아보세요
-                </p>
-                <div className="bg-emerald-100 rounded-full p-2 shadow-md">
-                  <ChevronDown className="h-6 w-6 text-emerald-600" />
-                </div>
+            {/* 대가들의 전략 섹션 */}
+            <div className="mb-12">
+              <div className="text-center mb-8">
+                <h3 className="text-2xl font-bold text-gray-800">대가들의 전략</h3>
+                <p className="text-gray-600 mt-2">전설적인 투자자들의 검증된 투자 원칙</p>
+              </div>
+
+              <div className="grid grid-cols-1  sm:grid-cols-2 xl:grid-cols-3  gap-6">
+                {/* 벤자민 그레이엄 전략 카드 */}
+                <Link
+                  href="/graham"
+                  className="block bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group"
+                >
+                  <div className="h-3 bg-emerald-500 w-full"></div>
+                  <div className="p-6">
+                    <div className="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center mb-5">
+                      <Landmark className="h-7 w-7 text-emerald-600" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-emerald-700 transition-colors">
+                      벤자민 그레이엄 전략
+                    </h3>
+                    <p className="text-gray-600 mb-6 text-sm">
+                      가치투자의 창시자가 제안한 7가지 투자 기준을 한국 시장에 맞게 수정하여
+                      안정적인 재무구조와 저평가된 기업에 투자합니다.
+                    </p>
+                    <div className="mb-6 space-y-3">
+                      <div className="flex items-start">
+                        <div className="bg-emerald-50 p-1 rounded-full mr-2 mt-0.5">
+                          <CheckSquare className="h-4 w-4 text-emerald-600" />
+                        </div>
+                        <div className="text-sm text-gray-700">부채비율 100% 미만, 재무안정성</div>
+                      </div>
+                      <div className="flex items-start">
+                        <div className="bg-emerald-50 p-1 rounded-full mr-2 mt-0.5">
+                          <CheckSquare className="h-4 w-4 text-emerald-600" />
+                        </div>
+                        <div className="text-sm text-gray-700">PBR 1.5배 이하, PER 15배 이하</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center text-emerald-700 font-medium text-sm group-hover:text-emerald-600">
+                      그레이엄 종목 보기
+                      <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </div>
+                </Link>
+
+                {/* 피터 린치 PEG 전략 카드 */}
+                <Link
+                  href="/lynch"
+                  className="block bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group"
+                >
+                  <div className="h-3 bg-emerald-500 w-full"></div>
+                  <div className="p-6">
+                    <div className="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center mb-5">
+                      <TrendingUp className="h-7 w-7 text-emerald-600" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-emerald-700 transition-colors">
+                      피터 린치 PEG 전략
+                    </h3>
+                    <p className="text-gray-600 mb-6 text-sm">
+                      성장률 대비 저평가된 기업을 발굴하는 PEG(Price/Earnings to Growth) 기반 투자
+                      접근법으로 합리적 가격의 성장주를 선별합니다.
+                    </p>
+                    <div className="mb-6 space-y-3">
+                      <div className="flex items-start">
+                        <div className="bg-emerald-50 p-1 rounded-full mr-2 mt-0.5">
+                          <CheckSquare className="h-4 w-4 text-emerald-600" />
+                        </div>
+                        <div className="text-sm text-gray-700">
+                          PEG 비율 1.0 이하, 성장 대비 저평가
+                        </div>
+                      </div>
+                      <div className="flex items-start">
+                        <div className="bg-emerald-50 p-1 rounded-full mr-2 mt-0.5">
+                          <CheckSquare className="h-4 w-4 text-emerald-600" />
+                        </div>
+                        <div className="text-sm text-gray-700">안정적 이익 성장 추세 기업</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center text-emerald-700 font-medium text-sm group-hover:text-emerald-600">
+                      PEG 종목 보기
+                      <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </div>
+                </Link>
+
+                {/* 하워드 막스 내재가치 전략 카드 */}
+                <Link
+                  href="/howard"
+                  className="block bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group"
+                >
+                  <div className="h-3 bg-emerald-500 w-full"></div>
+                  <div className="p-6">
+                    <div className="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center mb-5">
+                      <LineChart className="h-7 w-7 text-emerald-600" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-emerald-700 transition-colors">
+                      하워드 막스 내재가치
+                    </h3>
+                    <p className="text-gray-600 mb-6 text-sm">
+                      순자산가치를 기반으로 내재가치를 계산하고, 시가총액보다 순자산가치가 큰 기업에
+                      투자하는 보수적 가치투자 전략입니다.
+                    </p>
+                    <div className="mb-6 space-y-3">
+                      <div className="flex items-start">
+                        <div className="bg-emerald-50 p-1 rounded-full mr-2 mt-0.5">
+                          <CheckSquare className="h-4 w-4 text-emerald-600" />
+                        </div>
+                        <div className="text-sm text-gray-700">순자산가치 &gt; 시가총액</div>
+                      </div>
+                      <div className="flex items-start">
+                        <div className="bg-emerald-50 p-1 rounded-full mr-2 mt-0.5">
+                          <CheckSquare className="h-4 w-4 text-emerald-600" />
+                        </div>
+                        <div className="text-sm text-gray-700">
+                          다양한 시나리오로 가치 범위 평가
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center text-emerald-700 font-medium text-sm group-hover:text-emerald-600">
+                      내재가치 종목 보기
+                      <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </div>
+                </Link>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-              {/* 벤자민 그레이엄 전략 카드 - 전체 카드 클릭 가능 */}
-              <Link
-                href="/graham"
-                className="block bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group"
-              >
-                <div className="h-3 bg-emerald-500 w-full"></div>
-                <div className="p-6">
-                  <div className="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center mb-5">
-                    <Landmark className="h-7 w-7 text-emerald-600" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-emerald-700 transition-colors">
-                    벤자민 그레이엄 전략
-                  </h3>
-                  <p className="text-gray-600 mb-6 text-sm">
-                    가치투자의 창시자가 제안한 안전한 투자 원칙으로, 안정적인 재무구조와 저평가된
-                    기업에 투자합니다.
-                  </p>
-                  <div className="mb-6 space-y-3">
-                    <div className="flex items-start">
-                      <div className="bg-emerald-50 p-1 rounded-full mr-2 mt-0.5">
-                        <CheckSquare className="h-4 w-4 text-emerald-600" />
-                      </div>
-                      <div className="text-sm text-gray-700">PER 10 이하, 안정적 수익성</div>
-                    </div>
-                    <div className="flex items-start">
-                      <div className="bg-emerald-50 p-1 rounded-full mr-2 mt-0.5">
-                        <CheckSquare className="h-4 w-4 text-emerald-600" />
-                      </div>
-                      <div className="text-sm text-gray-700">부채비율 100% 미만, 재무안정성</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center text-emerald-700 font-medium text-sm group-hover:text-emerald-600">
-                    그레이엄 종목 보기
-                    <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </div>
-              </Link>
+            {/* 전략 간 구분선 및 안내 문구 */}
+            {/* <div className="flex flex-col items-center my-12 animate-pulse">
+              <p className="text-lg font-medium text-emerald-700 mb-3">
+                두 가지 접근법 중 원하는 전략을 선택하세요
+              </p>
+              <div className="bg-emerald-100 rounded-full p-2 shadow-md">
+                <ChevronDown className="h-6 w-6 text-emerald-600" />
+              </div>
+            </div> */}
 
-              {/* 고배당 가치주 전략 카드 - 전체 카드 클릭 가능 */}
-              <Link
-                href="/flavor"
-                className="block bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group"
-              >
-                <div className="h-3 bg-emerald-500 w-full"></div>
-                <div className="p-6">
-                  <div className="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center mb-5">
-                    <DollarSign className="h-7 w-7 text-emerald-600" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-emerald-700 transition-colors">
-                    고배당 가치주 전략
-                  </h3>
-                  <p className="text-gray-600 mb-6 text-sm">
-                    안정적인 배당수익과 저평가된 가치 모두를 고려한 균형 잡힌 접근법으로 장기 복리
-                    수익을 추구합니다.
-                  </p>
-                  <div className="mb-6 space-y-3">
-                    <div className="flex items-start">
-                      <div className="bg-emerald-50 p-1 rounded-full mr-2 mt-0.5">
-                        <CheckSquare className="h-4 w-4 text-emerald-600" />
-                      </div>
-                      <div className="text-sm text-gray-700">PER 10 이하, PBR 1 이하</div>
-                    </div>
-                    <div className="flex items-start">
-                      <div className="bg-emerald-50 p-1 rounded-full mr-2 mt-0.5">
-                        <CheckSquare className="h-4 w-4 text-emerald-600" />
-                      </div>
-                      <div className="text-sm text-gray-700">배당률 5% 이상, 안정적 수익</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center text-emerald-700 font-medium text-sm group-hover:text-emerald-600">
-                    고배당 종목 보기
-                    <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </div>
-              </Link>
+            {/* 실용투자 전략 섹션 */}
+            <div className="mt-12">
+              <div className="text-center mb-8">
+                <h3 className="text-2xl font-bold text-gray-800">실용투자 전략</h3>
+                <p className="text-gray-600 mt-2">실전에 바로 적용할 수 있는 가치투자 접근법</p>
+              </div>
 
-              {/* S-RIM 내재가치 전략 카드 - 전체 카드 클릭 가능 */}
-              <Link
-                href="/s-rim"
-                className="block bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group"
-              >
-                <div className="h-3 bg-emerald-500 w-full"></div>
-                <div className="p-6">
-                  <div className="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center mb-5">
-                    <BarChart4 className="h-7 w-7 text-emerald-600" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-emerald-700 transition-colors">
-                    S-RIM 내재가치 전략
-                  </h3>
-                  <p className="text-gray-600 mb-6 text-sm">
-                    초과이익 모델을 활용한 기업의 본질적 가치 평가 방법론으로 장기적 관점의 투자
-                    가치를 분석합니다.
-                  </p>
-                  <div className="mb-6 space-y-3">
-                    <div className="flex items-start">
-                      <div className="bg-emerald-50 p-1 rounded-full mr-2 mt-0.5">
-                        <CheckSquare className="h-4 w-4 text-emerald-600" />
-                      </div>
-                      <div className="text-sm text-gray-700">ROE 기반 초과이익의 현재가치 평가</div>
+              <div className="grid grid-cols-1  sm:grid-cols-2 xl:grid-cols-3  gap-6">
+                {/* 고배당 가치주 전략 카드 */}
+                <Link
+                  href="/flavor"
+                  className="block bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group"
+                >
+                  <div className="h-3 bg-emerald-500 w-full"></div>
+                  <div className="p-6">
+                    <div className="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center mb-5">
+                      <DollarSign className="h-7 w-7 text-emerald-600" />
                     </div>
-                    <div className="flex items-start">
-                      <div className="bg-emerald-50 p-1 rounded-full mr-2 mt-0.5">
-                        <CheckSquare className="h-4 w-4 text-emerald-600" />
+                    <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-emerald-700 transition-colors">
+                      고배당 가치주 전략
+                    </h3>
+                    <p className="text-gray-600 mb-6 text-sm">
+                      PER 10 이하, PBR 1 이하의 저평가 가치주 중 5% 이상의 높은 배당률을 제공하는
+                      기업에 투자하는 전략입니다.
+                    </p>
+                    <div className="mb-6 space-y-3">
+                      <div className="flex items-start">
+                        <div className="bg-emerald-50 p-1 rounded-full mr-2 mt-0.5">
+                          <CheckSquare className="h-4 w-4 text-emerald-600" />
+                        </div>
+                        <div className="text-sm text-gray-700">PER 10 이하, PBR 1 이하</div>
                       </div>
-                      <div className="text-sm text-gray-700">최소 30% 안전마진 확보</div>
+                      <div className="flex items-start">
+                        <div className="bg-emerald-50 p-1 rounded-full mr-2 mt-0.5">
+                          <CheckSquare className="h-4 w-4 text-emerald-600" />
+                        </div>
+                        <div className="text-sm text-gray-700">배당률 5% 이상, 안정적 수익</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center text-emerald-700 font-medium text-sm group-hover:text-emerald-600">
+                      고배당 종목 보기
+                      <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                     </div>
                   </div>
-                  <div className="flex items-center text-emerald-700 font-medium text-sm group-hover:text-emerald-600">
-                    S-RIM 종목 보기
-                    <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </div>
-              </Link>
+                </Link>
 
-              {/* 비즈니스 퀄리티 종목 카드 - 전체 카드 클릭 가능 */}
-              <Link
-                href="/quality"
-                className="block bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group"
-              >
-                <div className="h-3 bg-emerald-500 w-full"></div>
-                <div className="p-6">
-                  <div className="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center mb-5">
-                    <Shield className="h-7 w-7 text-emerald-600" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-emerald-700 transition-colors">
-                    비즈니스 퀄리티 전략
-                  </h3>
-                  <p className="text-gray-600 mb-6 text-sm">
-                    장기적으로 높은 수익을 창출하는 고품질 비즈니스 기업들에 투자하여 지속 가능한
-                    성장을 추구합니다.
-                  </p>
-                  <div className="mb-6 space-y-3">
-                    <div className="flex items-start">
-                      <div className="bg-emerald-50 p-1 rounded-full mr-2 mt-0.5">
-                        <CheckSquare className="h-4 w-4 text-emerald-600" />
-                      </div>
-                      <div className="text-sm text-gray-700">ROE 10% 이상, 3년 평균</div>
+                {/* 비즈니스 퀄리티 종목 카드 */}
+                <Link
+                  href="/quality"
+                  className="block bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group"
+                >
+                  <div className="h-3 bg-emerald-500 w-full"></div>
+                  <div className="p-6">
+                    <div className="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center mb-5">
+                      <Shield className="h-7 w-7 text-emerald-600" />
                     </div>
-                    <div className="flex items-start">
-                      <div className="bg-emerald-50 p-1 rounded-full mr-2 mt-0.5">
-                        <CheckSquare className="h-4 w-4 text-emerald-600" />
+                    <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-emerald-700 transition-colors">
+                      비즈니스 퀄리티 전략
+                    </h3>
+                    <p className="text-gray-600 mb-6 text-sm">
+                      5년 평균 ROE 10% 이상, 영업이익률 15% 이상의 고품질 비즈니스 모델을 가진
+                      기업에 투자하는 전략입니다.
+                    </p>
+                    <div className="mb-6 space-y-3">
+                      <div className="flex items-start">
+                        <div className="bg-emerald-50 p-1 rounded-full mr-2 mt-0.5">
+                          <CheckSquare className="h-4 w-4 text-emerald-600" />
+                        </div>
+                        <div className="text-sm text-gray-700">5년 평균 ROE 10% 이상</div>
                       </div>
-                      <div className="text-sm text-gray-700">영업이익률 15% 이상, 지속 성장</div>
+                      <div className="flex items-start">
+                        <div className="bg-emerald-50 p-1 rounded-full mr-2 mt-0.5">
+                          <CheckSquare className="h-4 w-4 text-emerald-600" />
+                        </div>
+                        <div className="text-sm text-gray-700">5년 평균 영업이익률 15% 이상</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center text-emerald-700 font-medium text-sm group-hover:text-emerald-600">
+                      퀄리티 종목 보기
+                      <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                     </div>
                   </div>
-                  <div className="flex items-center text-emerald-700 font-medium text-sm group-hover:text-emerald-600">
-                    퀄리티 종목 보기
-                    <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </div>
-              </Link>
+                </Link>
 
-              {/* 피터 린치 PEG 전략 카드 - 전체 카드 클릭 가능 */}
-              <Link
-                href="/lynch"
-                className="block bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group"
-              >
-                <div className="h-3 bg-emerald-500 w-full"></div>
-                <div className="p-6">
-                  <div className="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center mb-5">
-                    <TrendingUp className="h-7 w-7 text-emerald-600" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-emerald-700 transition-colors">
-                    피터 린치 PEG 전략
-                  </h3>
-                  <p className="text-gray-600 mb-6 text-sm">
-                    성장률 대비 저평가된 기업을 발굴하는 성장 가치 투자 접근법으로 합리적 가격의
-                    성장주를 선별합니다.
-                  </p>
-                  <div className="mb-6 space-y-3">
-                    <div className="flex items-start">
-                      <div className="bg-emerald-50 p-1 rounded-full mr-2 mt-0.5">
-                        <CheckSquare className="h-4 w-4 text-emerald-600" />
+                {/* S-RIM 내재가치 전략 카드 */}
+                <Link
+                  href="/s-rim"
+                  className="block bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group"
+                >
+                  <div className="h-3 bg-emerald-500 w-full"></div>
+                  <div className="p-6">
+                    <div className="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center mb-5">
+                      <BarChart4 className="h-7 w-7 text-emerald-600" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-emerald-700 transition-colors">
+                      S-RIM 내재가치 전략
+                    </h3>
+                    <p className="text-gray-600 mb-6 text-sm">
+                      미래 초과이익의 현재가치와 순자산을 기반으로 기업의 내재가치를 평가하고 최소
+                      30% 안전마진을 확보하는 전략입니다.
+                    </p>
+                    <div className="mb-6 space-y-3">
+                      <div className="flex items-start">
+                        <div className="bg-emerald-50 p-1 rounded-full mr-2 mt-0.5">
+                          <CheckSquare className="h-4 w-4 text-emerald-600" />
+                        </div>
+                        <div className="text-sm text-gray-700">
+                          ROE 기반 초과이익의 현재가치 평가
+                        </div>
                       </div>
-                      <div className="text-sm text-gray-700">
-                        PEG 비율 1.0 이하, 성장 대비 저평가
+                      <div className="flex items-start">
+                        <div className="bg-emerald-50 p-1 rounded-full mr-2 mt-0.5">
+                          <CheckSquare className="h-4 w-4 text-emerald-600" />
+                        </div>
+                        <div className="text-sm text-gray-700">최소 30% 안전마진 확보</div>
                       </div>
                     </div>
-                    <div className="flex items-start">
-                      <div className="bg-emerald-50 p-1 rounded-full mr-2 mt-0.5">
-                        <CheckSquare className="h-4 w-4 text-emerald-600" />
-                      </div>
-                      <div className="text-sm text-gray-700">안정적 이익 성장 추세 기업</div>
+                    <div className="flex items-center text-emerald-700 font-medium text-sm group-hover:text-emerald-600">
+                      S-RIM 종목 보기
+                      <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                     </div>
                   </div>
-                  <div className="flex items-center text-emerald-700 font-medium text-sm group-hover:text-emerald-600">
-                    PEG 종목 보기
-                    <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </div>
-              </Link>
+                </Link>
 
-              {/* 하워드 막스 내재가치 전략 카드 - 전체 카드 클릭 가능 */}
-              <Link
-                href="/howard"
-                className="block bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group"
-              >
-                <div className="h-3 bg-emerald-500 w-full"></div>
-                <div className="p-6">
-                  <div className="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center mb-5">
-                    <LineChart className="h-7 w-7 text-emerald-600" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-emerald-700 transition-colors">
-                    하워드 막스 내재가치
-                  </h3>
-                  <p className="text-gray-600 mb-6 text-sm">
-                    현금흐름 할인법과 안전마진을 중시하는 하워드 막스의 투자 원칙으로 시장 사이클에
-                    대응합니다.
-                  </p>
-                  <div className="mb-6 space-y-3">
-                    <div className="flex items-start">
-                      <div className="bg-emerald-50 p-1 rounded-full mr-2 mt-0.5">
-                        <CheckSquare className="h-4 w-4 text-emerald-600" />
+                {/* 수익가치 전략 카드 (신규 추가) */}
+                <Link
+                  href="/profit"
+                  className="block bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group"
+                >
+                  <div className="h-3 bg-emerald-500 w-full"></div>
+                  <div className="p-6">
+                    <div className="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center mb-5">
+                      <Calculator className="h-7 w-7 text-emerald-600" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-emerald-700 transition-colors">
+                      수익가치 전략
+                    </h3>
+                    <p className="text-gray-600 mb-6 text-sm">
+                      ROE와 BPS를 기반으로 기업의 내재가치를 산출하고 보수/기본/낙관 시나리오를 통해
+                      투자 안전성을 확보하는 전략입니다.
+                    </p>
+                    <div className="mb-6 space-y-3">
+                      <div className="flex items-start">
+                        <div className="bg-emerald-50 p-1 rounded-full mr-2 mt-0.5">
+                          <CheckSquare className="h-4 w-4 text-emerald-600" />
+                        </div>
+                        <div className="text-sm text-gray-700">
+                          가중평균 ROE 활용, 10% 할인율 적용
+                        </div>
                       </div>
-                      <div className="text-sm text-gray-700">
-                        DCF 기반, 미래 현금흐름의 현재가치
+                      <div className="flex items-start">
+                        <div className="bg-emerald-50 p-1 rounded-full mr-2 mt-0.5">
+                          <CheckSquare className="h-4 w-4 text-emerald-600" />
+                        </div>
+                        <div className="text-sm text-gray-700">
+                          시나리오 분석으로 안전마진 30% 이상 확보
+                        </div>
                       </div>
                     </div>
-                    <div className="flex items-start">
-                      <div className="bg-emerald-50 p-1 rounded-full mr-2 mt-0.5">
-                        <CheckSquare className="h-4 w-4 text-emerald-600" />
-                      </div>
-                      <div className="text-sm text-gray-700">다양한 시나리오로 가치 범위 평가</div>
+                    <div className="flex items-center text-emerald-700 font-medium text-sm group-hover:text-emerald-600">
+                      수익가치 종목 보기
+                      <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                     </div>
                   </div>
-                  <div className="flex items-center text-emerald-700 font-medium text-sm group-hover:text-emerald-600">
-                    내재가치 종목 보기
-                    <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </div>
-              </Link>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
