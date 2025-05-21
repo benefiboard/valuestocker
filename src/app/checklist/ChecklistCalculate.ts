@@ -49,30 +49,30 @@ export const getStockChecklistFromSupabase = async (
     epsGrowthRate: Number(data.epsgrowthrate || 0),
     netIncomeGrowthRate: Number(data.netincomegrowthrate || 0),
     bpsGrowthRate: Number(data.bpsgrowthrate || 0),
-    
+
     // 수익성 및 효율성 지표들
     avgOpMargin: Number(data.avgopmargin || 0),
     avgRoe: Number(data.avgroe || 0),
     avgRoa: Number(data.avgroa || 0),
     assetTurnover: Number(data.assetturnover || 0),
     equityTurnover: Number(data.equityturnover || 0),
-    
+
     // 재무 건전성 지표들
     debtRatio: Number(data.debtratio || 0),
     interestBearingDebtRatio: Number(data.interestbearingdebtratio || 0),
     equityRatio: Number(data.equityratio || 0),
-    
+
     // 현금흐름 및 경쟁력 지표들
     fcfRatio: Number(data.fcfratio || 0),
     opCashFlowToRevenueRatio: Number(data.opcashflowtorevenueratio || 0),
     fcfMargin: Number(data.fcfmargin || 0),
     dividendYield: Number(data.dividendyield || 0),
-    
+
     // PER 관련 지표들
     avgPer: Number(data.avgper || 0),
     maxPer: Number(data.maxper || 0),
     maxPerTimes04: Number(data.maxpertimes04 || 0),
-    
+
     // 연도별 값
     currentBps: Number(data.currentbps || 0),
     previousBps: Number(data.previousbps || 0),
@@ -115,7 +115,9 @@ export const getStockPriceFromSupabase = async (stockCode: string): Promise<Stoc
 };
 
 // Supabase에서 현재 PER 데이터 가져오기
-export const getStockCurrentFromSupabase = async (stockCode: string): Promise<StockCurrent | null> => {
+export const getStockCurrentFromSupabase = async (
+  stockCode: string
+): Promise<StockCurrent | null> => {
   const { data, error } = await supabase
     .from('stock_current')
     .select('*')
@@ -171,7 +173,7 @@ export const calculateChecklist = async (
   stockPrice.sharesOutstanding = parseFloat(stockData.shares_outstanding || '0');
 
   // 4. 현재 PER 설정 (stock_current에서 가져오거나 계산)
-  const currentPer = stockCurrent?.currentPer || (stockPrice.price / stockData.currentYearEps);
+  const currentPer = stockCurrent?.currentPer || stockPrice.price / stockData.currentYearEps;
 
   // 5. 기존 함수로 체크리스트 계산 (현재 PER 전달)
   return calculateJsonChecklist(stockCode, stockPrice, industry, currentPer);
@@ -213,12 +215,12 @@ export const calculateJsonChecklist = (
   // 현재 주가
   const currentPrice = stockPrice.price;
   const currentEps = stockData.currentYearEps || 0;
-  
+
   // 현재 PER 계산 (제공된 값 없으면 직접 계산)
-  const per = currentPer > 0 ? currentPer : (currentEps > 0 ? currentPrice / currentEps : 0);
+  const per = currentPer > 0 ? currentPer : currentEps > 0 ? currentPrice / currentEps : 0;
   console.log('현재 PER:', per);
   console.log('현재가격:', currentPrice);
-  
+
   // 현재 PBR 계산
   const currentBps = stockData.currentBps || 0;
   const pbr = currentBps > 0 ? currentPrice / currentBps : 0;
@@ -454,26 +456,25 @@ export const calculateJsonChecklist = (
 
       case '영업이익 성장률':
         item.actualValue = stockData.opIncomeGrowthRate;
-        
+
         // 영업이익률에 따른 조정된 기준 적용
         if (currentOpMargin >= 20) {
           // 매우 높은 영업이익률(20% 이상)
           console.log('영업이익률 20% 이상 기업 - 영업이익 성장률 기준 조정 적용');
           if (stockData.opIncomeGrowthRate >= 0) {
-            item.score = 8;  // 양수 성장이면 이미 좋은 점수
+            item.score = 8; // 양수 성장이면 이미 좋은 점수
           } else if (stockData.opIncomeGrowthRate >= -10) {
-            item.score = 6;  // 소폭 감소는 합리적 평가
+            item.score = 6; // 소폭 감소는 합리적 평가
           } else if (stockData.opIncomeGrowthRate >= -20) {
-            item.score = 4;  // 중간 감소도 여전히 양호
+            item.score = 4; // 중간 감소도 여전히 양호
           } else {
-            item.score = 2;  // 큰 감소만 낮은 점수
+            item.score = 2; // 큰 감소만 낮은 점수
           }
           // 영업이익률 20% 이상 기업은 -10%까지 통과 인정
           item.isPassed = stockData.opIncomeGrowthRate >= -10;
           // 표시 기준값 변경
-          item.targetValue = "> -10%";
-        }
-        else if (currentOpMargin >= 15) {
+          item.targetValue = '> -10%';
+        } else if (currentOpMargin >= 15) {
           // 높은 영업이익률(15% 이상)
           console.log('영업이익률 15% 이상 기업 - 영업이익 성장률 기준 조정 적용');
           if (stockData.opIncomeGrowthRate >= 0) {
@@ -488,9 +489,8 @@ export const calculateJsonChecklist = (
           // 영업이익률 15% 이상 기업은 -5%까지 통과 인정
           item.isPassed = stockData.opIncomeGrowthRate >= -5;
           // 표시 기준값 변경
-          item.targetValue = "> -5%";
-        }
-        else if (currentOpMargin >= 10) {
+          item.targetValue = '> -5%';
+        } else if (currentOpMargin >= 10) {
           // 양호한 영업이익률(10% 이상)
           console.log('영업이익률 10% 이상 기업 - 영업이익 성장률 기준 조정 적용');
           if (stockData.opIncomeGrowthRate >= 5) {
@@ -505,9 +505,8 @@ export const calculateJsonChecklist = (
           // 영업이익률 10% 이상 기업은 0%까지 통과 인정
           item.isPassed = stockData.opIncomeGrowthRate >= 0;
           // 표시 기준값 변경
-          item.targetValue = "> 0%";
-        }
-        else {
+          item.targetValue = '> 0%';
+        } else {
           // 기존 로직 (영업이익률이 10% 미만인 일반 기업)
           if (isNaN(stockData.opIncomeGrowthRate)) {
             item.score = 0;
@@ -528,19 +527,20 @@ export const calculateJsonChecklist = (
           } else {
             item.score = 4;
           }
-          
-          item.isPassed = stockData.opIncomeGrowthRate >= 10 || stockData.opIncomeGrowthRate === 100;
+
+          item.isPassed =
+            stockData.opIncomeGrowthRate >= 10 || stockData.opIncomeGrowthRate === 100;
           // 표시 기준값 유지
-          item.targetValue = "> 10%";
+          item.targetValue = '> 10%';
         }
-        
+
         // 흑자전환이면 미달에서 제외 (공통)
         item.isFailCriteria = item.score === 0 && stockData.opIncomeGrowthRate !== 100;
         break;
 
       case 'EPS 성장률':
         item.actualValue = stockData.epsGrowthRate;
-        
+
         // 영업이익률에 따른 조정된 기준 적용
         if (currentOpMargin >= 20) {
           // 매우 높은 영업이익률(20% 이상)
@@ -557,9 +557,8 @@ export const calculateJsonChecklist = (
           // 영업이익률 20% 이상 기업은 -10%까지 통과 인정
           item.isPassed = stockData.epsGrowthRate >= -10;
           // 표시 기준값 변경
-          item.targetValue = "> -10%";
-        }
-        else if (currentOpMargin >= 15) {
+          item.targetValue = '> -10%';
+        } else if (currentOpMargin >= 15) {
           // 높은 영업이익률(15% 이상)
           console.log('영업이익률 15% 이상 기업 - EPS 성장률 기준 조정 적용');
           if (stockData.epsGrowthRate >= 0) {
@@ -574,9 +573,8 @@ export const calculateJsonChecklist = (
           // 영업이익률 15% 이상 기업은 -5%까지 통과 인정
           item.isPassed = stockData.epsGrowthRate >= -5;
           // 표시 기준값 변경
-          item.targetValue = "> -5%";
-        }
-        else if (currentOpMargin >= 10) {
+          item.targetValue = '> -5%';
+        } else if (currentOpMargin >= 10) {
           // 양호한 영업이익률(10% 이상)
           console.log('영업이익률 10% 이상 기업 - EPS 성장률 기준 조정 적용');
           if (stockData.epsGrowthRate >= 5) {
@@ -591,9 +589,8 @@ export const calculateJsonChecklist = (
           // 영업이익률 10% 이상 기업은 0%까지 통과 인정
           item.isPassed = stockData.epsGrowthRate >= 0;
           // 표시 기준값 변경
-          item.targetValue = "> 0%";
-        }
-        else {
+          item.targetValue = '> 0%';
+        } else {
           // 기존 로직 (영업이익률이 10% 미만인 일반 기업)
           if (isNaN(stockData.epsGrowthRate)) {
             item.score = 0;
@@ -614,19 +611,19 @@ export const calculateJsonChecklist = (
           } else {
             item.score = 4;
           }
-          
+
           item.isPassed = stockData.epsGrowthRate >= 10 || stockData.epsGrowthRate === 100;
           // 표시 기준값 유지
-          item.targetValue = "> 10%";
+          item.targetValue = '> 10%';
         }
-        
+
         // 흑자전환이면 미달에서 제외 (공통)
         item.isFailCriteria = item.score === 0 && stockData.epsGrowthRate !== 100;
         break;
 
       case '순이익 증가율':
         item.actualValue = stockData.netIncomeGrowthRate;
-        
+
         // 영업이익률에 따른 조정된 기준 적용
         if (currentOpMargin >= 20) {
           // 매우 높은 영업이익률(20% 이상)
@@ -643,9 +640,8 @@ export const calculateJsonChecklist = (
           // 영업이익률 20% 이상 기업은 -10%까지 통과 인정
           item.isPassed = stockData.netIncomeGrowthRate >= -10;
           // 표시 기준값 변경
-          item.targetValue = "> -10%";
-        }
-        else if (currentOpMargin >= 15) {
+          item.targetValue = '> -10%';
+        } else if (currentOpMargin >= 15) {
           // 높은 영업이익률(15% 이상)
           console.log('영업이익률 15% 이상 기업 - 순이익 증가율 기준 조정 적용');
           if (stockData.netIncomeGrowthRate >= 0) {
@@ -660,9 +656,8 @@ export const calculateJsonChecklist = (
           // 영업이익률 15% 이상 기업은 -5%까지 통과 인정
           item.isPassed = stockData.netIncomeGrowthRate >= -5;
           // 표시 기준값 변경
-          item.targetValue = "> -5%";
-        }
-        else if (currentOpMargin >= 10) {
+          item.targetValue = '> -5%';
+        } else if (currentOpMargin >= 10) {
           // 양호한 영업이익률(10% 이상)
           console.log('영업이익률 10% 이상 기업 - 순이익 증가율 기준 조정 적용');
           if (stockData.netIncomeGrowthRate >= 5) {
@@ -677,9 +672,8 @@ export const calculateJsonChecklist = (
           // 영업이익률 10% 이상 기업은 0%까지 통과 인정
           item.isPassed = stockData.netIncomeGrowthRate >= 0;
           // 표시 기준값 변경
-          item.targetValue = "> 0%";
-        }
-        else {
+          item.targetValue = '> 0%';
+        } else {
           // 기존 로직 (영업이익률이 10% 미만인 일반 기업)
           if (isNaN(stockData.netIncomeGrowthRate)) {
             item.score = 0;
@@ -702,15 +696,15 @@ export const calculateJsonChecklist = (
           } else {
             item.score = 4;
           }
-          
+
           // 순이익은 20~50% 범위가 이상적이지만, 흑자전환도 매우 긍정적으로 평가
-          item.isPassed = 
+          item.isPassed =
             (stockData.netIncomeGrowthRate >= 20 && stockData.netIncomeGrowthRate < 50) ||
             stockData.netIncomeGrowthRate === 100;
           // 표시 기준값 유지
-          item.targetValue = "20% ~ 50%";
+          item.targetValue = '20% ~ 50%';
         }
-        
+
         // 흑자전환이면 미달에서 제외 (공통)
         item.isFailCriteria = item.score === 0 && stockData.netIncomeGrowthRate !== 100;
         break;
@@ -767,10 +761,10 @@ export const calculateJsonChecklist = (
 
       case 'ROA(%)':
         item.actualValue = stockData.avgRoa;
-        
+
         // ROA 점수 계산
         if (stockData.avgRoa < 0) {
-          item.score = 0;  // 음수 ROA는 0점
+          item.score = 0; // 음수 ROA는 0점
           item.isPassed = false;
           item.isFailCriteria = true;
         } else {
@@ -791,13 +785,13 @@ export const calculateJsonChecklist = (
           // ROA 7% 이상이면 통과
           item.isPassed = stockData.avgRoa > 7;
         }
-        
-        item.targetValue = "> 7%";
+
+        item.targetValue = '> 7%';
         break;
 
       case '자산회전율':
         item.actualValue = stockData.assetTurnover;
-        
+
         // 자산회전율 점수 계산
         item.score =
           stockData.assetTurnover > 2
@@ -811,15 +805,15 @@ export const calculateJsonChecklist = (
             : stockData.assetTurnover > 0.4
             ? 2
             : 0;
-        
+
         // 자산회전율 1 이상이면 통과
         item.isPassed = stockData.assetTurnover > 1;
-        item.targetValue = "> 1.0";
+        item.targetValue = '> 1.0';
         break;
 
       case '자기자본회전율':
         item.actualValue = stockData.equityTurnover;
-        
+
         // 자기자본회전율 점수 계산
         item.score =
           stockData.equityTurnover > 3
@@ -833,10 +827,10 @@ export const calculateJsonChecklist = (
             : stockData.equityTurnover > 0.5
             ? 2
             : 0;
-        
+
         // 자기자본회전율 1.5 이상이면 통과
         item.isPassed = stockData.equityTurnover > 1.5;
-        item.targetValue = "> 1.5";
+        item.targetValue = '> 1.5';
         break;
 
       // 자산 가치 지표
@@ -932,7 +926,7 @@ export const calculateJsonChecklist = (
 
       case '이자발생부채비율':
         item.actualValue = stockData.interestBearingDebtRatio;
-        
+
         // 이자발생부채비율 점수 계산
         item.score =
           stockData.interestBearingDebtRatio < 10
@@ -946,15 +940,15 @@ export const calculateJsonChecklist = (
             : stockData.interestBearingDebtRatio < 50
             ? 2
             : 0;
-        
+
         // 이자발생부채비율 30% 이하면 통과
         item.isPassed = stockData.interestBearingDebtRatio < 30;
-        item.targetValue = "< 30%";
+        item.targetValue = '< 30%';
         break;
 
       case '자기자본비율':
         item.actualValue = stockData.equityRatio;
-        
+
         // 자기자본비율 점수 계산
         item.score =
           stockData.equityRatio > 70
@@ -968,10 +962,10 @@ export const calculateJsonChecklist = (
             : stockData.equityRatio > 30
             ? 2
             : 0;
-        
+
         // 자기자본비율 50% 이상이면 통과
         item.isPassed = stockData.equityRatio > 50;
-        item.targetValue = "> 50%";
+        item.targetValue = '> 50%';
         break;
 
       // 현금흐름 및 경쟁력 지표
@@ -994,7 +988,7 @@ export const calculateJsonChecklist = (
 
       case '영업현금흐름 대 매출액 비율':
         item.actualValue = stockData.opCashFlowToRevenueRatio;
-        
+
         // 영업현금흐름 대 매출액 비율 점수 계산
         item.score =
           stockData.opCashFlowToRevenueRatio > 15
@@ -1008,15 +1002,15 @@ export const calculateJsonChecklist = (
             : stockData.opCashFlowToRevenueRatio > 0
             ? 2
             : 0;
-        
+
         // 영업현금흐름 대 매출액 비율 7% 이상이면 통과
         item.isPassed = stockData.opCashFlowToRevenueRatio > 7;
-        item.targetValue = "> 7%";
+        item.targetValue = '> 7%';
         break;
 
       case 'FCF 마진':
         item.actualValue = stockData.fcfMargin;
-        
+
         // FCF 마진 점수 계산
         item.score =
           stockData.fcfMargin > 12
@@ -1030,15 +1024,15 @@ export const calculateJsonChecklist = (
             : stockData.fcfMargin > 0
             ? 2
             : 0;
-        
+
         // FCF 마진 6% 이상이면 통과
         item.isPassed = stockData.fcfMargin > 6;
-        item.targetValue = "> 6%";
+        item.targetValue = '> 6%';
         break;
 
       case '배당수익률':
         item.actualValue = stockData.dividendYield;
-        
+
         // 배당수익률 점수 계산
         item.score =
           stockData.dividendYield > 4
@@ -1052,10 +1046,10 @@ export const calculateJsonChecklist = (
             : stockData.dividendYield > 0
             ? 2
             : 0;
-        
+
         // 배당수익률 2% 이상이면 통과
         item.isPassed = stockData.dividendYield > 2;
-        item.targetValue = "> 2%";
+        item.targetValue = '> 2%';
         break;
 
       // PER 관련 지표
@@ -1080,13 +1074,7 @@ export const calculateJsonChecklist = (
             // 기존 일반 기업 기준
             const maxPer = stockData.maxPer;
             item.score =
-              per < maxPerTimes04
-                ? 10
-                : per < maxPer * 0.6
-                ? 7
-                : per < maxPer * 0.8
-                ? 4
-                : 2;
+              per < maxPerTimes04 ? 10 : per < maxPer * 0.6 ? 7 : per < maxPer * 0.8 ? 4 : 2;
             item.isPassed = per < maxPerTimes04;
           }
         }
@@ -1292,14 +1280,15 @@ export const calculateInvestmentRating = (
   const coreItemsPassCount = coreItems.filter((item) => item.score >= 6).length;
 
   // 등급 산정
+  // 등급 산정
   let grade;
   const percentage = (totalScore / maxPossibleScore) * 100;
 
   if (hasCriticalFailure) {
     // 미달이 있으면 최대 D등급까지만 가능
     grade = percentage >= 40 ? 'D' : 'F';
-  } else if (coreItemsPassCount < 3 && !isFinancialCompany) {
-    // 금융회사가 아닌 경우에만 핵심 지표 통과 개수 제한 적용
+  } else if (coreItemsPassCount < Math.ceil(coreItems.length * 0.5) && !isFinancialCompany) {
+    // 핵심 지표의 50% 이상 통과 필요 (반올림)
     grade = percentage >= 50 ? 'C' : 'D';
   } else if (isFinancialCompany && coreItemsPassCount < 1) {
     // 금융회사는 최소 1개 이상의 핵심 지표는 통과해야 함

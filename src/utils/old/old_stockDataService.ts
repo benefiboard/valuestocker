@@ -62,7 +62,7 @@ export interface HowardStock {
   conservative_intrinsic_value: number; // 보수 시나리오 내재가치
   discount_rate: number; // 할인율 (%)
   margin_of_safety: number; // 안전마진 (%)
-  consecutive_dividend: boolean; // 3년 연속 배당 여부
+  consecutive_dividend: boolean; // 5년 연속 배당 여부
 }
 
 export interface LynchStock {
@@ -77,7 +77,7 @@ export interface LynchStock {
   average_eps: number; // 평균 EPS
   margin_of_safety: number; // 안전마진
   dividend_yield: number; // 배당률
-  consecutive_dividend: boolean; // 3년 연속 배당 여부
+  consecutive_dividend: boolean; // 5년 연속 배당 여부
 }
 
 export interface SrimStock {
@@ -92,7 +92,7 @@ export interface SrimStock {
   srim_decline_20pct: number; // ROE 20% 감소 시나리오
   margin_of_safety: number; // 안전마진
   dividend_yield: number; // 배당률
-  consecutive_dividend: boolean; // 3년 연속 배당 여부
+  consecutive_dividend: boolean; // 5년 연속 배당 여부
   latestroe: number; // 최신 ROE
 }
 

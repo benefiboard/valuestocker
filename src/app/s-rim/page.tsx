@@ -3,7 +3,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { SrimStock, fetchSrimStocks } from '@/utils/stockDataService';
 import Link from 'next/link';
 import { formatNumber } from '../../utils/stockUtils';
 import {
@@ -28,6 +27,8 @@ import {
   X,
 } from 'lucide-react';
 import { StockLinkButtons } from '../../components/StockLinkButtons';
+import { SrimStock } from '@/utils/stockDataTypes';
+import { fetchSrimStocks } from './srimStock';
 
 // 정렬 타입 정의
 type SortField =
@@ -364,11 +365,11 @@ export default function SrimPage() {
                     내재가치 대비 30% 이상 저평가된 종목만 표시
                   </li>
                   <li>
-                    <strong className="text-emerald-700">영업이익 필터링</strong> - 최근 3년 중 2년
+                    <strong className="text-emerald-700">영업이익 필터링</strong> - 최근 5년 중 2년
                     이상 영업이익이 음수인 기업 제외
                   </li>
                   <li>
-                    <strong className="text-emerald-700">연속 배당 여부 표시</strong> - 3년 연속
+                    <strong className="text-emerald-700">연속 배당 여부 표시</strong> - 5년 연속
                     배당금 지급 체크
                   </li>
                 </ul>
@@ -544,7 +545,7 @@ export default function SrimPage() {
                       className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                     >
                       <option value="">전체</option>
-                      <option value="true">O (3년 연속 배당)</option>
+                      <option value="true">O (5년 연속 배당)</option>
                       <option value="false">X (연속 배당 아님)</option>
                     </select>
                   </div>
@@ -733,7 +734,7 @@ export default function SrimPage() {
                         className="w-full rounded-lg border border-gray-300 p-2 text-sm"
                       >
                         <option value="">전체</option>
-                        <option value="true">O (3년 연속 배당)</option>
+                        <option value="true">O (5년 연속 배당)</option>
                         <option value="false">X (연속 배당 아님)</option>
                       </select>
                     </div>

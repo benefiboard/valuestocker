@@ -25,7 +25,8 @@ import {
   X,
 } from 'lucide-react';
 import { StockLinkButtons } from '../../components/StockLinkButtons';
-import { fetchProfitStocks, ProfitStock } from '@/utils/stockDataService';
+import { ProfitStock } from '@/utils/stockDataTypes';
+import { fetchProfitStocks } from './profitStock';
 
 // 정렬 타입 정의
 type SortField =
@@ -366,7 +367,7 @@ export default function ProfitPage() {
                     대비 30% 이상 저평가된 종목만 표시
                   </li>
                   <li>
-                    <strong className="text-emerald-700">연속 배당 여부 표시</strong> - 3년 연속
+                    <strong className="text-emerald-700">연속 배당 여부 표시</strong> - 5년 연속
                     배당금 지급 여부 확인
                   </li>
                 </ul>
@@ -542,7 +543,7 @@ export default function ProfitPage() {
                       className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                     >
                       <option value="">전체</option>
-                      <option value="true">O (3년 연속 배당)</option>
+                      <option value="true">O (5년 연속 배당)</option>
                       <option value="false">X (연속 배당 아님)</option>
                     </select>
                   </div>
@@ -733,7 +734,7 @@ export default function ProfitPage() {
                         className="w-full rounded-lg border border-gray-300 p-2 text-sm"
                       >
                         <option value="">전체</option>
-                        <option value="true">O (3년 연속 배당)</option>
+                        <option value="true">O (5년 연속 배당)</option>
                         <option value="false">X (연속 배당 아님)</option>
                       </select>
                     </div>

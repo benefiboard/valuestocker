@@ -526,8 +526,58 @@ export default function ChecklistPage() {
   };
 
   // 점수 +20점 하기
-  const getDisplayScore = (score: number): number => {
-    return Math.min(Math.round(score + 20), 100);
+  // 디버깅을 위한 콘솔 로그가 추가된 함수
+  const getDisplayScore = (value: number): number => {
+    console.log('getDisplayScore 함수 호출됨 - 입력값:', value);
+    console.log('investmentRating 존재 여부:', !!investmentRating);
+
+    // investmentRating이 있을 때만 보너스 점수 계산
+    if (investmentRating) {
+      const coreItemsPassCount = investmentRating.coreItemsPassCount;
+      const coreItemsCount = investmentRating.coreItemsCount;
+
+      console.log('핵심 지표 정보:', {
+        통과개수: coreItemsPassCount,
+        전체개수: coreItemsCount,
+        통과율: ((coreItemsPassCount / coreItemsCount) * 100).toFixed(2) + '%',
+      });
+
+      // 핵심 지표 통과 비율
+      const corePassRatio = coreItemsCount > 0 ? coreItemsPassCount / coreItemsCount : 0;
+
+      // 핵심 지표 통과 비율에 따른 보너스 점수
+      let bonus = 0;
+      if (corePassRatio >= 0.8) {
+        bonus = 20; // 80% 이상 통과: +20점
+        console.log('보너스: 20점 (80% 이상 통과)');
+      } else if (corePassRatio >= 0.5) {
+        bonus = 10; // 50% 이상 통과: +10점
+        console.log('보너스: 10점 (50% 이상 통과)');
+      } else {
+        bonus = 0; // 50% 미만 통과: 보너스 없음
+        console.log('보너스: 0점 (50% 미만 통과)');
+      }
+
+      const result = Math.min(Math.round(value + bonus), 100);
+      console.log('최종 계산 결과:', {
+        원점수: value,
+        보너스: bonus,
+        최종점수: result,
+      });
+
+      return result;
+    }
+
+    // investmentRating이 없는 경우 기존처럼 20점 더하기
+    console.log('investmentRating이 없음 - 기본 보너스 20점 적용');
+    const result = Math.min(Math.round(value + 20), 100);
+    console.log('최종 계산 결과:', {
+      원점수: value,
+      보너스: 20,
+      최종점수: result,
+    });
+
+    return result;
   };
 
   // 원형 프로그레스 바 컴포넌트

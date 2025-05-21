@@ -1,9 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { EnhancedGrahamStock, fetchEnhancedGrahamStocks } from '@/utils/stockDataService';
 import Link from 'next/link';
-import { formatNumber, formatAsset } from '../../utils/stockUtils';
 import { Pagination } from '../../components/StockPageComponents';
 import {
   ArrowDown,
@@ -28,6 +26,9 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { StockLinkButtons } from '../../components/StockLinkButtons';
+import { GrahamStock } from '@/utils/stockDataTypes';
+import { fetchGrahamStocks } from './grahamStock';
+import { formatNumber } from '@/utils/stockUtils';
 
 // 정렬 타입 정의
 type SortField =
@@ -53,10 +54,10 @@ type SortField =
 type SortDirection = 'asc' | 'desc';
 type ViewMode = 'card' | 'table' | 'mobileTable';
 
-export default function EnhancedGrahamPage() {
+export default function GrahamPage() {
   // 상태 관리
-  const [stocks, setStocks] = useState<EnhancedGrahamStock[]>([]);
-  const [filteredStocks, setFilteredStocks] = useState<EnhancedGrahamStock[]>([]);
+  const [stocks, setStocks] = useState<GrahamStock[]>([]);
+  const [filteredStocks, setFilteredStocks] = useState<GrahamStock[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
   const [sortField, setSortField] = useState<SortField>('discount_rate');
@@ -88,7 +89,7 @@ export default function EnhancedGrahamPage() {
       setLoading(true);
 
       // 그레이엄 종목 데이터 가져오기
-      const result = await fetchEnhancedGrahamStocks();
+      const result = await fetchGrahamStocks();
 
       if (result.error) {
         setError(result.error);
@@ -375,15 +376,15 @@ export default function EnhancedGrahamPage() {
                     미만 (금융업종별 차등)
                   </li>
                   <li>
-                    <strong className="text-emerald-700">최소 3년간 지속적 배당</strong> - 3년 연속
+                    <strong className="text-emerald-700">최소 5년간 지속적 배당</strong> - 5년 연속
                     배당금 지급
                   </li>
                   <li>
-                    <strong className="text-emerald-700">최근 3년간 적자가 없을 것</strong> - 순이익
+                    <strong className="text-emerald-700">최근 5년간 적자가 없을 것</strong> - 순이익
                     지속
                   </li>
                   <li>
-                    <strong className="text-emerald-700">최소 3년간 EPS 20% 이상 성장</strong> -
+                    <strong className="text-emerald-700">최소 5년간 EPS 20% 이상 성장</strong> -
                     성장성
                   </li>
                   <li>
@@ -552,7 +553,7 @@ export default function EnhancedGrahamPage() {
                       className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                     >
                       <option value="">전체</option>
-                      <option value="true">O (3년 연속 배당)</option>
+                      <option value="true">O (5년 연속 배당)</option>
                       <option value="false">X (연속 배당 아님)</option>
                     </select>
                   </div>
@@ -725,7 +726,7 @@ export default function EnhancedGrahamPage() {
                         className="w-full rounded-lg border border-gray-300 p-2 text-sm"
                       >
                         <option value="">전체</option>
-                        <option value="true">O (3년 연속 배당)</option>
+                        <option value="true">O (5년 연속 배당)</option>
                         <option value="false">X (연속 배당 아님)</option>
                       </select>
                     </div>

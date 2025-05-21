@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { HowardStock, fetchHowardStocks } from '@/utils/stockDataService';
 import Link from 'next/link';
 import { formatNumber } from '../../utils/stockUtils';
 import {
@@ -26,6 +25,8 @@ import {
   X,
 } from 'lucide-react';
 import { StockLinkButtons } from '../../components/StockLinkButtons';
+import { HowardStock } from '@/utils/stockDataTypes';
+import { fetchHowardStocks } from './howardStock';
 
 // 정렬 타입 정의
 type SortField =
@@ -324,8 +325,8 @@ export default function HowardPage() {
                 </p>
                 <ul className="list-disc pl-5 text-sm sm:text-base text-gray-700 space-y-2">
                   <li>
-                    <strong className="text-emerald-700">순자산가치 계산</strong> - 2024년
-                    유동자산(current_assets)에서 유동부채(current_liabilities)를 뺀 값
+                    <strong className="text-emerald-700">순자산가치 계산</strong> - 최근
+                    유동자산에서 유동부채를 뺀 값
                   </li>
                   <li>
                     <strong className="text-emerald-700">시가총액 계산</strong> - 현재 주가에
@@ -524,7 +525,7 @@ export default function HowardPage() {
                       className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                     >
                       <option value="">전체</option>
-                      <option value="true">O (3년 연속 배당)</option>
+                      <option value="true">O (5년 연속 배당)</option>
                       <option value="false">X (연속 배당 아님)</option>
                     </select>
                   </div>

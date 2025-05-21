@@ -4,7 +4,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { formatNumber, formatAsset } from '../../utils/stockUtils';
+// import { fetchFlavorStocks } from '@/utils/stockDataService';
+// import { formatNumber, formatAsset } from '../../utils/stockUtils';
 import { AccordionSection, Pagination } from '../../components/StockPageComponents';
 import {
   ArrowDown,
@@ -29,7 +30,8 @@ import {
   X,
 } from 'lucide-react';
 import { StockLinkButtons } from '../../components/StockLinkButtons';
-import { fetchFlavorStocks } from '@/utils/stockDataService';
+import { fetchFlavorStocks } from './flavorStock';
+import { formatAsset, formatNumber } from '@/utils/stockUtils';
 
 // 주식 데이터 타입 정의
 interface FlavorStock {
@@ -42,7 +44,7 @@ interface FlavorStock {
   current_price: number;
   dividend_yield: number;
   assets: number;
-  consecutive_dividend: boolean; // 3년 연속 배당 여부 추가
+  consecutive_dividend: boolean; // 5년 연속 배당 여부 추가
 }
 
 // 정렬 타입 정의
@@ -370,8 +372,8 @@ export default function FlavorPage() {
                     수익 기대 (필터에서 조정 가능)
                   </li>
                   <li>
-                    <strong className="text-emerald-700">3년 연속 배당 여부 표시</strong> -
-                    2022-2024년 연속 배당금 지급 여부
+                    <strong className="text-emerald-700">5년 연속 배당 여부 표시</strong> - 최근 5년
+                    연속 배당금 지급 여부
                   </li>
                 </ul>
               </div>
@@ -514,7 +516,7 @@ export default function FlavorPage() {
                       className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                     >
                       <option value="">전체</option>
-                      <option value="true">O (3년 연속 배당)</option>
+                      <option value="true">O (5년 연속 배당)</option>
                       <option value="false">X (연속 배당 아님)</option>
                     </select>
                   </div>
@@ -695,7 +697,7 @@ export default function FlavorPage() {
                         className="w-full rounded-lg border border-gray-300 p-2 text-sm"
                       >
                         <option value="">전체</option>
-                        <option value="true">O (3년 연속 배당)</option>
+                        <option value="true">O (5년 연속 배당)</option>
                         <option value="false">X (연속 배당 아님)</option>
                       </select>
                     </div>

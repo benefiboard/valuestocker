@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { formatNumber, formatAsset } from '../../utils/stockUtils';
+
 import {
   ArrowDown,
   ArrowLeft,
@@ -28,7 +28,8 @@ import {
   X,
 } from 'lucide-react';
 import { StockLinkButtons } from '../../components/StockLinkButtons';
-import { fetchQualityStocks } from '@/utils/stockDataService';
+import { fetchQualityStocks } from './qualityStock';
+import { formatNumber } from '@/utils/stockUtils';
 
 // 주식 데이터 타입 정의
 interface QualityStock {
@@ -41,7 +42,7 @@ interface QualityStock {
   dividend_yield: number;
   avg_roe: number;
   avg_operating_margin: number;
-  consecutive_dividend: boolean; // 3년 연속 배당 여부 추가
+  consecutive_dividend: boolean; // 5년 연속 배당 여부 추가
 }
 
 // 정렬 타입 정의
@@ -354,16 +355,16 @@ export default function QualityPage() {
                 </p>
                 <ul className="list-disc pl-5 text-sm sm:text-base text-gray-700 space-y-2">
                   <li>
-                    <strong className="text-emerald-700">3년 평균 ROE 10% 이상</strong> - 투자 자본
+                    <strong className="text-emerald-700">5년 평균 ROE 10% 이상</strong> - 투자 자본
                     대비 높은 수익률
                   </li>
                   <li>
-                    <strong className="text-emerald-700">3년 평균 영업이익률 15% 이상</strong> -
+                    <strong className="text-emerald-700">5년 평균 영업이익률 15% 이상</strong> -
                     매출 대비 높은 이익 마진
                   </li>
                   <li>
-                    <strong className="text-emerald-700">3년 연속 배당 여부 표시</strong> -
-                    2022-2024년 연속 배당금 지급 여부
+                    <strong className="text-emerald-700">5년 연속 배당 여부 표시</strong> - 최근 5년
+                    연속 배당금 지급 여부
                   </li>
                 </ul>
                 <p className="text-sm sm:text-base text-gray-700 mt-3">
@@ -542,7 +543,7 @@ export default function QualityPage() {
                       className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                     >
                       <option value="">전체</option>
-                      <option value="true">O (3년 연속 배당)</option>
+                      <option value="true">O (5년 연속 배당)</option>
                       <option value="false">X (연속 배당 아님)</option>
                     </select>
                   </div>
@@ -722,7 +723,7 @@ export default function QualityPage() {
                       className="w-full rounded-lg border border-gray-300 p-2 text-sm"
                     >
                       <option value="">전체</option>
-                      <option value="true">O (3년 연속 배당)</option>
+                      <option value="true">O (5년 연속 배당)</option>
                       <option value="false">X (연속 배당 아님)</option>
                     </select>
                   </div>
