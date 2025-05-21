@@ -21,6 +21,7 @@ import {
   DollarSign,
   X,
 } from 'lucide-react';
+import { formatAsset } from '@/utils/stockUtils';
 
 // ROE 계산 함수 (중복 방지를 위해 import 또는 여기서 정의)
 const calculateROE = (netIncome: number, equity: number): number => {
@@ -40,6 +41,7 @@ export default function ProfitCalculatorPage() {
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<boolean>(false);
   const [showSearchForm, setShowSearchForm] = useState<boolean>(true);
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState<boolean>(false);
   const [expandedROETable, setExpandedROETable] = useState<boolean>(false);
   const [autoSearchTriggered, setAutoSearchTriggered] = useState<boolean>(false);
   const [roeHistory, setRoeHistory] = useState<ROEData[] | null>(null);
@@ -57,6 +59,40 @@ export default function ProfitCalculatorPage() {
   const discountRateOptions = [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
   const sustainableYearsOptions = Array.from({ length: 16 }, (_, i) => i + 5); // 5-20년
   const settingROEOptions = Array.from({ length: 20 }, (_, i) => i + 1); // 1-20%
+
+  // 애니메이션 키프레임 추가
+  const styles = `
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse 2s ease-in-out infinite;
+  }
+  `;
+
+  // 스타일 태그 추가
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const styleTag = document.createElement('style');
+      styleTag.textContent = styles;
+      document.head.appendChild(styleTag);
+
+      return () => {
+        document.head.removeChild(styleTag);
+      };
+    }
+  }, []);
 
   // 회사 선택 핸들러
   const handleCompanySelect = async (company: CompanyInfo) => {
@@ -220,196 +256,212 @@ export default function ProfitCalculatorPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 px-4 sm:px-6 py-4 sm:py-6">
-      {/* 헤더 */}
-      {/* <header className="mb-6 max-w-4xl mx-auto w-full">
-        <div className="bg-white shadow-sm rounded-2xl p-4 flex items-center justify-between">
-          <div className="flex items-center">
-            <Link
-              href="/"
-              className="mr-3 sm:mr-4 text-gray-600 hover:text-gray-900 transition-colors p-2 rounded-full hover:bg-gray-100"
-            >
-              <ArrowLeft size={20} className="sm:w-6 sm:h-6" />
-            </Link>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center">
-            
-                수익가치 계산기
-              </h1>
-              <p className="text-sm text-gray-600 mt-1">기업이 버는 돈으로 적정 주가 계산하기</p>
-            </div>
-          </div>
-        </div>
-      </header> */}
-
       <main className="flex-1 max-w-4xl mx-auto w-full">
-        {/* 검색 영역 */}
+        {/* 검색 영역 - fairprice 스타일 적용 */}
         {showSearchForm ? (
-          <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-md mb-6 border border-gray-100">
-            <div className="mb-4">
-              <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-2">기업 검색</h2>
-              <p className="text-sm text-gray-600">적정가격을 계산할 기업을 검색하세요</p>
+          <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-md mb-6 border border-gray-100 transition-all duration-300 hover:shadow-lg">
+            <div className="mb-4 flex justify-between items-center">
+              <div>
+                <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-2">기업 검색</h2>
+                <p className="text-sm text-gray-600">적정가격을 계산할 기업을 검색하세요</p>
+              </div>
             </div>
 
-            <form onSubmit={handleSearch}>
+            <form onSubmit={handleSearch} className="transition-all duration-300">
               <div className="flex flex-col gap-5 sm:gap-6">
                 <div className="relative">
-                  <label className="block text-sm font-medium text-gray-700 mb-2 sm:mb-3">
-                    회사명
-                  </label>
-                  <CompanySearchInput
-                    onCompanySelect={handleCompanySelect}
-                    initialValue={companyName}
-                    placeholder="회사명 또는 종목코드 입력"
-                  />
+                  <div className="group transition-all duration-300 hover:shadow-md rounded-xl">
+                    <CompanySearchInput
+                      onCompanySelect={handleCompanySelect}
+                      initialValue={companyName}
+                      placeholder="회사명 또는 종목코드 입력"
+                      className="transition-all duration-300 focus-within:shadow-md"
+                    />
+                  </div>
                 </div>
 
-                {/* 선택된 회사의 ROE 히스토리 표시 */}
-                {selectedCompany && roeHistory && (
-                  <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-                    <h3 className="font-semibold text-blue-900 mb-3">
-                      📊 {selectedCompany.companyName}의 최근 3년 수익성
-                    </h3>
-                    <div className="grid grid-cols-3 gap-3 mb-3">
-                      {roeHistory.map((data) => (
-                        <div key={data.year} className="bg-white rounded-lg p-3 text-center">
-                          <p className="text-xs text-gray-600">{data.year}년</p>
-                          <p className="text-lg font-bold text-blue-700">{data.roe.toFixed(1)}%</p>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="bg-blue-100 rounded-lg p-3 text-center">
-                      <p className="text-sm text-blue-800">3년 평균 ROE</p>
-                      <p className="text-xl font-bold text-blue-900">
-                        {averageHistoricalROE.toFixed(1)}%
-                      </p>
-                    </div>
-                    <p className="text-xs text-blue-700 mt-2">
-                      💡 위 데이터를 참고하여 미래 수익성을 예측해보세요
-                    </p>
-                  </div>
-                )}
-
-                {/* 3단계 설명 박스 - 검색 폼에서만 보임 */}
-                {/* <div className="bg-green-50 rounded-2xl p-6 border border-green-100">
-                  <h3 className="font-bold text-green-900 mb-3 text-lg">
-                    💰 3단계로 적정가격 찾기
-                  </h3>
-
-                  <div className="space-y-3">
-                    <div className="flex items-start">
-                      <span className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 flex-shrink-0">
-                        1
-                      </span>
-                      <div>
-                        <p className="font-medium text-green-800">기업이 얼마나 버나요?</p>
-                        <p className="text-sm text-green-700">
-                          자기자본 대비 수익률(ROE)을 입력하세요
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start">
-                      <span className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 flex-shrink-0">
-                        2
-                      </span>
-                      <div>
-                        <p className="font-medium text-green-800">얼마나 오래 버나요?</p>
-                        <p className="text-sm text-green-700">
-                          이 수익이 지속될 기간을 예상하세요 (보통 5-10년)
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start">
-                      <span className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 flex-shrink-0">
-                        3
-                      </span>
-                      <div>
-                        <p className="font-medium text-green-800">내가 원하는 수익률은?</p>
-                        <p className="text-sm text-green-700">
-                          최소한 얻고 싶은 연 수익률을 정하세요
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div> */}
-
-                {/* 수익가치 파라미터 입력 */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      💵 기업 수익성 (ROE %)
-                    </label>
-                    <select
-                      value={profitParams.settingROE}
-                      onChange={(e) => handleParamChange('settingROE', Number(e.target.value))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                {/* 선택된 회사 정보가 있을 때만 고급 옵션 표시 */}
+                {selectedCompany && (
+                  <div className="animate-fadeIn">
+                    <button
+                      type="button"
+                      onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
+                      className="w-full text-center text-sm text-gray-600 hover:text-emerald-600 transition-colors duration-300 mb-4 flex items-center justify-center"
                     >
-                      {settingROEOptions.map((roe) => (
-                        <option key={roe} value={roe}>
-                          {roe}%{' '}
-                          {roe >= 15
-                            ? '(우수)'
-                            : roe >= 10
-                            ? '(양호)'
-                            : roe >= 5
-                            ? '(보통)'
-                            : '(저조)'}
-                        </option>
-                      ))}
-                    </select>
-                    <p className="text-xs text-gray-500 mt-1">자본 100원당 연간 수익</p>
-                    {selectedCompany && averageHistoricalROE > 0 && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleParamChange('settingROE', Math.round(averageHistoricalROE))
-                        }
-                        className="text-xs text-blue-600 hover:text-blue-800 mt-1"
-                      >
-                        → 평균값({Math.round(averageHistoricalROE)}%) 사용하기
-                      </button>
+                      {showAdvancedOptions ? (
+                        <>
+                          <ChevronUp size={16} className="mr-1" /> 고급 옵션 접기
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown size={16} className="mr-1" /> 고급 옵션 펼치기
+                        </>
+                      )}
+                    </button>
+
+                    {showAdvancedOptions && (
+                      <div className="space-y-5 animate-fadeIn">
+                        {/* 선택된 회사의 ROE 히스토리 표시 */}
+                        {roeHistory && (
+                          <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                            <h3 className="font-semibold text-blue-900 mb-3">
+                              📊 {selectedCompany.companyName}의 최근 3년 수익성
+                            </h3>
+                            <div className="grid grid-cols-3 gap-3 mb-3">
+                              {roeHistory.map((data) => (
+                                <div
+                                  key={data.year}
+                                  className="bg-white rounded-lg p-3 text-center"
+                                >
+                                  <p className="text-xs text-gray-600">{data.year}년</p>
+                                  <p className="text-lg font-bold text-blue-700">
+                                    {data.roe.toFixed(1)}%
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                            <div className="bg-blue-100 rounded-lg p-3 text-center">
+                              <p className="text-sm text-blue-800">3년 평균 ROE</p>
+                              <p className="text-xl font-bold text-blue-900">
+                                {averageHistoricalROE.toFixed(1)}%
+                              </p>
+                            </div>
+                            <p className="text-xs text-blue-700 mt-2">
+                              💡 위 데이터를 참고하여 미래 수익성을 예측해보세요
+                            </p>
+                          </div>
+                        )}
+
+                        {/* 3단계 설명 박스 */}
+                        <div className="bg-green-50 rounded-2xl p-6 border border-green-100">
+                          <h3 className="font-bold text-green-900 mb-3 text-lg">
+                            💰 3단계로 적정가격 찾기
+                          </h3>
+
+                          <div className="space-y-3">
+                            <div className="flex items-start">
+                              <span className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 flex-shrink-0">
+                                1
+                              </span>
+                              <div>
+                                <p className="font-medium text-green-800">기업이 얼마나 버나요?</p>
+                                <p className="text-sm text-green-700">
+                                  자기자본 대비 수익률(ROE)을 입력하세요
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-start">
+                              <span className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 flex-shrink-0">
+                                2
+                              </span>
+                              <div>
+                                <p className="font-medium text-green-800">얼마나 오래 버나요?</p>
+                                <p className="text-sm text-green-700">
+                                  이 수익이 지속될 기간을 예상하세요 (보통 5-10년)
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-start">
+                              <span className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 flex-shrink-0">
+                                3
+                              </span>
+                              <div>
+                                <p className="font-medium text-green-800">내가 원하는 수익률은?</p>
+                                <p className="text-sm text-green-700">
+                                  최소한 얻고 싶은 연 수익률을 정하세요
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 수익가치 파라미터 입력 */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              💵 기업 수익성 (ROE %)
+                            </label>
+                            <select
+                              value={profitParams.settingROE}
+                              onChange={(e) =>
+                                handleParamChange('settingROE', Number(e.target.value))
+                              }
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            >
+                              {settingROEOptions.map((roe) => (
+                                <option key={roe} value={roe}>
+                                  {roe}%{' '}
+                                  {roe >= 15
+                                    ? '(우수)'
+                                    : roe >= 10
+                                    ? '(양호)'
+                                    : roe >= 5
+                                    ? '(보통)'
+                                    : '(저조)'}
+                                </option>
+                              ))}
+                            </select>
+                            <p className="text-xs text-gray-500 mt-1">자본 100원당 연간 수익</p>
+                            {selectedCompany && averageHistoricalROE > 0 && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleParamChange('settingROE', Math.round(averageHistoricalROE))
+                                }
+                                className="text-xs text-blue-600 hover:text-blue-800 mt-1"
+                              >
+                                → 평균값({Math.round(averageHistoricalROE)}%) 사용하기
+                              </button>
+                            )}
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              ⏰ 예상 유지 기간
+                            </label>
+                            <select
+                              value={profitParams.sustainableYears}
+                              onChange={(e) =>
+                                handleParamChange('sustainableYears', Number(e.target.value))
+                              }
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            >
+                              {sustainableYearsOptions.map((year) => (
+                                <option key={year} value={year}>
+                                  {year}년 {year <= 5 ? '(단기)' : year <= 10 ? '(중기)' : '(장기)'}
+                                </option>
+                              ))}
+                            </select>
+                            <p className="text-xs text-gray-500 mt-1">이 수익이 지속될 기간</p>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              🎯 목표 수익률
+                            </label>
+                            <select
+                              value={profitParams.discountRate}
+                              onChange={(e) =>
+                                handleParamChange('discountRate', Number(e.target.value))
+                              }
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            >
+                              {discountRateOptions.map((rate) => (
+                                <option key={rate} value={rate}>
+                                  연 {rate}%{' '}
+                                  {rate <= 7 ? '(안정형)' : rate <= 10 ? '(균형형)' : '(공격형)'}
+                                </option>
+                              ))}
+                            </select>
+                            <p className="text-xs text-gray-500 mt-1">내가 원하는 최소 수익률</p>
+                          </div>
+                        </div>
+                      </div>
                     )}
                   </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      ⏰ 예상 유지 기간
-                    </label>
-                    <select
-                      value={profitParams.sustainableYears}
-                      onChange={(e) =>
-                        handleParamChange('sustainableYears', Number(e.target.value))
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    >
-                      {sustainableYearsOptions.map((year) => (
-                        <option key={year} value={year}>
-                          {year}년 {year <= 5 ? '(단기)' : year <= 10 ? '(중기)' : '(장기)'}
-                        </option>
-                      ))}
-                    </select>
-                    <p className="text-xs text-gray-500 mt-1">이 수익이 지속될 기간</p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      🎯 목표 수익률
-                    </label>
-                    <select
-                      value={profitParams.discountRate}
-                      onChange={(e) => handleParamChange('discountRate', Number(e.target.value))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    >
-                      {discountRateOptions.map((rate) => (
-                        <option key={rate} value={rate}>
-                          연 {rate}% {rate <= 7 ? '(안정형)' : rate <= 10 ? '(균형형)' : '(공격형)'}
-                        </option>
-                      ))}
-                    </select>
-                    <p className="text-xs text-gray-500 mt-1">내가 원하는 최소 수익률</p>
-                  </div>
-                </div>
+                )}
 
                 {/* 계산 버튼 추가 */}
                 <button
@@ -418,62 +470,32 @@ export default function ProfitCalculatorPage() {
                   className="w-full mt-6 bg-emerald-600 hover:bg-emerald-700 text-white py-3 sm:py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center shadow-sm hover:shadow group relative overflow-hidden"
                   disabled={loading || !selectedCompany}
                 >
-                  {loading ? (
-                    <>
-                      <Loader2 size={20} className="mr-3 animate-spin" />
-                      계산 중...
-                    </>
-                  ) : (
-                    <>
-                      <Calculator size={20} className="mr-3" />
-                      적정가격 계산하기
-                    </>
-                  )}
+                  {/* 버튼 배경 효과 */}
+                  <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-emerald-500 to-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                  {/* 버튼 텍스트 */}
+                  <span className="relative flex items-center">
+                    {loading ? (
+                      <>
+                        <Loader2 size={20} className="mr-3 animate-spin" />
+                        계산 중...
+                      </>
+                    ) : (
+                      <>
+                        <Calculator
+                          size={20}
+                          className="mr-3 group-hover:scale-110 transition-transform duration-300"
+                        />
+                        적정가격 계산하기
+                      </>
+                    )}
+                  </span>
                 </button>
               </div>
             </form>
-
-            {/* 3단계 설명 박스 - 검색 폼에서만 보임 */}
-            <div className="bg-green-50 rounded-2xl p-6 border border-green-100 mt-6">
-              <h3 className="font-bold text-green-900 mb-3 text-lg">💰 3단계로 적정가격 찾기</h3>
-
-              <div className="space-y-3">
-                <div className="flex items-start">
-                  <span className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 flex-shrink-0">
-                    1
-                  </span>
-                  <div>
-                    <p className="font-medium text-green-800">기업이 얼마나 버나요?</p>
-                    <p className="text-sm text-green-700">자기자본 대비 수익률(ROE)을 입력하세요</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start">
-                  <span className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 flex-shrink-0">
-                    2
-                  </span>
-                  <div>
-                    <p className="font-medium text-green-800">얼마나 오래 버나요?</p>
-                    <p className="text-sm text-green-700">
-                      이 수익이 지속될 기간을 예상하세요 (보통 5-10년)
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start">
-                  <span className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 flex-shrink-0">
-                    3
-                  </span>
-                  <div>
-                    <p className="font-medium text-green-800">내가 원하는 수익률은?</p>
-                    <p className="text-sm text-green-700">최소한 얻고 싶은 연 수익률을 정하세요</p>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         ) : (
-          <div className="bg-white rounded-2xl p-5 sm:px-6 shadow-md mb-6 flex justify-between items-center border border-gray-100">
+          <div className="bg-white rounded-2xl p-5 sm:px-6 shadow-md mb-6 flex justify-between items-center border border-gray-100 transition-all duration-300 hover:shadow-md">
             <div className="flex items-center">
               <div className="p-2 bg-emerald-50 rounded-full mr-3">
                 <Calculator className="h-5 w-5 sm:h-5 sm:w-5 text-emerald-600" />
@@ -497,7 +519,7 @@ export default function ProfitCalculatorPage() {
 
         {/* 로딩 상태 */}
         {loading && (
-          <div className="bg-white rounded-2xl p-8 shadow-md flex flex-col items-center justify-center mb-6 border border-gray-100">
+          <div className="bg-white rounded-2xl p-8 shadow-md flex flex-col items-center justify-center mb-6 border border-gray-100 transition-all duration-300">
             <div className="relative w-16 h-16 mb-4">
               <div className="absolute inset-0 rounded-full border-4 border-gray-200"></div>
               <div className="absolute inset-0 rounded-full border-4 border-t-emerald-600 animate-spin"></div>
@@ -511,7 +533,7 @@ export default function ProfitCalculatorPage() {
 
         {/* 오류 메시지 */}
         {error && !loading && (
-          <div className="bg-white p-5 sm:p-6 rounded-2xl shadow-md mb-6 border-l-4 border-red-500">
+          <div className="bg-white p-5 sm:p-6 rounded-2xl shadow-md mb-6 border-l-4 border-red-500 transition-all duration-300 hover:shadow-lg animate-fadeIn">
             <div className="flex items-start">
               <div className="bg-red-50 p-2 rounded-full mr-3">
                 <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-red-500" />
@@ -526,11 +548,20 @@ export default function ProfitCalculatorPage() {
 
         {/* 결과 영역 */}
         {success && calculatedResult && (
-          <div>
+          <div className="animate-fadeIn">
             {/* 수익가치 분석 결과 */}
             <div className="bg-gradient-to-tl from-gray-50 to-gray-100 border-2 border-gray-200 rounded-2xl p-6 sm:p-8 shadow-md mb-6">
               <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-5">
                 💰 예상 수익률 분석
+                {calculatedResult.averageROE > 0 && (
+                  <span className="ml-3 text-xs sm:text-sm font-normal text-gray-700 bg-gray-50 px-1 sm:px-3 py-1 rounded-full border border-gray-200">
+                    3년 평균 ROE:{' '}
+                    <span className="font-bold text-lg sm:text-xl">
+                      {calculatedResult.averageROE.toFixed(1)}
+                    </span>
+                    %
+                  </span>
+                )}
               </h2>
 
               <div className="grid grid-cols-3  sm:gap-4">
@@ -549,19 +580,6 @@ export default function ProfitCalculatorPage() {
                 {/* 화살표와 수익률 */}
                 <div className="flex items-center justify-center">
                   <div className="text-center ">
-                    {/* <svg
-                      className="w-8 h-8 mx-auto text-emerald-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 7l5 5m0 0l-5 5m5-5H6"
-                      />
-                    </svg> */}
                     <p
                       className={`text-2xl font-bold mt-2 sm:text-4xl ${
                         calculatedResult.expectedReturn > 0 ? 'text-emerald-600' : 'text-red-600'
@@ -594,32 +612,6 @@ export default function ProfitCalculatorPage() {
                   수익률 {profitParams.discountRate}% 가정)
                 </p>
               </div>
-
-              {/* 수익 예상 설명 */}
-              {/* <div
-                className={`p-5 rounded-xl text-center ${
-                  calculatedResult.expectedReturn > 0
-                    ? 'bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200'
-                    : 'bg-gradient-to-r from-red-50 to-orange-50 border border-red-200'
-                }`}
-              >
-                <p className="text-gray-700 mb-2">지금 사면</p>
-                <p
-                  className={`text-xl font-bold ${
-                    calculatedResult.expectedReturn > 0 ? 'text-emerald-700' : 'text-red-700'
-                  }`}
-                >
-                  <span className="text-2xl mx-1">
-                    {calculatedResult.expectedReturn >= 0 ? '+' : ''}
-                    {calculatedResult.expectedReturn.toFixed(1)}%
-                  </span>
-                  {calculatedResult.expectedReturn > 0 ? '수익' : '손실'} 예상
-                </p>
-                <p className="text-sm text-gray-600 mt-3">
-                  ({profitParams.sustainableYears}년간 ROE {profitParams.settingROE}% 유지, 목표
-                  수익률 {profitParams.discountRate}% 가정)
-                </p>
-              </div> */}
 
               {/* ROE가 할인율보다 낮을 때 경고 메시지 */}
               {profitParams.settingROE < profitParams.discountRate && (
@@ -709,7 +701,7 @@ export default function ProfitCalculatorPage() {
             {/* ROE 데이터 테이블 */}
             <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-md mb-6 border border-gray-100">
               <button
-                className="w-full flex items-center justify-between mb-5"
+                className="w-full flex items-center justify-between "
                 onClick={() => setExpandedROETable(!expandedROETable)}
               >
                 <h2 className="text-lg sm:text-xl font-bold text-gray-800">
@@ -749,10 +741,10 @@ export default function ProfitCalculatorPage() {
                           <tr key={data.year} className="border-b hover:bg-gray-50">
                             <td className="py-3 px-4 text-sm">{data.year}년</td>
                             <td className="py-3 px-4 text-sm text-right">
-                              {formatNumber(data.netIncome)}
+                              {formatAsset(data.netIncome)}
                             </td>
                             <td className="py-3 px-4 text-sm text-right">
-                              {formatNumber(data.equity)}
+                              {formatAsset(data.equity)}
                             </td>
                             <td className="py-3 px-4 text-sm text-right font-medium">
                               {data.roe.toFixed(2)}%

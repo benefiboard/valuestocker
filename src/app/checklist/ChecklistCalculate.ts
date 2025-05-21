@@ -768,25 +768,47 @@ export const calculateJsonChecklist = (
           item.isPassed = false;
           item.isFailCriteria = true;
         } else {
-          // 일반 기업 ROA 기준
-          item.score =
-            stockData.avgRoa > 15
-              ? 10
-              : stockData.avgRoa > 10
-              ? 8
-              : stockData.avgRoa > 7
-              ? 6
-              : stockData.avgRoa > 4
-              ? 4
-              : stockData.avgRoa > 0
-              ? 2
-              : 0;
+          if (isFinancialCompany) {
+            // 금융회사용 ROA 기준 (낮은 기준 적용)
+            item.score =
+              stockData.avgRoa > 2
+                ? 10
+                : stockData.avgRoa > 1.5
+                ? 9
+                : stockData.avgRoa > 1
+                ? 8
+                : stockData.avgRoa > 0.7
+                ? 6
+                : stockData.avgRoa > 0.4
+                ? 4
+                : stockData.avgRoa > 0
+                ? 2
+                : 0;
 
-          // ROA 7% 이상이면 통과
-          item.isPassed = stockData.avgRoa > 7;
+            // 금융회사는 ROA 1% 이상이면 통과
+            item.isPassed = stockData.avgRoa > 1;
+            item.targetValue = '> 1%'; // 금융회사용 기준값
+          } else {
+            // 일반 기업 ROA 기준 (기존 로직)
+            item.score =
+              stockData.avgRoa > 15
+                ? 10
+                : stockData.avgRoa > 10
+                ? 8
+                : stockData.avgRoa > 7
+                ? 6
+                : stockData.avgRoa > 4
+                ? 4
+                : stockData.avgRoa > 0
+                ? 2
+                : 0;
+
+            // ROA 7% 이상이면 통과 (일반 기업)
+            item.isPassed = stockData.avgRoa > 7;
+            item.targetValue = '> 7%'; // 일반 기업용 기준값
+          }
         }
 
-        item.targetValue = '> 7%';
         break;
 
       case '자산회전율':

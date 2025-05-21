@@ -535,27 +535,48 @@ export default function ChecklistPage() {
     if (investmentRating) {
       const coreItemsPassCount = investmentRating.coreItemsPassCount;
       const coreItemsCount = investmentRating.coreItemsCount;
+      const isFinancialCompany = investmentRating.isFinancialCompany;
 
       console.log('핵심 지표 정보:', {
         통과개수: coreItemsPassCount,
         전체개수: coreItemsCount,
+        금융회사여부: isFinancialCompany,
         통과율: ((coreItemsPassCount / coreItemsCount) * 100).toFixed(2) + '%',
       });
 
       // 핵심 지표 통과 비율
       const corePassRatio = coreItemsCount > 0 ? coreItemsPassCount / coreItemsCount : 0;
 
-      // 핵심 지표 통과 비율에 따른 보너스 점수
+      // 금융회사와 일반 기업에 대해 다른 보너스 점수 적용
       let bonus = 0;
-      if (corePassRatio >= 0.8) {
-        bonus = 20; // 80% 이상 통과: +20점
-        console.log('보너스: 20점 (80% 이상 통과)');
-      } else if (corePassRatio >= 0.5) {
-        bonus = 10; // 50% 이상 통과: +10점
-        console.log('보너스: 10점 (50% 이상 통과)');
+
+      if (isFinancialCompany) {
+        // 금융회사용 보너스 체계 (3개 핵심지표 기준)
+        if (corePassRatio === 1) {
+          bonus = 20; // 100% 통과 (3/3): +25점
+          console.log('금융회사 보너스: 20점 (100% 통과)');
+        } else if (corePassRatio >= 0.67) {
+          bonus = 15; // 67% 통과 (2/3): +15점
+          console.log('금융회사 보너스: 15점 (67% 통과)');
+        } else if (corePassRatio >= 0.33) {
+          bonus = 10; // 33% 통과 (1/3): +5점
+          console.log('금융회사 보너스: 10점 (33% 통과)');
+        } else {
+          bonus = 0; // 0% 통과 (0/3): 보너스 없음
+          console.log('금융회사 보너스: 0점 (0% 통과)');
+        }
       } else {
-        bonus = 0; // 50% 미만 통과: 보너스 없음
-        console.log('보너스: 0점 (50% 미만 통과)');
+        // 일반 기업용 보너스 체계 (기존 로직)
+        if (corePassRatio >= 0.8) {
+          bonus = 20; // 80% 이상 통과: +20점
+          console.log('보너스: 20점 (80% 이상 통과)');
+        } else if (corePassRatio >= 0.5) {
+          bonus = 10; // 50% 이상 통과: +10점
+          console.log('보너스: 10점 (50% 이상 통과)');
+        } else {
+          bonus = 0; // 50% 미만 통과: 보너스 없음
+          console.log('보너스: 0점 (50% 미만 통과)');
+        }
       }
 
       const result = Math.min(Math.round(value + bonus), 100);
