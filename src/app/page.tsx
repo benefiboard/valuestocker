@@ -230,7 +230,11 @@ export default function TotalPage() {
 
   // 검색 수행 함수
   const performSearch = async (company: CompanyInfo) => {
-    // 모든 상태 초기화
+    // 먼저 회사 정보 설정 (렌더링 문제 해결)
+    setCompanyName(company.companyName);
+    setSelectedCompany(company);
+
+    // 나머지 상태 초기화
     setStockPrice(null);
     setChecklistResults([]);
     setInvestmentRating(null);
@@ -239,10 +243,6 @@ export default function TotalPage() {
     setError('');
     setLoading(true);
     setShowNewSearchForm(false); // 새 검색창 숨기기
-
-    // 현재 선택된 회사 정보 업데이트 (중요!)
-    setCompanyName(company.companyName);
-    setSelectedCompany(company);
 
     try {
       console.log('===== 종합 검색 시작 =====');
@@ -731,7 +731,7 @@ export default function TotalPage() {
                 <Target className="h-5 w-5 sm:h-5 sm:w-5 text-emerald-600" />
               </div>
               <p className="text-lg font-semibold text-gray-800 truncate">
-                {selectedCompany?.companyName}{' '}
+                {companyName || '회사명 없음'}{' '}
                 <span className="font-normal text-sm text-gray-500">({stockPrice?.code})</span>
               </p>
             </div>
@@ -823,7 +823,7 @@ export default function TotalPage() {
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 sm:mb-6">
                 <div className="w-full">
                   <h2 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center break-words">
-                    {selectedCompany?.companyName}{' '}
+                    {companyName || '회사명 없음'}{' '}
                     <span className="text-xs sm:text-sm text-gray-500 ml-2">
                       ({stockPrice.code})
                     </span>
@@ -871,7 +871,7 @@ export default function TotalPage() {
 
                   <div className="row-span-3 flex items-center">
                     <Link href={`/checklist?stockCode=${stockPrice.code}`} className="w-full">
-                      <button className="w-full bg-gray-100 border-2 border-gray-200 text-gray-600 py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center group">
+                      <button className="w-full border-2 border-gray-200 text-gray-600 py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center group">
                         <span className="mr-2">
                           <CheckSquare size={18} />
                         </span>
@@ -902,7 +902,7 @@ export default function TotalPage() {
 
                   <div className="row-span-3 flex items-center">
                     <Link href={`/fairprice?stockCode=${stockPrice.code}`} className="w-full">
-                      <button className="w-full bg-gray-100 border-2 border-gray-200 text-gray-600 py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center group">
+                      <button className="w-full border-2 border-gray-200 text-gray-600 py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center group">
                         <span className="mr-2">
                           <DollarSign size={18} />
                         </span>
@@ -917,7 +917,7 @@ export default function TotalPage() {
               {investmentRating && calculatedResults && (
                 <div className="bg-gray-50 p-5 rounded-xl text-center">
                   <p className="text-gray-700">
-                    <strong>{selectedCompany?.companyName}</strong>은(는) 현재{' '}
+                    <strong>{companyName || '해당 회사'}</strong>는(은) 현재{' '}
                     <span className="font-bold">{investmentRating.grade}등급</span> 투자 대상으로,{' '}
                     {stockPrice.price < calculatedResults.priceRange.midRange ? (
                       <span className="text-emerald-600 font-semibold">
@@ -940,6 +940,126 @@ export default function TotalPage() {
                   </p>
                 </div>
               )}
+
+              <hr className="mt-6" />
+
+              <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <Link
+                  href={`/checklist?stockCode=${selectedCompany?.stockCode}`}
+                  className="w-full"
+                >
+                  <button className="w-full inline-flex items-center justify-center border-2 border-gray-200 text-gray-600 px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-emerald-700 transition-all duration-300 shadow-sm hover:shadow group relative overflow-hidden">
+                    {/* 버튼 배경 효과 */}
+                    <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-emerald-500 to-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                    {/* 버튼 텍스트 */}
+                    <span className="relative flex items-center">
+                      체크리스트
+                      <svg
+                        className="ml-2 w-4 h-4 sm:w-5 sm:h-5 transform group-hover:translate-x-1 transition-transform duration-300"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </span>
+                  </button>
+                </Link>
+
+                <Link href={`/fairprice?stockCode=${stockPrice.code}`} className="w-full">
+                  <button className="w-full inline-flex items-center justify-center border-2 border-gray-200 text-gray-600 px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-emerald-700 transition-all duration-300 shadow-sm hover:shadow group relative overflow-hidden">
+                    {/* 버튼 배경 효과 */}
+                    <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-emerald-500 to-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                    {/* 버튼 텍스트 */}
+                    <span className="relative flex items-center">
+                      적정가계산
+                      <svg
+                        className="ml-2 w-4 h-4 sm:w-5 sm:h-5 transform group-hover:translate-x-1 transition-transform duration-300"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </span>
+                  </button>
+                </Link>
+
+                {/* 수익가치 계산 버튼 추가 */}
+                <Link
+                  href={`/profit-calculator?stockCode=${selectedCompany?.stockCode}`}
+                  className="w-full"
+                >
+                  <button className="w-full inline-flex items-center justify-center border-2 border-gray-200 text-gray-600 px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-emerald-700 transition-all duration-300 shadow-sm hover:shadow group relative overflow-hidden">
+                    {/* 버튼 배경 효과 */}
+                    <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-emerald-500 to-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                    {/* 버튼 텍스트 */}
+                    <span className="relative flex items-center">
+                      수익가치 계산
+                      <svg
+                        className="ml-2 w-4 h-4 sm:w-5 sm:h-5 transform group-hover:translate-x-1 transition-transform duration-300"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </span>
+                  </button>
+                </Link>
+
+                <a
+                  href={`https://finance.naver.com/item/main.naver?code=${selectedCompany?.stockCode}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full"
+                >
+                  <button className="w-full inline-flex items-center justify-center border-2 border-gray-200 text-gray-600 px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-emerald-700 transition-all duration-300 shadow-sm hover:shadow group relative overflow-hidden">
+                    {/* 버튼 배경 효과 */}
+                    <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-emerald-500 to-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                    {/* 버튼 텍스트 */}
+                    <span className="relative flex items-center">
+                      네이버증권
+                      <svg
+                        className="ml-2 w-4 h-4 sm:w-5 sm:h-5 transform group-hover:translate-x-1 transition-transform duration-300"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                        />
+                      </svg>
+                    </span>
+                  </button>
+                </a>
+              </div>
             </div>
           </>
         )}
