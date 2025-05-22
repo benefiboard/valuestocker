@@ -16,7 +16,6 @@ import {
   BarChart3,
   TrendingUp,
   Sparkles,
-  MessageCircleQuestion,
 } from 'lucide-react';
 
 // 체크리스트 관련 임포트
@@ -24,12 +23,12 @@ import {
   calculateChecklist,
   calculateInvestmentRating,
   getStockPriceFromSupabase,
-} from './checklist/ChecklistCalculate';
-import { InvestmentRating, ScoredChecklistItem, StockPrice } from './checklist/types';
+} from '../checklist/ChecklistCalculate';
+import { InvestmentRating, ScoredChecklistItem, StockPrice } from '../checklist/types';
 
 // 적정가 계산 관련 임포트
-import { extractCalculatedResultsFromSupabase } from './fairprice/FairpriceCalculate';
-import { CalculatedResults } from './fairprice/types';
+import { extractCalculatedResultsFromSupabase } from '../fairprice/FairpriceCalculate';
+import { CalculatedResults } from '../fairprice/types';
 
 // 가격 비교 막대 차트 컴포넌트
 const PriceGauge = ({
@@ -109,7 +108,7 @@ const PriceGauge = ({
         {/* 적정가 막대 */}
         <div className="flex items-center">
           <div
-            className="bg-gradient-to-r from-emerald-500 to-emerald-600 h-8 flex items-center justify-center rounded-r-lg shadow-sm relative"
+            className="bg-gradient-to-r from-emerald-500 to-emerald-600 h-8 flex items-center justify-center rounded-r-2xl shadow-sm relative"
             style={{ width: fairBarWidth }}
           >
             <span className="text-white text-sm font-medium">적정가</span>
@@ -122,7 +121,7 @@ const PriceGauge = ({
         {/* 현재주가 막대 */}
         <div className="flex items-center">
           <div
-            className={`${currentPriceBarColor} h-8 flex items-center justify-center rounded-r-lg shadow-sm relative`}
+            className={`${currentPriceBarColor} h-8 flex items-center justify-center rounded-r-2xl shadow-sm relative`}
             style={{ width: currentBarWidth }}
           >
             <span className="text-white text-sm font-medium">현재주가</span>
@@ -175,27 +174,8 @@ export default function TotalPage() {
   useEffect(() => {
     const stockCode = searchParams.get('stockCode');
 
-    // stockCode가 없으면 (메인페이지로 돌아온 경우) 상태 초기화
-    if (!stockCode) {
-      // 상태 초기화 (첫 화면으로 복귀)
-      setCompanyName('');
-      setSelectedCompany(null);
-      setStockPrice(null);
-      setChecklistResults([]);
-      setInvestmentRating(null);
-      setCalculatedResults(null);
-      setSuccess(false);
-      setError('');
-      setShowSearchForm(true);
-      setShowNewSearchForm(false);
-      setNewCompanyName('');
-      setNewSelectedCompany(null);
-      // autoSearchTriggered는 리셋하지 않음 (중복 호출 방지를 위해)
-      return;
-    }
-
-    // 이미 자동 검색을 수행했으면 리턴
-    if (autoSearchTriggered) {
+    // 이미 자동 검색을 수행했거나 stockCode가 없으면 리턴
+    if (autoSearchTriggered || !stockCode) {
       return;
     }
 
@@ -569,11 +549,11 @@ export default function TotalPage() {
         <div className="mb-4 text-center">
           {/* 메인 헤드라인 */}
           <div className="flex items-start sm:gap-2">
-            <h1 className="text-2xl md:text-4xl font-bold text-gray-400 mb-2 leading-tight">
+            <h1 className="text-3xl md:text-6xl font-bold text-gray-400 mb-4 leading-tight">
               투자 전 필수 체크포인트
             </h1>
 
-            <h1 className="-mt-4 text-xl md:text-2xl font-extrabold text-emerald-400 mb-4 leading-tight">
+            <h1 className="-mt-4 text-2xl md:text-4xl font-extrabold text-emerald-400 mb-4 leading-tight">
               VT
             </h1>
           </div>
@@ -611,87 +591,11 @@ export default function TotalPage() {
               </button>
             </div>
 
-            <Link href="/info">
-              <div className="flex items-center justify-center gap-1 text-xs sm:text-sm mt-16 text-center text-gray-400 ">
-                <MessageCircleQuestion size={16} />
-                <p className="hover:text-gray-800">밸류타게터 서비스 소개</p>
-              </div>
+            <Link href="/fairprice">
+              <p className="mt-16 text-center text-gray-400 underline underline-offset-4">
+                Value Targeter 서비스 소개
+              </p>
             </Link>
-
-            {/* 마키 UI - 네비게이션 메뉴들이 흐르는 자막 */}
-            <div className="mt-8 w-full overflow-hidden">
-              <div className="marquee-container bg-gray-50 flex items-center justify-center">
-                <div className="marquee-wrapper ">
-                  <Link href="/fairprice" className="marquee-item">
-                    적정가 계산
-                  </Link>
-                  <Link href="/checklist" className="marquee-item">
-                    체크리스트
-                  </Link>
-                  <Link href="/profit-calculator" className="marquee-item">
-                    수익가치 계산
-                  </Link>
-                  <Link href="/graham" className="marquee-item">
-                    벤자민 그레이엄 전략
-                  </Link>
-                  <Link href="/lynch" className="marquee-item">
-                    피터 린치 PEG 전략
-                  </Link>
-                  <Link href="/howard" className="marquee-item">
-                    하워드 막스 내재가치
-                  </Link>
-                  <Link href="/flavor" className="marquee-item">
-                    고배당 가치주 전략
-                  </Link>
-                  <Link href="/quality" className="marquee-item">
-                    비즈니스 퀄리티 전략
-                  </Link>
-                  <Link href="/s-rim" className="marquee-item">
-                    S-RIM 내재가치 전략
-                  </Link>
-                  <Link href="/profit" className="marquee-item">
-                    수익가치 전략
-                  </Link>
-                  <Link href="/info" className="marquee-item">
-                    서비스 소개
-                  </Link>
-
-                  <Link href="/fairprice" className="marquee-item">
-                    적정가 계산
-                  </Link>
-                  <Link href="/checklist" className="marquee-item">
-                    체크리스트
-                  </Link>
-                  <Link href="/profit-calculator" className="marquee-item">
-                    수익가치 계산
-                  </Link>
-                  <Link href="/graham" className="marquee-item">
-                    벤자민 그레이엄 전략
-                  </Link>
-                  <Link href="/lynch" className="marquee-item">
-                    피터 린치 PEG 전략
-                  </Link>
-                  <Link href="/howard" className="marquee-item">
-                    하워드 막스 내재가치
-                  </Link>
-                  <Link href="/flavor" className="marquee-item">
-                    고배당 가치주 전략
-                  </Link>
-                  <Link href="/quality" className="marquee-item">
-                    비즈니스 퀄리티 전략
-                  </Link>
-                  <Link href="/s-rim" className="marquee-item">
-                    S-RIM 내재가치 전략
-                  </Link>
-                  <Link href="/profit" className="marquee-item">
-                    수익가치 전략
-                  </Link>
-                  <Link href="/info" className="marquee-item">
-                    서비스 소개
-                  </Link>
-                </div>
-              </div>
-            </div>
           </form>
 
           {/* 오류 메시지 */}
@@ -955,46 +859,8 @@ const styles = `
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes marquee {
-  0% { transform: translateX(0%); }
-  100% { transform: translateX(-200%); }
-}
-
 .animate-fadeIn {
   animation: fadeIn 0.3s ease-out forwards;
-}
-
-.marquee-container {
-  width: 100%;
-  height: 40px;
-  overflow: hidden;
-}
-
-.marquee-wrapper {
-  display: flex;
-  align-items: center;
-  width: 200%; /* 2배 너비로 설정 */
-  animation: marquee 180s linear infinite;
-  white-space: nowrap;
-}
-
-.marquee-item {
-  color: rgb(156 163 175); /* gray-400 */
-  font-size: 0.75rem; /* text-sm */
-  padding: 0 1rem;
-  transition: color 0.3s ease;
-  text-decoration: none;
-  display: inline-block;
-  flex-shrink: 0;
-}
-
-.marquee-item:hover {
-  color: rgb(34 197 94); /* emerald-500 */
-}
-
-/* 호버 시 애니메이션 일시정지 */
-.marquee-container:hover .marquee-wrapper {
-  animation-play-state: paused;
 }
 `;
 

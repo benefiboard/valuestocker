@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, ChangeEvent, FormEvent, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation'; // useRouter 추가
 import CompanySearchInput from '@/components/CompanySearchInput';
 
 import { CalculatedResults, StockPrice } from './types';
@@ -29,6 +29,7 @@ import { getIndustryParameters } from '@/lib/industryData';
 export default function FairPricePage() {
   // URL 쿼리 파라미터 가져오기
   const searchParams = useSearchParams();
+  const router = useRouter(); // router 추가
 
   // 상태 관리
   const [companyName, setCompanyName] = useState<string>('');
@@ -165,6 +166,11 @@ export default function FairPricePage() {
       setCalculatedResults(calculatedResults);
       setSuccess(true);
       setShowSearchForm(false);
+
+      // URL에 stockCode 파라미터 추가
+      const url = new URL(window.location.href);
+      url.searchParams.set('stockCode', stockCode);
+      router.push(url.pathname + url.search, { scroll: false });
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
@@ -188,6 +194,8 @@ export default function FairPricePage() {
 
     // 주식 코드 가져오기
     const stockCode = selectedCompany.stockCode;
+
+    setAutoSearchTriggered(true);
 
     // 검색 수행
     await performSearch(stockCode);
@@ -404,7 +412,7 @@ export default function FairPricePage() {
             </div>
 
             <form onSubmit={handleSearch} className="transition-all duration-300">
-              <div className="flex flex-col gap-5 sm:gap-6">
+              <div className="flex flex-col gap-2 sm:gap-4">
                 <div className="relative">
                   <label className="block text-sm font-medium text-gray-700 mb-2 sm:mb-3">
                     회사명
@@ -420,7 +428,7 @@ export default function FairPricePage() {
                 </div>
                 <button
                   type="submit"
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 sm:py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center mt-3 shadow-sm hover:shadow group relative overflow-hidden"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-4 rounded-xl transition-all duration-300 flex items-center justify-center mt-1 shadow-sm hover:shadow group relative overflow-hidden"
                   disabled={loading}
                 >
                   {/* 버튼 배경 효과 */}

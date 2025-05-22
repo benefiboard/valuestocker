@@ -3,7 +3,7 @@
 'use client';
 
 import { useState, ChangeEvent, FormEvent, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation'; // useRouter 추가
 import CompanySearchInput from '@/components/CompanySearchInput';
 import { CompanyInfo, stockCodeMap } from '../../lib/stockCodeData';
 import { ProfitResult, ProfitCalculationParams, ROEData } from './types';
@@ -32,6 +32,7 @@ const calculateROE = (netIncome: number, equity: number): number => {
 export default function ProfitCalculatorPage() {
   // URL 쿼리 파라미터 가져오기
   const searchParams = useSearchParams();
+  const router = useRouter(); // router 추가
 
   // 상태 관리
   const [companyName, setCompanyName] = useState<string>('');
@@ -183,6 +184,11 @@ export default function ProfitCalculatorPage() {
       setSuccess(true);
       setShowSearchForm(false);
 
+      // URL에 stockCode 파라미터 추가
+      const url = new URL(window.location.href);
+      url.searchParams.set('stockCode', stockCode);
+      router.push(url.pathname + url.search, { scroll: false });
+
       // 부드럽게 화면 최상단으로 스크롤
       window.scrollTo({
         top: 0,
@@ -208,8 +214,11 @@ export default function ProfitCalculatorPage() {
       return;
     }
 
-    const stockCode = selectedCompany.stockCode;
-    await performSearch(stockCode);
+    // 수동 검색이므로 자동 검색 트리거를 true로 설정 (중복 방지)
+    setAutoSearchTriggered(true);
+
+    // stockCode 문자열을 전달
+    await performSearch(selectedCompany.stockCode);
   };
 
   // 계산 버튼 클릭 핸들러 (타입 에러 해결을 위해 추가)
@@ -220,8 +229,11 @@ export default function ProfitCalculatorPage() {
       return;
     }
 
-    const stockCode = selectedCompany.stockCode;
-    performSearch(stockCode);
+    // 수동 검색이므로 자동 검색 트리거를 true로 설정 (중복 방지)
+    setAutoSearchTriggered(true);
+
+    // stockCode 문자열을 전달
+    performSearch(selectedCompany.stockCode);
   };
 
   // 파라미터 변경 시 재계산
@@ -268,7 +280,7 @@ export default function ProfitCalculatorPage() {
             </div>
 
             <form onSubmit={handleSearch} className="transition-all duration-300">
-              <div className="flex flex-col gap-5 sm:gap-6">
+              <div className="flex flex-col gap-2 sm:gap-4">
                 <div className="relative">
                   <div className="group transition-all duration-300 hover:shadow-md rounded-xl">
                     <CompanySearchInput
@@ -467,7 +479,7 @@ export default function ProfitCalculatorPage() {
                 <button
                   onClick={handleCalculateClick}
                   type="button"
-                  className="w-full mt-6 bg-emerald-600 hover:bg-emerald-700 text-white py-3 sm:py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center shadow-sm hover:shadow group relative overflow-hidden"
+                  className="w-full mt-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-4 rounded-xl transition-all duration-300 flex items-center justify-center shadow-sm hover:shadow group relative overflow-hidden"
                   disabled={loading || !selectedCompany}
                 >
                   {/* 버튼 배경 효과 */}
@@ -486,7 +498,7 @@ export default function ProfitCalculatorPage() {
                           size={20}
                           className="mr-3 group-hover:scale-110 transition-transform duration-300"
                         />
-                        적정가격 계산하기
+                        수익 가치로 계산하기
                       </>
                     )}
                   </span>

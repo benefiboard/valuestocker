@@ -3,7 +3,7 @@
 'use client';
 
 import { useState, FormEvent, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation'; // useRouter 추가
 
 import { CompanyInfo, stockCodeMap } from '@/lib/stockCodeData';
 import { ScoredChecklistItem, InvestmentRating, StockPrice } from './types';
@@ -199,6 +199,7 @@ const GrowthRateExplanation = ({
 export default function ChecklistPage() {
   // URL 쿼리 파라미터 가져오기
   const searchParams = useSearchParams();
+  const router = useRouter(); // router 추가
 
   // 상태 관리
   const [companyName, setCompanyName] = useState<string>('');
@@ -346,6 +347,11 @@ export default function ChecklistPage() {
       console.log('분석 완료!');
       setSuccess(true);
       setShowSearchForm(false); // 검색 결과가 표시되면 검색 폼 숨기기
+
+      // URL에 stockCode 파라미터 추가
+      const url = new URL(window.location.href);
+      url.searchParams.set('stockCode', company.stockCode);
+      router.push(url.pathname + url.search, { scroll: false });
     } catch (error) {
       console.error('오류 발생:', error);
       if (error instanceof Error) {
@@ -367,6 +373,9 @@ export default function ChecklistPage() {
       setError('회사를 검색하고 선택해주세요');
       return;
     }
+
+    // 수동 검색이므로 자동 검색 트리거를 true로 설정 (중복 방지)
+    setAutoSearchTriggered(true);
 
     // 검색 수행
     await performSearch(selectedCompany);
@@ -738,24 +747,6 @@ export default function ChecklistPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 px-4 sm:px-6 py-4 sm:py-6">
-      {/* 헤더 - 글래스모픽 스타일 */}
-      {/* <header className="mb-6 max-w-4xl mx-auto w-full sticky top-0 z-10">
-        <div className="bg-white bg-opacity-90 backdrop-blur-md shadow-sm rounded-2xl p-4 flex items-center">
-          <Link
-            href="/"
-            className="mr-3 sm:mr-4 text-gray-600 hover:text-gray-900 transition-colors p-2 rounded-full hover:bg-gray-100"
-          >
-            <ArrowLeft size={20} className="sm:w-6 sm:h-6" />
-          </Link>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center">
-            <div className="hidden sm:block p-2 bg-emerald-50 rounded-full mr-3">
-              <CheckSquare className="text-emerald-600 w-5 h-5 sm:w-6 sm:h-6" />
-            </div>
-            가치투자 체크리스트
-          </h1>
-        </div>
-      </header> */}
-
       <main className="flex-1 max-w-4xl mx-auto w-full">
         {/* 로딩 상태 - 세련된 로딩 애니메이션 */}
         {loading && (
@@ -793,7 +784,7 @@ export default function ChecklistPage() {
             </div>
 
             <form onSubmit={handleSearch} className="transition-all duration-300">
-              <div className="flex flex-col gap-5 sm:gap-6">
+              <div className="flex flex-col gap-2 sm:gap-4">
                 <div className="relative">
                   <label className="block text-sm font-medium text-gray-700 mb-2 sm:mb-3">
                     회사명
@@ -809,7 +800,7 @@ export default function ChecklistPage() {
                 </div>
                 <button
                   type="submit"
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 sm:py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center mt-3 shadow-sm hover:shadow group relative overflow-hidden"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-4 rounded-xl transition-all duration-300 flex items-center justify-center mt-1 shadow-sm hover:shadow group relative overflow-hidden"
                   disabled={loading}
                 >
                   {/* 버튼 배경 효과 */}

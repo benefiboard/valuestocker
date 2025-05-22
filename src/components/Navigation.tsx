@@ -171,7 +171,7 @@ const Navigation = () => {
         {/* 데스크탑 메뉴 */}
         <div className="hidden xl:flex items-center space-x-4">
           <Dropdown
-            title="투자 전략"
+            title="투자 지표"
             items={strategyItems}
             isOpen={strategyDropdown}
             toggle={toggleStrategyDropdown}
@@ -192,17 +192,17 @@ const Navigation = () => {
             closeMenu={closeAllDropdowns}
           />
           <Link
-            href="/checklist"
+            href="/info"
             className="text-gray-600 hover:text-emerald-700 transition-colors py-2"
           >
-            체크리스트
+            서비스 소개
           </Link>
-          <Link
+          {/* <Link
             href="/fairprice"
             className="text-gray-600 hover:text-emerald-700 transition-colors py-2"
           >
             적정가 계산
-          </Link>
+          </Link> */}
           <p>|</p>
           <Link href="/" className="text-gray-300 hover:text-emerald-700 transition-colors py-2">
             메인페이지
@@ -229,7 +229,7 @@ const Navigation = () => {
         </div>
 
         {/* 데스크탑에서 메인 페이지일 때만 시작하기 버튼 표시 */}
-        {isHomePage && (
+        {/* {isHomePage && (
           <div className="hidden xl:block">
             <Link href="/fairprice">
               <button className="bg-emerald-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-emerald-700 transition-colors shadow-sm hover:shadow">
@@ -237,7 +237,7 @@ const Navigation = () => {
               </button>
             </Link>
           </div>
-        )}
+        )} */}
       </nav>
 
       {/* 모바일 드롭다운 메뉴 - 네비게이션 바 아래에 표시 */}
@@ -249,7 +249,7 @@ const Navigation = () => {
         >
           {/* 투자 전략 메뉴 그룹 */}
           <div className="px-6 py-4 border-b border-gray-100">
-            <h3 className="font-medium text-gray-800 mb-3">투자 전략</h3>
+            <h3 className="font-medium text-gray-800 mb-3">투자 지표</h3>
             <div className="space-y-3 pl-3">
               {strategyItems.map((item, index) => (
                 <Link
@@ -298,18 +298,18 @@ const Navigation = () => {
           {/* 기타 메뉴 항목 */}
           <div className="px-6 py-4 flex flex-col space-y-3">
             <Link
-              href="/checklist"
+              href="/info"
               className="text-gray-800 hover:text-emerald-700 font-medium transition-colors"
             >
-              체크리스트
+              서비스 소개
             </Link>
 
-            <Link
+            {/* <Link
               href="/fairprice"
               className="text-gray-800 hover:text-emerald-700 font-medium transition-colors"
             >
               적정가 계산
-            </Link>
+            </Link> */}
           </div>
         </div>
       )}
