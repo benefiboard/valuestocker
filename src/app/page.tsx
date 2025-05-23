@@ -144,7 +144,7 @@ const PriceGauge = ({
   );
 };
 
-export default function TotalPage() {
+export default function HomePage() {
   // URL 쿼리 파라미터 가져오기
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -171,13 +171,56 @@ export default function TotalPage() {
   // 적정가 계산 결과 상태
   const [calculatedResults, setCalculatedResults] = useState<CalculatedResults | null>(null);
 
-  // URL 쿼리 파라미터에서 stockCode를 읽어 자동 검색 수행
+  // 안전한 회사명 표시 함수
+  const getDisplayCompanyName = () => {
+    const name = selectedCompany?.companyName || companyName;
+    console.log('🏷️ 표시할 회사명:', {
+      selectedCompany: selectedCompany?.companyName,
+      companyName,
+      result: name,
+    });
+    return name || '회사명 불러오는 중...';
+  };
+
+  // 상태 변화 모니터링
+  useEffect(() => {
+    console.log('🔄 상태 변화 감지:', {
+      companyName,
+      selectedCompany: selectedCompany?.companyName,
+      stockPrice: stockPrice?.name,
+      success,
+      loading,
+    });
+  }, [companyName, selectedCompany, stockPrice, success, loading]);
+
+  // ⭐ 수정된 useEffect - 검색 전/후 상태 구분
   useEffect(() => {
     const stockCode = searchParams.get('stockCode');
 
-    // stockCode가 없으면 (메인페이지로 돌아온 경우) 상태 초기화
+    console.log('🔄 useEffect 실행:', {
+      stockCode,
+      autoSearchTriggered,
+      loading,
+      success,
+      hasCompanyInfo: !!selectedCompany,
+    });
+
+    // stockCode가 없을 때의 처리
     if (!stockCode) {
-      // 상태 초기화 (첫 화면으로 복귀)
+      // 다음 경우에는 초기화하지 않음:
+      // 1. 로딩 중
+      // 2. 성공 상태
+      // 3. 회사가 선택되어 있지만 아직 검색하지 않은 상태 (검색 전 상태)
+      if (loading || success || (selectedCompany && !autoSearchTriggered)) {
+        console.log('⏸️ 초기화 건너뜀 - 이유:', {
+          loading,
+          success,
+          searchReady: selectedCompany && !autoSearchTriggered,
+        });
+        return;
+      }
+
+      console.log('🧹 URL에 stockCode 없음 - 상태 초기화 (홈으로 돌아가기)');
       setCompanyName('');
       setSelectedCompany(null);
       setStockPrice(null);
@@ -190,19 +233,29 @@ export default function TotalPage() {
       setShowNewSearchForm(false);
       setNewCompanyName('');
       setNewSelectedCompany(null);
-      // autoSearchTriggered는 리셋하지 않음 (중복 호출 방지를 위해)
+      setAutoSearchTriggered(false); // 자동 검색 트리거도 리셋
       return;
     }
 
-    // 이미 자동 검색을 수행했으면 리턴
-    if (autoSearchTriggered) {
+    // 이미 자동 검색을 수행했거나 로딩 중이면 리턴
+    if (autoSearchTriggered || loading) {
+      console.log('⏸️ 이미 검색 완료했거나 로딩 중 - useEffect 종료');
       return;
     }
+
+    // 이미 같은 종목이 선택되어 있으면 리턴
+    if (selectedCompany && selectedCompany.stockCode === stockCode) {
+      console.log('⏸️ 이미 같은 종목 선택됨 - useEffect 종료');
+      return;
+    }
+
+    console.log('🔍 URL에서 자동 검색 시작:', stockCode);
 
     // stockCodeMap에서 해당 종목 코드 찾기
     const company = Object.values(stockCodeMap).find((company) => company.stockCode === stockCode);
 
     if (company) {
+      console.log('✅ 회사 정보 찾음:', company.companyName);
       // 회사 정보 설정
       handleCompanySelect(company);
 
@@ -213,28 +266,36 @@ export default function TotalPage() {
       setTimeout(() => {
         performSearch(company);
       }, 100);
+    } else {
+      console.log('❌ 종목 코드를 찾을 수 없음:', stockCode);
     }
-  }, [searchParams, autoSearchTriggered]);
+  }, [searchParams, autoSearchTriggered, loading, success, selectedCompany]);
 
   // 회사 선택 핸들러 (첫 화면용)
   const handleCompanySelect = (company: CompanyInfo) => {
+    console.log('🏢 회사 선택:', company.companyName, company.stockCode);
     setCompanyName(company.companyName);
     setSelectedCompany(company);
+    console.log('✅ 상태 설정 완료');
   };
 
   // 새 검색창 회사 선택 핸들러
   const handleNewCompanySelect = (company: CompanyInfo) => {
+    console.log('🔄 새 회사 선택:', company.companyName, company.stockCode);
     setNewCompanyName(company.companyName);
     setNewSelectedCompany(company);
+    console.log('✅ 새 검색 상태 설정 완료');
   };
 
-  // 검색 수행 함수
+  // ⭐ 수정된 performSearch 함수 - URL 업데이트 타이밍 조정
   const performSearch = async (company: CompanyInfo) => {
-    // 먼저 회사 정보 설정 (렌더링 문제 해결)
-    setCompanyName(company.companyName);
-    setSelectedCompany(company);
+    console.log('===== 종합 검색 시작 =====');
+    console.log(`전달받은 회사 정보:`, company);
+    console.log(`현재 상태 - companyName: ${companyName}, selectedCompany:`, selectedCompany);
 
-    // 나머지 상태 초기화
+    console.log('🧹 상태 초기화 시작');
+
+    // 나머지 상태 초기화 (회사 정보는 건드리지 않음)
     setStockPrice(null);
     setChecklistResults([]);
     setInvestmentRating(null);
@@ -242,13 +303,26 @@ export default function TotalPage() {
     setSuccess(false);
     setError('');
     setLoading(true);
-    setShowNewSearchForm(false); // 새 검색창 숨기기
+    setShowNewSearchForm(false);
+
+    console.log('✅ 상태 초기화 완료');
+    console.log(`상태 확인 - companyName: ${companyName}, selectedCompany:`, selectedCompany);
 
     try {
-      console.log('===== 종합 검색 시작 =====');
-      console.log(`회사명: ${company.companyName} (${company.stockCode})`);
+      console.log('📊 데이터 가져오기 시작');
+
+      // 주가 정보 가져오기
+      console.log('💰 주가 데이터 요청...');
+      const stockPriceData = await getStockPriceFromSupabase(company.stockCode);
+      if (!stockPriceData) {
+        throw new Error(`${company.companyName}의 주가 데이터를 찾을 수 없습니다`);
+      }
+
+      console.log('✅ 주가 데이터 설정:', stockPriceData);
+      setStockPrice(stockPriceData);
 
       // 두 분석을 병렬로 실행
+      console.log('🔄 병렬 분석 시작...');
       const [checklistPromise, fairPricePromise] = await Promise.allSettled([
         // 체크리스트 계산
         (async () => {
@@ -272,34 +346,24 @@ export default function TotalPage() {
       // 체크리스트 결과 처리
       if (checklistPromise.status === 'fulfilled') {
         const checklist = checklistPromise.value;
+        console.log('✅ 체크리스트 데이터 설정');
         setChecklistResults(checklist);
-
-        // 주가 정보 직접 가져오기
-        const stockPriceData = await getStockPriceFromSupabase(company.stockCode);
-        if (!stockPriceData) {
-          throw new Error(`${company.companyName}의 주가 데이터를 찾을 수 없습니다`);
-        }
-
-        // 주가 정보 설정
-        setStockPrice(stockPriceData);
 
         // 투자 등급 계산
         const rating = calculateInvestmentRating(checklist, company.stockCode, company.industry);
+        console.log('✅ 투자 등급 설정:', rating.grade);
         setInvestmentRating(rating);
       }
 
       // 적정가 계산 결과 처리
       if (fairPricePromise.status === 'fulfilled') {
         const fairPriceResults = fairPricePromise.value;
+        console.log('✅ 적정가 데이터 설정');
         setCalculatedResults(fairPriceResults);
-
-        // 이미 주가가 설정되지 않았다면 적정가 계산에서 나온 주가 정보를 사용
-        if (!stockPrice && fairPriceResults.latestPrice) {
-          setStockPrice(fairPriceResults.latestPrice);
-        }
       }
 
       // 결과 표시를 위한 설정
+      console.log('🎯 성공 상태 설정');
       setSuccess(true);
       setShowSearchForm(false);
 
@@ -307,12 +371,18 @@ export default function TotalPage() {
       setNewCompanyName('');
       setNewSelectedCompany(null);
 
-      // URL에 stockCode 파라미터 추가
-      const url = new URL(window.location.href);
-      url.searchParams.set('stockCode', company.stockCode);
-      router.push(url.pathname + url.search, { scroll: false });
+      console.log('🎉 전체 분석 완료!');
+
+      // ⭐ 중요: URL 업데이트를 성공 후에 실행 (useEffect 충돌 방지)
+      setTimeout(() => {
+        console.log('🔗 URL 업데이트 시작');
+        const url = new URL(window.location.href);
+        url.searchParams.set('stockCode', company.stockCode);
+        router.push(url.pathname + url.search, { scroll: false });
+        console.log('✅ URL 업데이트 완료');
+      }, 100);
     } catch (error) {
-      console.error('오류 발생:', error);
+      console.error('❌ 오류 발생:', error);
       if (error instanceof Error) {
         setError(error.message);
       } else {
@@ -327,6 +397,10 @@ export default function TotalPage() {
   const handleSearch = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    console.log('🔍 검색 시작');
+    console.log('선택된 회사:', selectedCompany);
+    console.log('현재 companyName 상태:', companyName);
+
     // 선택된 회사가 없으면 에러 표시
     if (!selectedCompany) {
       setError('회사를 검색하고 선택해주세요');
@@ -335,6 +409,9 @@ export default function TotalPage() {
 
     // 수동 검색이므로 자동 검색 트리거를 true로 설정 (중복 방지)
     setAutoSearchTriggered(true);
+
+    console.log('🚀 performSearch 호출 직전');
+    console.log('전달할 회사 정보:', selectedCompany);
 
     // 검색 수행
     await performSearch(selectedCompany);
@@ -349,6 +426,12 @@ export default function TotalPage() {
       setError('회사를 검색하고 선택해주세요');
       return;
     }
+
+    console.log('🆕 새 검색 시작:', newSelectedCompany.companyName);
+
+    // 새로 선택된 회사 정보를 메인 상태로 복사
+    setCompanyName(newSelectedCompany.companyName);
+    setSelectedCompany(newSelectedCompany);
 
     // 수동 검색이므로 자동 검색 트리거를 true로 설정 (중복 방지)
     setAutoSearchTriggered(true);
@@ -723,26 +806,28 @@ export default function TotalPage() {
           </div>
         )}
 
-        {/* 검색 후 상단 바 */}
+        {/* 검색 후 상단 바 - 수정된 부분 */}
         {!loading && success && (
-          <div className="bg-white rounded-2xl p-5 sm:px-6 shadow-md mb-6 flex justify-between items-center border border-gray-100 transition-all duration-300 hover:shadow-md">
-            <div className="flex items-center">
-              <div className="p-2 bg-emerald-50 rounded-full mr-3">
-                <Target className="h-5 w-5 sm:h-5 sm:w-5 text-emerald-600" />
+          <>
+            <div className="bg-white rounded-2xl p-5 sm:px-6 shadow-md mb-6 flex justify-between items-center border border-gray-100 transition-all duration-300 hover:shadow-md">
+              <div className="flex items-center">
+                <div className="p-2 bg-emerald-50 rounded-full mr-3">
+                  <Target className="h-5 w-5 sm:h-5 sm:w-5 text-emerald-600" />
+                </div>
+                <p className="text-lg font-semibold text-gray-800 truncate">
+                  {getDisplayCompanyName()}{' '}
+                  <span className="font-normal text-sm text-gray-500">({stockPrice?.code})</span>
+                </p>
               </div>
-              <p className="text-lg font-semibold text-gray-800 truncate">
-                {companyName || '회사명 없음'}{' '}
-                <span className="font-normal text-sm text-gray-500">({stockPrice?.code})</span>
-              </p>
+              <button
+                onClick={handleShowNewSearch}
+                className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 text-sm rounded-xl flex items-center transition-all duration-300 group"
+              >
+                <SearchIcon className="h-4 w-4 sm:mr-2 group-hover:scale-110 transition-transform duration-300" />
+                <span className="hidden sm:block">다른 종목</span>
+              </button>
             </div>
-            <button
-              onClick={handleShowNewSearch}
-              className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 text-sm rounded-xl flex items-center transition-all duration-300 group"
-            >
-              <SearchIcon className="h-4 w-4 sm:mr-2 group-hover:scale-110 transition-transform duration-300" />
-              <span className="hidden sm:block">다른 종목</span>
-            </button>
-          </div>
+          </>
         )}
 
         {/* 새로운 검색 폼 - 결과 화면에서 추가 검색용 */}
@@ -815,7 +900,7 @@ export default function TotalPage() {
           </div>
         )}
 
-        {/* 결과 영역 */}
+        {/* 결과 영역 - 수정된 부분 */}
         {success && stockPrice && (
           <>
             {/* 주요 정보 요약 */}
@@ -823,7 +908,7 @@ export default function TotalPage() {
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 sm:mb-6">
                 <div className="w-full">
                   <h2 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center break-words">
-                    {companyName || '회사명 없음'}{' '}
+                    {getDisplayCompanyName()}{' '}
                     <span className="text-xs sm:text-sm text-gray-500 ml-2">
                       ({stockPrice.code})
                     </span>
@@ -913,11 +998,11 @@ export default function TotalPage() {
                 </div>
               </div>
 
-              {/* 종합 평가 문구 */}
+              {/* 종합 평가 문구 - 수정된 부분 */}
               {investmentRating && calculatedResults && (
                 <div className="bg-gray-50 p-5 rounded-xl text-center">
                   <p className="text-gray-700">
-                    <strong>{companyName || '해당 회사'}</strong>는(은) 현재{' '}
+                    <strong>{getDisplayCompanyName()}</strong>는(은) 현재{' '}
                     <span className="font-bold">{investmentRating.grade}등급</span> 투자 대상으로,{' '}
                     {stockPrice.price < calculatedResults.priceRange.midRange ? (
                       <span className="text-emerald-600 font-semibold">
