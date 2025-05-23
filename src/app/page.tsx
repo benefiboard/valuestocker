@@ -30,6 +30,7 @@ import { InvestmentRating, ScoredChecklistItem, StockPrice } from './checklist/t
 // 적정가 계산 관련 임포트
 import { extractCalculatedResultsFromSupabase } from './fairprice/FairpriceCalculate';
 import { CalculatedResults } from './fairprice/types';
+import MarqueeNav from '@/components/marquee/MarqueeNav';
 
 // 가격 비교 막대 차트 컴포넌트
 const PriceGauge = ({
@@ -644,6 +645,21 @@ export default function HomePage() {
     );
   };
 
+  // 마키아이템
+  const marqueeItems = [
+    { href: '/fairprice', text: '적정가 계산' },
+    { href: '/checklist', text: '체크리스트' },
+    { href: '/profit-calculator', text: '수익가치 계산' },
+    { href: '/graham', text: '벤자민 그레이엄 전략' },
+    { href: '/lynch', text: '피터 린치 PEG 전략' },
+    { href: '/howard', text: '하워드 막스 내재가치' },
+    { href: '/flavor', text: '고배당 가치주 전략' },
+    { href: '/quality', text: '비즈니스 퀄리티 전략' },
+    { href: '/s-rim', text: 'S-RIM 내재가치 전략' },
+    { href: '/profit', text: '수익가치 전략' },
+    { href: '/info', text: '서비스 소개' },
+  ];
+
   // Google 스타일 첫 화면 렌더링 - 네비게이션바 고려한 높이 계산
   if (showSearchForm && !loading && !success) {
     return (
@@ -702,78 +718,9 @@ export default function HomePage() {
             </Link>
 
             {/* 마키 UI - 네비게이션 메뉴들이 흐르는 자막 */}
-            <div className="mt-8 w-full overflow-hidden">
-              <div className="marquee-container bg-gray-50 flex items-center justify-center">
-                <div className="marquee-wrapper ">
-                  <Link href="/fairprice" className="marquee-item">
-                    적정가 계산
-                  </Link>
-                  <Link href="/checklist" className="marquee-item">
-                    체크리스트
-                  </Link>
-                  <Link href="/profit-calculator" className="marquee-item">
-                    수익가치 계산
-                  </Link>
-                  <Link href="/graham" className="marquee-item">
-                    벤자민 그레이엄 전략
-                  </Link>
-                  <Link href="/lynch" className="marquee-item">
-                    피터 린치 PEG 전략
-                  </Link>
-                  <Link href="/howard" className="marquee-item">
-                    하워드 막스 내재가치
-                  </Link>
-                  <Link href="/flavor" className="marquee-item">
-                    고배당 가치주 전략
-                  </Link>
-                  <Link href="/quality" className="marquee-item">
-                    비즈니스 퀄리티 전략
-                  </Link>
-                  <Link href="/s-rim" className="marquee-item">
-                    S-RIM 내재가치 전략
-                  </Link>
-                  <Link href="/profit" className="marquee-item">
-                    수익가치 전략
-                  </Link>
-                  <Link href="/info" className="marquee-item">
-                    서비스 소개
-                  </Link>
 
-                  <Link href="/fairprice" className="marquee-item">
-                    적정가 계산
-                  </Link>
-                  <Link href="/checklist" className="marquee-item">
-                    체크리스트
-                  </Link>
-                  <Link href="/profit-calculator" className="marquee-item">
-                    수익가치 계산
-                  </Link>
-                  <Link href="/graham" className="marquee-item">
-                    벤자민 그레이엄 전략
-                  </Link>
-                  <Link href="/lynch" className="marquee-item">
-                    피터 린치 PEG 전략
-                  </Link>
-                  <Link href="/howard" className="marquee-item">
-                    하워드 막스 내재가치
-                  </Link>
-                  <Link href="/flavor" className="marquee-item">
-                    고배당 가치주 전략
-                  </Link>
-                  <Link href="/quality" className="marquee-item">
-                    비즈니스 퀄리티 전략
-                  </Link>
-                  <Link href="/s-rim" className="marquee-item">
-                    S-RIM 내재가치 전략
-                  </Link>
-                  <Link href="/profit" className="marquee-item">
-                    수익가치 전략
-                  </Link>
-                  <Link href="/info" className="marquee-item">
-                    서비스 소개
-                  </Link>
-                </div>
-              </div>
+            <div className="mt-8 w-full overflow-hidden">
+              <MarqueeNav items={marqueeItems} />
             </div>
           </form>
 
@@ -788,7 +735,6 @@ export default function HomePage() {
     );
   }
 
-  // 나머지는 기존 레이아웃 유지
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 px-4 sm:px-6 py-4 sm:py-6">
       <main className="flex-1 max-w-4xl mx-auto w-full">
@@ -1151,61 +1097,4 @@ export default function HomePage() {
       </main>
     </div>
   );
-}
-
-// 애니메이션 키프레임 스타일 추가
-const styles = `
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes marquee {
-  0% { transform: translateX(0%); }
-  100% { transform: translateX(-200%); }
-}
-
-.animate-fadeIn {
-  animation: fadeIn 0.3s ease-out forwards;
-}
-
-.marquee-container {
-  width: 100%;
-  height: 40px;
-  overflow: hidden;
-}
-
-.marquee-wrapper {
-  display: flex;
-  align-items: center;
-  width: 200%; /* 2배 너비로 설정 */
-  animation: marquee 180s linear infinite;
-  white-space: nowrap;
-}
-
-.marquee-item {
-  color: rgb(156 163 175); /* gray-400 */
-  font-size: 0.75rem; /* text-sm */
-  padding: 0 1rem;
-  transition: color 0.3s ease;
-  text-decoration: none;
-  display: inline-block;
-  flex-shrink: 0;
-}
-
-.marquee-item:hover {
-  color: rgb(34 197 94); /* emerald-500 */
-}
-
-/* 호버 시 애니메이션 일시정지 */
-.marquee-container:hover .marquee-wrapper {
-  animation-play-state: paused;
-}
-`;
-
-// 스타일 태그 추가
-if (typeof document !== 'undefined') {
-  const styleTag = document.createElement('style');
-  styleTag.textContent = styles;
-  document.head.appendChild(styleTag);
 }

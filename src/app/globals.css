@@ -454,3 +454,61 @@
 .table-row-hover:hover .sort-icon {
   transform: scale(1.2);
 }
+
+/* 미키관련 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-200%);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.marquee-container {
+  width: 100%;
+  height: 40px;
+  overflow: hidden;
+}
+
+.marquee-wrapper {
+  display: flex;
+  align-items: center;
+  width: 200%; /* 2배 너비로 설정 */
+  animation: marquee 90s linear infinite;
+  white-space: nowrap;
+}
+
+.marquee-item {
+  color: rgb(156 163 175); /* gray-400 */
+  font-size: 0.75rem; /* text-sm */
+  padding: 0 1rem;
+  transition: color 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.marquee-item:hover {
+  color: rgb(34 197 94); /* emerald-500 */
+}
+
+/* 호버 시 애니메이션 일시정지 */
+.marquee-container:hover .marquee-wrapper {
+  animation-play-state: paused;
+}
