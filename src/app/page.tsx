@@ -956,7 +956,7 @@ export default function HomePage() {
 
                   <div className="row-span-3 flex items-center">
                     <Link href={`/checklist?stockCode=${stockPrice.code}`} className="w-full">
-                      <button className="w-full border-2 border-gray-200 text-gray-600 py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center group">
+                      <button className="w-full border-2 border-gray-200 text-gray-600 py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center group cursor-pointer">
                         <span className="mr-2">
                           <CheckSquare size={18} />
                         </span>
@@ -987,7 +987,7 @@ export default function HomePage() {
 
                   <div className="row-span-3 flex items-center">
                     <Link href={`/fairprice?stockCode=${stockPrice.code}`} className="w-full">
-                      <button className="w-full border-2 border-gray-200 text-gray-600 py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center group">
+                      <button className="w-full border-2 border-gray-200 text-gray-600 py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center group cursor-pointer">
                         <span className="mr-2">
                           <DollarSign size={18} />
                         </span>
@@ -1033,9 +1033,9 @@ export default function HomePage() {
                   href={`/checklist?stockCode=${selectedCompany?.stockCode}`}
                   className="w-full"
                 >
-                  <button className="w-full inline-flex items-center justify-center border-2 border-gray-200 text-gray-600 px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-emerald-700 transition-all duration-300 shadow-sm hover:shadow group relative overflow-hidden">
+                  <button className="w-full inline-flex items-center justify-center border-2 border-gray-200 text-gray-600 px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-gray-200 transition-all duration-300 shadow-sm hover:shadow group relative overflow-hidden cursor-pointer">
                     {/* 버튼 배경 효과 */}
-                    <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-emerald-500 to-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    {/* <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-emerald-500 to-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div> */}
 
                     {/* 버튼 텍스트 */}
                     <span className="relative flex items-center">
@@ -1059,9 +1059,9 @@ export default function HomePage() {
                 </Link>
 
                 <Link href={`/fairprice?stockCode=${stockPrice.code}`} className="w-full">
-                  <button className="w-full inline-flex items-center justify-center border-2 border-gray-200 text-gray-600 px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-emerald-700 transition-all duration-300 shadow-sm hover:shadow group relative overflow-hidden">
+                  <button className="w-full inline-flex items-center justify-center border-2 border-gray-200 text-gray-600 px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-gray-200 transition-all duration-300 shadow-sm hover:shadow group relative overflow-hidden cursor-pointer">
                     {/* 버튼 배경 효과 */}
-                    <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-emerald-500 to-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    {/* <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-emerald-500 to-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div> */}
 
                     {/* 버튼 텍스트 */}
                     <span className="relative flex items-center">
@@ -1089,9 +1089,9 @@ export default function HomePage() {
                   href={`/profit-calculator?stockCode=${selectedCompany?.stockCode}`}
                   className="w-full"
                 >
-                  <button className="w-full inline-flex items-center justify-center border-2 border-gray-200 text-gray-600 px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-emerald-700 transition-all duration-300 shadow-sm hover:shadow group relative overflow-hidden">
+                  <button className="w-full inline-flex items-center justify-center border-2 border-gray-200 text-gray-600 px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-gray-200 transition-all duration-300 shadow-sm hover:shadow group relative overflow-hidden cursor-pointer">
                     {/* 버튼 배경 효과 */}
-                    <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-emerald-500 to-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    {/* <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-emerald-500 to-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div> */}
 
                     {/* 버튼 텍스트 */}
                     <span className="relative flex items-center">
@@ -1120,9 +1120,9 @@ export default function HomePage() {
                   rel="noopener noreferrer"
                   className="w-full"
                 >
-                  <button className="w-full inline-flex items-center justify-center border-2 border-gray-200 text-gray-600 px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-emerald-700 transition-all duration-300 shadow-sm hover:shadow group relative overflow-hidden">
+                  <button className="w-full inline-flex items-center justify-center border-2 border-gray-200 text-gray-600 px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-gray-200 transition-all duration-300 shadow-sm hover:shadow group relative overflow-hidden cursor-pointer">
                     {/* 버튼 배경 효과 */}
-                    <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-emerald-500 to-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    {/* <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-emerald-500 to-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div> */}
 
                     {/* 버튼 텍스트 */}
                     <span className="relative flex items-center">
