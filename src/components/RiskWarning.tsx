@@ -9,9 +9,10 @@ const OWNER_RISK_STOCKS = ['475560']; // 더본코리아
 const ACCOUNTING_RISK_STOCKS: string[] = []; // 회계 리스크 (나중 확장용)
 const REGULATORY_RISK_STOCKS: string[] = []; // 규제 리스크 (나중 확장용)
 const ESG_RISK_STOCKS: string[] = []; // ESG 리스크 (나중 확장용)
+const HACKING_RISK_STOCKS: string[] = ['017670']; // 해킹 리스크 (나중 확장용)
 
 // ===== 리스크 타입 정의 =====
-type RiskType = 'OWNER_RISK' | 'ACCOUNTING_RISK' | 'REGULATORY_RISK' | 'ESG_RISK';
+type RiskType = 'OWNER_RISK' | 'ACCOUNTING_RISK' | 'REGULATORY_RISK' | 'ESG_RISK' | 'HACKING_RISK';
 
 interface RiskInfo {
   type: RiskType;
@@ -26,7 +27,7 @@ interface RiskInfo {
 const RISK_MESSAGES: Record<RiskType, Omit<RiskInfo, 'type'>> = {
   OWNER_RISK: {
     message: '오너리스크 - 데이터 기반 평가 대비 당분간 투자 주의',
-    bgColor: 'bg-red-600',
+    bgColor: 'bg-yellow-600',
     textColor: 'text-white',
     icon: <AlertTriangle size={20} />,
     level: 'HIGH',
@@ -51,6 +52,13 @@ const RISK_MESSAGES: Record<RiskType, Omit<RiskInfo, 'type'>> = {
     textColor: 'text-white',
     icon: <Shield size={20} />,
     level: 'LOW',
+  },
+  HACKING_RISK: {
+    message: '해킹리스크 -고객정보유출',
+    bgColor: 'bg-yellow-600',
+    textColor: 'text-white',
+    icon: <Shield size={20} />,
+    level: 'HIGH',
   },
 };
 
@@ -89,6 +97,13 @@ const checkRisks = (stockCode: string): RiskInfo[] => {
     risks.push({
       type: 'ESG_RISK',
       ...RISK_MESSAGES.ESG_RISK,
+    });
+  }
+  // 해킹리스크 체크
+  if (HACKING_RISK_STOCKS.includes(stockCode)) {
+    risks.push({
+      type: 'HACKING_RISK',
+      ...RISK_MESSAGES.HACKING_RISK,
     });
   }
 
@@ -137,7 +152,7 @@ const RiskWarning: React.FC<RiskWarningProps> = ({ stockCode, className = '' }) 
       <div className="absolute inset-0 flex items-center justify-center">
         {/* 메인 테이프 (중앙) */}
         <div
-          className="absolute w-full h-16 bg-red-600 text-white shadow-2xl transform rotate-12"
+          className="absolute w-full h-16 bg-yellow-400 text-white shadow-2xl transform rotate-12"
           style={{ minWidth: '150%' }}
         >
           <div className="flex items-center justify-center h-full overflow-hidden">
@@ -160,7 +175,7 @@ const RiskWarning: React.FC<RiskWarningProps> = ({ stockCode, className = '' }) 
 
         {/* 상단 테이프 */}
         <div
-          className="absolute w-full h-12 bg-red-700 text-white shadow-xl transform -rotate-12 -translate-y-20"
+          className="absolute w-full h-12 bg-yellow-500 text-white shadow-xl transform -rotate-12 -translate-y-20"
           style={{ minWidth: '140%' }}
         >
           <div className="flex items-center justify-center h-full overflow-hidden">
@@ -177,7 +192,7 @@ const RiskWarning: React.FC<RiskWarningProps> = ({ stockCode, className = '' }) 
 
         {/* 하단 테이프 */}
         <div
-          className="absolute w-full h-12 bg-red-700 text-white shadow-xl transform rotate-12 translate-y-20"
+          className="absolute w-full h-12 bg-yellow-500 text-white shadow-xl transform rotate-12 translate-y-20"
           style={{ minWidth: '140%' }}
         >
           <div className="flex items-center justify-center h-full overflow-hidden">
