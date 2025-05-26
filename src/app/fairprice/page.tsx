@@ -25,6 +25,7 @@ import {
 import { extractCalculatedResultsFromSupabase } from './FairpriceCalculate';
 import { CompanyInfo, stockCodeMap } from '@/lib/stockCodeData';
 import { getIndustryParameters } from '@/lib/industryData';
+import RiskWarning from '@/components/RiskWarning';
 
 export default function FairPricePage() {
   // URL 쿼리 파라미터 가져오기
@@ -390,6 +391,7 @@ export default function FairPricePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 px-4 sm:px-6 py-4 sm:py-6">
+      <RiskWarning stockCode={selectedCompany?.stockCode || ''} />
       <main className="flex-1 max-w-4xl mx-auto w-full">
         {/* 검색 영역 - 세련된 카드 디자인 */}
         {showSearchForm ? (

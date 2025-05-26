@@ -31,6 +31,7 @@ import { InvestmentRating, ScoredChecklistItem, StockPrice } from './checklist/t
 import { extractCalculatedResultsFromSupabase } from './fairprice/FairpriceCalculate';
 import { CalculatedResults } from './fairprice/types';
 import MarqueeNav from '@/components/marquee/MarqueeNav';
+import RiskWarning from '@/components/RiskWarning';
 
 // 가격 비교 막대 차트 컴포넌트
 const PriceGauge = ({
@@ -737,6 +738,7 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 px-4 sm:px-6 py-4 sm:py-6">
+      <RiskWarning stockCode={selectedCompany?.stockCode || ''} />
       <main className="flex-1 max-w-4xl mx-auto w-full">
         {/* 로딩 상태 */}
         {loading && (

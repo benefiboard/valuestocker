@@ -41,6 +41,7 @@ import Link from 'next/link';
 import React from 'react';
 import CompanySearchInput from '../../components/CompanySearchInput';
 import { FINANCIAL_COMPANIES } from './constants/industryThresholds';
+import RiskWarning from '@/components/RiskWarning';
 
 // 계층적 카테고리 구조 정의
 interface HierarchicalCategory {
@@ -747,6 +748,7 @@ export default function ChecklistPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 px-4 sm:px-6 py-4 sm:py-6">
+      <RiskWarning stockCode={selectedCompany?.stockCode || ''} />
       <main className="flex-1 max-w-4xl mx-auto w-full">
         {/* 로딩 상태 - 세련된 로딩 애니메이션 */}
         {loading && (
