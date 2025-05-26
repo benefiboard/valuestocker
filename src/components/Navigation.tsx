@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronDown, ChevronLeft, Home, Menu, X } from 'lucide-react';
 
@@ -79,6 +79,7 @@ const Navigation = () => {
   const pathname = usePathname();
   const router = useRouter();
   const isHomePage = pathname === '/';
+  const searchParams = useSearchParams();
 
   // 모든 드롭다운 닫기
   const closeAllDropdowns = () => {

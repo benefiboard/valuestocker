@@ -67,27 +67,34 @@ export default function FairPricePage() {
   useEffect(() => {
     const stockCode = searchParams.get('stockCode');
 
-    // 이미 자동 검색을 수행했거나 stockCode가 없으면 리턴
-    if (autoSearchTriggered || !stockCode) {
+    if (!stockCode) {
+      // URL에 stockCode 없으면 → 무조건 초기화 (조건 없이!)
+      console.log('🧹 stockCode 없음 - /fairprice 무조건 초기화');
+      setCompanyName('');
+      setSelectedCompany(null);
+      setLatestPrice(null);
+      setCalculatedResults(null);
+      setSuccess(false);
+      setError('');
+      setShowSearchForm(true);
+      setAutoSearchTriggered(false);
+      // 기타 상태들도 초기화
+      setIsSrimExpanded(false);
+      setExpandedCategories(new Set(['assetBased', 'profitBased', 'srimModels']));
       return;
     }
 
-    // stockCodeMap에서 해당 종목 코드 찾기
-    const company = Object.values(stockCodeMap).find((company) => company.stockCode === stockCode);
-
-    if (company) {
-      // 회사 정보 설정
-      handleCompanySelect(company);
-
-      // 자동 검색 트리거 표시 (중복 실행 방지)
-      setAutoSearchTriggered(true);
-
-      // 약간의 딜레이 후 검색 실행 (UI가 업데이트될 시간 제공)
-      setTimeout(() => {
-        performSearch(company.stockCode);
-      }, 100);
+    // URL에 stockCode 있으면 → 검색 (현재 종목과 다를 때만)
+    if (selectedCompany?.stockCode !== stockCode) {
+      console.log('🔍 새로운 종목 검색:', stockCode);
+      const company = Object.values(stockCodeMap).find((c) => c.stockCode === stockCode);
+      if (company) {
+        handleCompanySelect(company);
+        setAutoSearchTriggered(true);
+        setTimeout(() => performSearch(company.stockCode), 100);
+      }
     }
-  }, [searchParams, autoSearchTriggered]);
+  }, [searchParams]);
 
   // 토글 함수
   const toggleSrimScenarios = () => {

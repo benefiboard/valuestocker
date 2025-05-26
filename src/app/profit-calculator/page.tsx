@@ -22,6 +22,7 @@ import {
   X,
 } from 'lucide-react';
 import { formatAsset } from '@/utils/stockUtils';
+import RiskWarning from '@/components/RiskWarning';
 
 // ROE 계산 함수 (중복 방지를 위해 import 또는 여기서 정의)
 const calculateROE = (netIncome: number, equity: number): number => {
@@ -151,20 +152,37 @@ export default function ProfitCalculatorPage() {
   useEffect(() => {
     const stockCode = searchParams.get('stockCode');
 
-    if (autoSearchTriggered || !stockCode) {
+    if (!stockCode) {
+      // URL에 stockCode 없으면 → 무조건 초기화 (조건 없이!)
+      console.log('🧹 stockCode 없음 - /profit-calculator 무조건 초기화');
+      setCompanyName('');
+      setSelectedCompany(null);
+      setCalculatedResult(null);
+      setSuccess(false);
+      setError('');
+      setShowSearchForm(true);
+      setAutoSearchTriggered(false);
+      // 수익가치 계산기 특화 상태들도 초기화
+      setShowAdvancedOptions(false);
+      setExpandedROETable(false);
+      setRoeHistory(null);
+      setAverageHistoricalROE(0);
+      setLoadingROE(false);
+      // profitParams는 사용자 설정이므로 초기화 안함
       return;
     }
 
-    const company = Object.values(stockCodeMap).find((company) => company.stockCode === stockCode);
-
-    if (company) {
-      handleCompanySelect(company);
-      setAutoSearchTriggered(true);
-      setTimeout(() => {
-        performSearch(company.stockCode);
-      }, 100);
+    // URL에 stockCode 있으면 → 검색 (현재 종목과 다를 때만)
+    if (selectedCompany?.stockCode !== stockCode) {
+      console.log('🔍 새로운 종목 검색:', stockCode);
+      const company = Object.values(stockCodeMap).find((c) => c.stockCode === stockCode);
+      if (company) {
+        handleCompanySelect(company);
+        setAutoSearchTriggered(true);
+        setTimeout(() => performSearch(company.stockCode), 100);
+      }
     }
-  }, [searchParams, autoSearchTriggered]);
+  }, [searchParams]);
 
   // 검색 수행 함수
   const performSearch = async (stockCode: string) => {
@@ -268,6 +286,7 @@ export default function ProfitCalculatorPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 px-4 sm:px-6 py-4 sm:py-6">
+      <RiskWarning stockCode={selectedCompany?.stockCode || ''} />
       <main className="flex-1 max-w-4xl mx-auto w-full">
         {/* 검색 영역 - fairprice 스타일 적용 */}
         {showSearchForm ? (

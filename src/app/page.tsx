@@ -199,30 +199,9 @@ export default function HomePage() {
   useEffect(() => {
     const stockCode = searchParams.get('stockCode');
 
-    console.log('🔄 useEffect 실행:', {
-      stockCode,
-      autoSearchTriggered,
-      loading,
-      success,
-      hasCompanyInfo: !!selectedCompany,
-    });
-
-    // stockCode가 없을 때의 처리
     if (!stockCode) {
-      // 다음 경우에는 초기화하지 않음:
-      // 1. 로딩 중
-      // 2. 성공 상태
-      // 3. 회사가 선택되어 있지만 아직 검색하지 않은 상태 (검색 전 상태)
-      if (loading || success || (selectedCompany && !autoSearchTriggered)) {
-        console.log('⏸️ 초기화 건너뜀 - 이유:', {
-          loading,
-          success,
-          searchReady: selectedCompany && !autoSearchTriggered,
-        });
-        return;
-      }
-
-      console.log('🧹 URL에 stockCode 없음 - 상태 초기화 (홈으로 돌아가기)');
+      // URL에 stockCode 없으면 → 무조건 초기화 (조건 없이!)
+      console.log('🧹 stockCode 없음 - 무조건 초기화');
       setCompanyName('');
       setSelectedCompany(null);
       setStockPrice(null);
@@ -232,46 +211,21 @@ export default function HomePage() {
       setSuccess(false);
       setError('');
       setShowSearchForm(true);
-      setShowNewSearchForm(false);
-      setNewCompanyName('');
-      setNewSelectedCompany(null);
-      setAutoSearchTriggered(false); // 자동 검색 트리거도 리셋
+      setAutoSearchTriggered(false);
       return;
     }
 
-    // 이미 자동 검색을 수행했거나 로딩 중이면 리턴
-    if (autoSearchTriggered || loading) {
-      console.log('⏸️ 이미 검색 완료했거나 로딩 중 - useEffect 종료');
-      return;
+    // URL에 stockCode 있으면 → 검색 (현재 종목과 다를 때만)
+    if (selectedCompany?.stockCode !== stockCode) {
+      console.log('🔍 새로운 종목 검색:', stockCode);
+      const company = Object.values(stockCodeMap).find((c) => c.stockCode === stockCode);
+      if (company) {
+        handleCompanySelect(company);
+        setAutoSearchTriggered(true);
+        setTimeout(() => performSearch(company), 100);
+      }
     }
-
-    // 이미 같은 종목이 선택되어 있으면 리턴
-    if (selectedCompany && selectedCompany.stockCode === stockCode) {
-      console.log('⏸️ 이미 같은 종목 선택됨 - useEffect 종료');
-      return;
-    }
-
-    console.log('🔍 URL에서 자동 검색 시작:', stockCode);
-
-    // stockCodeMap에서 해당 종목 코드 찾기
-    const company = Object.values(stockCodeMap).find((company) => company.stockCode === stockCode);
-
-    if (company) {
-      console.log('✅ 회사 정보 찾음:', company.companyName);
-      // 회사 정보 설정
-      handleCompanySelect(company);
-
-      // 자동 검색 트리거 표시 (중복 실행 방지)
-      setAutoSearchTriggered(true);
-
-      // 약간의 딜레이 후 검색 실행 (UI가 업데이트될 시간 제공)
-      setTimeout(() => {
-        performSearch(company);
-      }, 100);
-    } else {
-      console.log('❌ 종목 코드를 찾을 수 없음:', stockCode);
-    }
-  }, [searchParams, autoSearchTriggered, loading, success, selectedCompany]);
+  }, [searchParams]);
 
   // 회사 선택 핸들러 (첫 화면용)
   const handleCompanySelect = (company: CompanyInfo) => {
