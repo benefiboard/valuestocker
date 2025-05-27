@@ -4,6 +4,7 @@ import './globals.css';
 import { Analytics } from '@vercel/analytics/react';
 import { Suspense } from 'react';
 import Navigation from '@/components/Navigation';
+import GlobalAnalytics from '@/components/GlobalAnalytics'; // 🔥 추가
 
 const notoSansKr = Noto_Sans_KR({
   subsets: ['latin'],
@@ -42,6 +43,12 @@ export default function RootLayout({
         >
           <Navigation />
         </Suspense>
+
+        {/* 🔥 전역 Analytics 추가 - 모든 페이지 자동 추적 */}
+        <Suspense fallback={null}>
+          <GlobalAnalytics />
+        </Suspense>
+
         {children}
         <Analytics />
       </body>

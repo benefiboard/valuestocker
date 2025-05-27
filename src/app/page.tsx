@@ -323,6 +323,19 @@ export default function HomePage() {
       setSuccess(true);
       setShowSearchForm(false);
 
+      // 🔥 검색 성공시 회사 정보를 localStorage에 저장 (Analytics에서 활용)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(
+          `company_${company.stockCode}`,
+          JSON.stringify({
+            companyName: company.companyName,
+            stockCode: company.stockCode,
+            industry: company.industry,
+            searchedAt: new Date().toISOString(),
+          })
+        );
+      }
+
       // 새 검색창 관련 상태 초기화
       setNewCompanyName('');
       setNewSelectedCompany(null);
