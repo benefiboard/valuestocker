@@ -2,112 +2,15 @@
 'use client';
 
 import { useState } from 'react';
-import { AlertTriangle, X, Shield, FileText, Scale } from 'lucide-react';
+import { AlertTriangle, X } from 'lucide-react';
 
-// ===== 리스크 종목 상수들 =====
-const OWNER_RISK_STOCKS = ['475560']; // 더본코리아
-const ACCOUNTING_RISK_STOCKS: string[] = []; // 회계 리스크 (나중 확장용)
-const REGULATORY_RISK_STOCKS: string[] = []; // 규제 리스크 (나중 확장용)
-const ESG_RISK_STOCKS: string[] = []; // ESG 리스크 (나중 확장용)
-const HACKING_RISK_STOCKS: string[] = ['017670']; // 해킹 리스크 (나중 확장용)
-
-// ===== 리스크 타입 정의 =====
-type RiskType = 'OWNER_RISK' | 'ACCOUNTING_RISK' | 'REGULATORY_RISK' | 'ESG_RISK' | 'HACKING_RISK';
-
-interface RiskInfo {
-  type: RiskType;
-  message: string;
-  bgColor: string;
-  textColor: string;
-  icon: React.ReactNode;
-  level: 'LOW' | 'MEDIUM' | 'HIGH';
-}
-
-// ===== 리스크 메시지 설정 =====
-const RISK_MESSAGES: Record<RiskType, Omit<RiskInfo, 'type'>> = {
-  OWNER_RISK: {
-    message: '오너리스크 - 데이터 기반 평가 대비 당분간 투자 주의',
-    bgColor: 'bg-yellow-600',
-    textColor: 'text-white',
-    icon: <AlertTriangle size={20} />,
-    level: 'HIGH',
-  },
-  ACCOUNTING_RISK: {
-    message: '회계 리스크 - 재무제표 신뢰성 검토 필요',
-    bgColor: 'bg-orange-600',
-    textColor: 'text-white',
-    icon: <FileText size={20} />,
-    level: 'MEDIUM',
-  },
-  REGULATORY_RISK: {
-    message: '규제 리스크 - 관련 법규 변경 가능성 주의',
-    bgColor: 'bg-yellow-600',
-    textColor: 'text-white',
-    icon: <Scale size={20} />,
-    level: 'MEDIUM',
-  },
-  ESG_RISK: {
-    message: 'ESG 리스크 - 환경·사회·지배구조 이슈 존재',
-    bgColor: 'bg-purple-600',
-    textColor: 'text-white',
-    icon: <Shield size={20} />,
-    level: 'LOW',
-  },
-  HACKING_RISK: {
-    message: '해킹리스크 -고객정보유출',
-    bgColor: 'bg-yellow-600',
-    textColor: 'text-white',
-    icon: <Shield size={20} />,
-    level: 'HIGH',
-  },
-};
-
-// ===== 리스크 체크 로직 =====
-const checkRisks = (stockCode: string): RiskInfo[] => {
-  if (!stockCode) return [];
-
-  const risks: RiskInfo[] = [];
-
-  // 오너리스크 체크
-  if (OWNER_RISK_STOCKS.includes(stockCode)) {
-    risks.push({
-      type: 'OWNER_RISK',
-      ...RISK_MESSAGES.OWNER_RISK,
-    });
-  }
-
-  // 회계리스크 체크
-  if (ACCOUNTING_RISK_STOCKS.includes(stockCode)) {
-    risks.push({
-      type: 'ACCOUNTING_RISK',
-      ...RISK_MESSAGES.ACCOUNTING_RISK,
-    });
-  }
-
-  // 규제리스크 체크
-  if (REGULATORY_RISK_STOCKS.includes(stockCode)) {
-    risks.push({
-      type: 'REGULATORY_RISK',
-      ...RISK_MESSAGES.REGULATORY_RISK,
-    });
-  }
-
-  // ESG리스크 체크
-  if (ESG_RISK_STOCKS.includes(stockCode)) {
-    risks.push({
-      type: 'ESG_RISK',
-      ...RISK_MESSAGES.ESG_RISK,
-    });
-  }
-  // 해킹리스크 체크
-  if (HACKING_RISK_STOCKS.includes(stockCode)) {
-    risks.push({
-      type: 'HACKING_RISK',
-      ...RISK_MESSAGES.HACKING_RISK,
-    });
-  }
-
-  return risks;
+// ===== 리스크 종목 상수 (단순화) =====
+const RISK_STOCKS: Record<string, string> = {
+  '475560': '오너 리스크', // 더본코리아
+  '017670': '해킹 리스크-고객 정보유출', // 해킹 리스크
+  // 추가 종목은 여기에 한 줄씩만 추가하면 됨
+  // '123456': '회계 리스크',
+  // '789012': 'ESG 리스크',
 };
 
 // ===== 메인 컴포넌트 =====
@@ -117,30 +20,20 @@ interface RiskWarningProps {
 }
 
 const RiskWarning: React.FC<RiskWarningProps> = ({ stockCode, className = '' }) => {
-  const [dismissedRisks, setDismissedRisks] = useState<Set<RiskType>>(new Set());
+  const [isDismissed, setIsDismissed] = useState(false);
 
-  // 리스크 체크
-  const risks = checkRisks(stockCode);
+  // 리스크 체크 (단순화)
+  const riskReason = RISK_STOCKS[stockCode];
 
-  // 해제되지 않은 리스크만 필터링
-  const activeRisks = risks.filter((risk) => !dismissedRisks.has(risk.type));
+  // 리스크가 없거나 해제되었으면 아무것도 렌더링하지 않음
+  if (!riskReason || isDismissed) return null;
 
-  // 리스크가 없으면 아무것도 렌더링하지 않음
-  if (activeRisks.length === 0) return null;
-
-  // 가장 높은 리스크 레벨 찾기 (HIGH > MEDIUM > LOW)
-  const getHighestRisk = (risks: RiskInfo[]): RiskInfo => {
-    const priorityOrder = { HIGH: 3, MEDIUM: 2, LOW: 1 };
-    return risks.reduce((highest, current) =>
-      priorityOrder[current.level] > priorityOrder[highest.level] ? current : highest
-    );
-  };
-
-  const primaryRisk = getHighestRisk(activeRisks);
+  // 리스크 메시지 생성
+  const riskMessage = `${riskReason} - 데이터 기반 평가 대비 당분간 투자 주의`;
 
   // 리스크 해제 핸들러
-  const handleDismiss = (riskType: RiskType) => {
-    setDismissedRisks((prev) => new Set([...prev, riskType]));
+  const handleDismiss = () => {
+    setIsDismissed(true);
   };
 
   return (
@@ -157,18 +50,9 @@ const RiskWarning: React.FC<RiskWarningProps> = ({ stockCode, className = '' }) 
         >
           <div className="flex items-center justify-center h-full overflow-hidden">
             <div className="flex whitespace-nowrap animate-pulse">
-              <span className="mx-8 font-bold text-lg flex items-center">
-                <AlertTriangle className="mr-2" size={20} />
-                ⚠️ {primaryRisk.message}
-              </span>
-              <span className="mx-8 font-bold text-lg flex items-center">
-                <AlertTriangle className="mr-2" size={20} />
-                ⚠️ {primaryRisk.message}
-              </span>
-              <span className="mx-8 font-bold text-lg flex items-center">
-                <AlertTriangle className="mr-2" size={20} />
-                ⚠️ {primaryRisk.message}
-              </span>
+              <span className="mx-8 font-bold text-lg flex items-center">⚠️ {riskMessage}</span>
+              <span className="mx-8 font-bold text-lg flex items-center">⚠️ {riskMessage}</span>
+              <span className="mx-8 font-bold text-lg flex items-center">⚠️ {riskMessage}</span>
             </div>
           </div>
         </div>
@@ -206,25 +90,17 @@ const RiskWarning: React.FC<RiskWarningProps> = ({ stockCode, className = '' }) 
             </div>
           </div>
         </div>
+      </div>
 
-        {/* 추가 리스크 테이프 (있을 경우) */}
-        {activeRisks.length > 1 && (
-          <div
-            className="absolute w-full h-10 bg-orange-600 text-white shadow-lg transform -rotate-6 translate-y-40"
-            style={{ minWidth: '120%' }}
-          >
-            <div className="flex items-center justify-center h-full overflow-hidden">
-              <div className="flex whitespace-nowrap">
-                <span className="mx-4 font-medium text-xs">
-                  ⚠️ +{activeRisks.length - 1}개 추가 리스크 존재 ⚠️ ADDITIONAL RISKS
-                </span>
-                <span className="mx-4 font-medium text-xs">
-                  ⚠️ +{activeRisks.length - 1}개 추가 리스크 존재 ⚠️ ADDITIONAL RISKS
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
+      {/* 해제 버튼 (옵션) */}
+      <div className="absolute top-4 right-4 pointer-events-auto">
+        <button
+          onClick={handleDismiss}
+          className="bg-red-600 text-white p-2 rounded-full hover:bg-red-700 transition-colors shadow-lg"
+          title="리스크 경고 해제"
+        >
+          <X size={20} />
+        </button>
       </div>
     </div>
   );
