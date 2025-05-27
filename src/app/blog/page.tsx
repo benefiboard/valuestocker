@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { Suspense } from 'react';
 import BlogList from '@/components/blog/BlogList';
 
 export const metadata: Metadata = {
@@ -25,7 +26,27 @@ export default function BlogPage() {
           </p>
         </header>
 
-        <BlogList />
+        <Suspense
+          fallback={
+            <div className="max-w-5xl mx-auto py-12 px-4">
+              <div className="animate-pulse space-y-8">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div className="h-64 bg-gray-200"></div>
+                    <div className="p-6">
+                      <div className="h-8 bg-gray-200 rounded w-3/4 mb-4"></div>
+                      <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                      <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                      <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          }
+        >
+          <BlogList />
+        </Suspense>
       </div>
     </main>
   );

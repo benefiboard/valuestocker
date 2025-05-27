@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Noto_Sans_KR } from 'next/font/google';
 import './globals.css';
 import { Analytics } from '@vercel/analytics/react';
+import { Suspense } from 'react';
 import Navigation from '@/components/Navigation';
 
 const notoSansKr = Noto_Sans_KR({
@@ -22,7 +23,25 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body className={`${notoSansKr.className} antialiased tracking-tighter`}>
-        <Navigation />
+        <Suspense
+          fallback={
+            <nav className="bg-white shadow-sm border-b border-gray-200">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex justify-between h-16">
+                  <div className="flex items-center">
+                    <div className="h-8 w-32 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="h-8 w-20 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="h-8 w-20 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                </div>
+              </div>
+            </nav>
+          }
+        >
+          <Navigation />
+        </Suspense>
         {children}
         <Analytics />
       </body>

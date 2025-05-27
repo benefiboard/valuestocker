@@ -1,4 +1,4 @@
-// src/app/page.tsx
+// src/app/info/page.tsx
 
 import Link from 'next/link';
 import {
@@ -15,9 +15,8 @@ import {
   ChevronDown,
   Calculator,
 } from 'lucide-react';
-import Navigation from '@/components/Navigation';
 
-export default function Home() {
+export default function InfoPage() {
   return (
     <div className="flex flex-col min-h-screen bg-white">
       <main className="flex-1 w-full">

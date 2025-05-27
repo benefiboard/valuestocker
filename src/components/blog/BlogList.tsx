@@ -20,20 +20,20 @@ export default function BlogList() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+
   useEffect(() => {
     const fetchPosts = async () => {
       try {
         setLoading(true);
-        
+
         const { data, error } = await supabase
           .from('blog_posts')
           .select('*')
           .eq('status', 'published')
           .order('created_at', { ascending: false });
-          
+
         if (error) throw error;
-        
+
         setPosts(data || []);
       } catch (err: any) {
         setError(err.message || '게시물을 불러오는 중 오류가 발생했습니다');
@@ -42,27 +42,27 @@ export default function BlogList() {
         setLoading(false);
       }
     };
-    
+
     fetchPosts();
   }, []);
-  
+
   // 게시물 내용에서 요약 추출 (첫 100자)
   const getExcerpt = (content: string) => {
     // HTML 태그 제거
     const textOnly = content.replace(/<[^>]*>/g, '');
     return textOnly.substring(0, 150) + (textOnly.length > 150 ? '...' : '');
   };
-  
+
   // 날짜 포맷팅
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('ko-KR', {
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
     });
   };
-  
+
   // 읽는 시간 계산 (평균 읽기 속도: 분당 300단어)
   const getReadingTime = (content: string) => {
     const textOnly = content.replace(/<[^>]*>/g, '');
@@ -70,7 +70,7 @@ export default function BlogList() {
     const readingTime = Math.ceil(wordCount / 300);
     return readingTime;
   };
-  
+
   if (loading) {
     return (
       <div className="max-w-5xl mx-auto py-12 px-4">
@@ -90,7 +90,7 @@ export default function BlogList() {
       </div>
     );
   }
-  
+
   if (error) {
     return (
       <div className="max-w-5xl mx-auto py-12 px-4">
@@ -100,7 +100,7 @@ export default function BlogList() {
       </div>
     );
   }
-  
+
   if (posts.length === 0) {
     return (
       <div className="max-w-5xl mx-auto py-12 px-4 text-center">
@@ -109,18 +109,21 @@ export default function BlogList() {
       </div>
     );
   }
-  
+
   return (
     <div className="max-w-5xl mx-auto py-12 px-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {posts.map((post) => (
-          <article key={post.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+          <article
+            key={post.id}
+            className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
+          >
             {post.image && (
               <Link href={`/blog/${post.slug}`}>
                 <div className="relative h-48 overflow-hidden">
-                  <img 
-                    src={post.image} 
-                    alt={post.title} 
+                  <img
+                    src={post.image}
+                    alt={post.title}
                     className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300"
                   />
                 </div>
@@ -134,19 +137,17 @@ export default function BlogList() {
                 <Clock className="h-3 w-3 mr-1" />
                 <span>{getReadingTime(post.content)}분 읽기</span>
               </div>
-              
+
               <Link href={`/blog/${post.slug}`}>
                 <h2 className="text-xl font-bold text-gray-800 mb-3 hover:text-emerald-700 transition-colors">
                   {post.title}
                 </h2>
               </Link>
-              
-              <p className="text-gray-600 mb-4">
-                {getExcerpt(post.content)}
-              </p>
-              
-              <Link 
-                href={`/blog/${post.slug}`} 
+
+              <p className="text-gray-600 mb-4">{getExcerpt(post.content)}</p>
+
+              <Link
+                href={`/blog/${post.slug}`}
                 className="inline-flex items-center text-emerald-600 hover:text-emerald-800 font-medium"
               >
                 계속 읽기
