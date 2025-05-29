@@ -16,6 +16,24 @@ export default function GlobalAnalytics() {
   const currentRecordIdRef = useRef<string | undefined>(undefined);
   const isInitialLoadRef = useRef(true);
 
+  // 개발 환경인지 체크하는 함수
+  const isDevEnvironment = (): boolean => {
+    if (typeof window === 'undefined') return false;
+
+    // 방법 1: hostname으로 체크 (localhost, 127.0.0.1 등)
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.')) {
+      return true;
+    }
+
+    // 방법 2: NODE_ENV로 체크 (추가 보안)
+    if (process.env.NODE_ENV === 'development') {
+      return true;
+    }
+
+    return false;
+  };
+
   // 익명 사용자 ID 생성/가져오기
   const getVisitorId = (): string => {
     if (typeof window === 'undefined') return '';
@@ -61,6 +79,9 @@ export default function GlobalAnalytics() {
 
   // 페이지 이탈 기록
   const trackPageExit = async () => {
+    // 개발 환경이면 추적하지 않음
+    if (isDevEnvironment()) return;
+
     if (!currentRecordIdRef.current || !entryTimeRef.current) return;
 
     const exitTime = new Date();
@@ -82,6 +103,12 @@ export default function GlobalAnalytics() {
   // 페이지 진입 기록
   const trackPageEntry = async () => {
     if (typeof window === 'undefined') return;
+
+    // 개발 환경이면 추적하지 않음
+    if (isDevEnvironment()) {
+      console.log('🚧 개발 환경 - 분석 추적 제외됨');
+      return;
+    }
 
     // 이전 페이지 이탈 처리
     if (currentRecordIdRef.current) {
