@@ -90,7 +90,7 @@ export default function ProfitCalculatorPage() {
   }, []);
 
   // 회사 선택 핸들러
-  const handleCompanySelect = async (company: CompanyInfo) => {
+  const handleCompanySelect = async (company: CompanyInfo, autoSearch: boolean = false) => {
     setCompanyName(company.companyName);
     setSelectedCompany(company);
 
@@ -137,6 +137,13 @@ export default function ProfitCalculatorPage() {
       console.error('ROE 데이터 로드 실패:', error);
     } finally {
       setLoadingROE(false);
+    }
+
+    // ⭐ 엔터키로 선택했으면 바로 분석 시작
+    if (autoSearch) {
+      console.log('🚀 profit-calculator 자동 분석 시작!');
+      setAutoSearchTriggered(true);
+      setTimeout(() => performSearch(company.stockCode), 100);
     }
   };
 

@@ -289,9 +289,16 @@ export default function ChecklistPage() {
   };
 
   // 회사 선택 핸들러
-  const handleCompanySelect = (company: CompanyInfo) => {
+  const handleCompanySelect = async (company: CompanyInfo, autoSearch: boolean = false) => {
     setCompanyName(company.companyName);
     setSelectedCompany(company);
+
+    // ⭐ 엔터키로 선택했으면 바로 분석 시작
+    if (autoSearch) {
+      console.log('🚀 checklist 자동 분석 시작!');
+      setAutoSearchTriggered(true);
+      setTimeout(() => performSearch(company), 100);
+    }
   };
 
   // 검색 수행 함수 (URL 파라미터에서도 사용)

@@ -228,19 +228,46 @@ export default function HomePage() {
   }, [searchParams]);
 
   // 회사 선택 핸들러 (첫 화면용)
-  const handleCompanySelect = (company: CompanyInfo) => {
-    console.log('🏢 회사 선택:', company.companyName, company.stockCode);
+  const handleCompanySelect = async (company: CompanyInfo, autoSearch: boolean = false) => {
+    console.log(
+      '🏢 회사 선택:',
+      company.companyName,
+      company.stockCode,
+      autoSearch ? '(자동분석)' : '(수동선택)'
+    );
     setCompanyName(company.companyName);
     setSelectedCompany(company);
     console.log('✅ 상태 설정 완료');
+
+    // ⭐ 엔터키로 선택했으면 바로 분석 시작
+    if (autoSearch) {
+      console.log('🚀 자동 분석 시작!');
+      setAutoSearchTriggered(true);
+      setTimeout(() => performSearch(company), 100);
+    }
   };
 
   // 새 검색창 회사 선택 핸들러
-  const handleNewCompanySelect = (company: CompanyInfo) => {
-    console.log('🔄 새 회사 선택:', company.companyName, company.stockCode);
+  const handleNewCompanySelect = async (company: CompanyInfo, autoSearch: boolean = false) => {
+    console.log(
+      '🔄 새 회사 선택:',
+      company.companyName,
+      company.stockCode,
+      autoSearch ? '(자동분석)' : '(수동선택)'
+    );
     setNewCompanyName(company.companyName);
     setNewSelectedCompany(company);
     console.log('✅ 새 검색 상태 설정 완료');
+
+    // ⭐ 엔터키로 선택했으면 바로 분석 시작
+    if (autoSearch) {
+      console.log('🚀 새 검색 자동 분석 시작!');
+      // 새로 선택된 회사 정보를 메인 상태로 복사
+      setCompanyName(company.companyName);
+      setSelectedCompany(company);
+      setAutoSearchTriggered(true);
+      setTimeout(() => performSearch(company), 100);
+    }
   };
 
   // ⭐ 수정된 performSearch 함수 - URL 업데이트 타이밍 조정

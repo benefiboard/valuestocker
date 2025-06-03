@@ -54,13 +54,20 @@ export default function FairPricePage() {
   const [autoSearchTriggered, setAutoSearchTriggered] = useState<boolean>(false);
 
   // 회사 선택 핸들러
-  const handleCompanySelect = (company: CompanyInfo) => {
+  const handleCompanySelect = async (company: CompanyInfo, autoSearch: boolean = false) => {
     setCompanyName(company.companyName);
     setSelectedCompany(company);
 
     // 산업군별 파라미터 가져오기
     const params = getIndustryParameters(company.industry);
     setIndustryParams(params);
+
+    // ⭐ 엔터키로 선택했으면 바로 분석 시작
+    if (autoSearch) {
+      console.log('🚀 fairprice 자동 분석 시작!');
+      setAutoSearchTriggered(true);
+      setTimeout(() => performSearch(company.stockCode), 100);
+    }
   };
 
   // URL 쿼리 파라미터에서 stockCode를 읽어 자동 검색 수행
@@ -662,7 +669,7 @@ export default function FairPricePage() {
                   >
                     <div className="flex items-center">
                       <div className="p-2 bg-emerald-50 rounded-full mr-3 group-hover:bg-emerald-100 transition-colors duration-300">
-                        <Info className="h-5 w-5 sm:h-6 sm:h-6 text-emerald-600" />
+                        <Info className="h-5 w-5  sm:h-6 text-emerald-600" />
                       </div>
                       <h3 className="text-base sm:text-lg font-medium text-gray-800 group-hover:text-gray-900 transition-colors duration-300">
                         S-RIM 모델
