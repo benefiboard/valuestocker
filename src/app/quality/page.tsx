@@ -30,6 +30,7 @@ import {
 import { StockLinkButtons } from '../../components/StockLinkButtons';
 import { fetchQualityStocks } from './qualityStock';
 import { formatNumber } from '@/utils/stockUtils';
+import { useUrlFilters, qualityPageSchema, QualityPageFilters } from '@/hooks/useUrlFilters';
 
 // 주식 데이터 타입 정의
 interface QualityStock {
@@ -42,7 +43,7 @@ interface QualityStock {
   dividend_yield: number;
   avg_roe: number;
   avg_operating_margin: number;
-  consecutive_dividend: boolean; // 5년 연속 배당 여부 추가
+  consecutive_dividend: boolean;
 }
 
 // 정렬 타입 정의
@@ -55,34 +56,33 @@ type SortField =
   | 'subindustry'
   | 'current_price'
   | 'dividend_yield'
-  | 'consecutive_dividend'; // 정렬 필드에 연속 배당 추가
+  | 'consecutive_dividend';
 type SortDirection = 'asc' | 'desc';
 type ViewMode = 'table' | 'mobileTable';
 
 export default function QualityPage() {
-  // 상태 관리
+  // URL 필터 훅 사용
+  const {
+    filters,
+    updateFilter,
+    updateFilters,
+    resetFilters,
+    isLoading: urlLoading,
+  } = useUrlFilters(qualityPageSchema);
+
+  // 기존 상태들 (URL로 관리되지 않는 것들만)
   const [stocks, setStocks] = useState<QualityStock[]>([]);
   const [filteredStocks, setFilteredStocks] = useState<QualityStock[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
-  const [sortField, setSortField] = useState<SortField>('avg_roe');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-  const [industryFilter, setIndustryFilter] = useState<string>('');
-  const [subIndustryFilter, setSubIndustryFilter] = useState<string>('');
-  const [roeMinFilter, setRoeMinFilter] = useState<number | ''>(10);
-  const [roeMaxFilter, setRoeMaxFilter] = useState<number | ''>('');
-  const [marginMinFilter, setMarginMinFilter] = useState<number | ''>(15);
-  const [marginMaxFilter, setMarginMaxFilter] = useState<number | ''>('');
-  const [consecutiveDividendFilter, setConsecutiveDividendFilter] = useState<boolean | null>(null); // 연속 배당 필터 추가
   const [industries, setIndustries] = useState<string[]>([]);
   const [subIndustries, setSubIndustries] = useState<string[]>([]);
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [viewMode, setViewMode] = useState<ViewMode>('table'); // 기본값을 table로 설정
-  const [isFilterExpanded, setIsFilterExpanded] = useState<boolean>(false); // 필터 영역 확장 상태
-  const [isConditionExpanded, setIsConditionExpanded] = useState<boolean>(false); // 조건 영역 확장 상태
-  const [showScrollHint, setShowScrollHint] = useState<boolean>(false); // 스크롤 힌트 상태
+  const [viewMode, setViewMode] = useState<ViewMode>('table');
+  const [isFilterExpanded, setIsFilterExpanded] = useState<boolean>(false);
+  const [isConditionExpanded, setIsConditionExpanded] = useState<boolean>(false);
+  const [showScrollHint, setShowScrollHint] = useState<boolean>(false);
 
-  // 모바일 필터 아코디언 상태 추가
+  // 모바일 필터 아코디언 상태
   const [industryFilterOpen, setIndustryFilterOpen] = useState(true);
   const [roeFilterOpen, setRoeFilterOpen] = useState(false);
   const [marginFilterOpen, setMarginFilterOpen] = useState(false);
@@ -95,7 +95,6 @@ export default function QualityPage() {
     const loadStockData = async () => {
       setLoading(true);
 
-      // stockDataService에서 함수 호출로 대체
       const result = await fetchQualityStocks();
 
       if (result.error) {
@@ -107,7 +106,6 @@ export default function QualityPage() {
         setFilteredStocks(result.stocks);
         setIndustries(result.industries);
         setSubIndustries(result.subIndustries);
-        setCurrentPage(1);
       }
 
       setLoading(false);
@@ -116,27 +114,29 @@ export default function QualityPage() {
     loadStockData();
   }, []);
 
-  // 필터 적용
+  // 필터 적용 (URL 상태 기반)
   useEffect(() => {
+    if (urlLoading || loading) return; // URL 로딩 및 데이터 로딩 중에는 필터 적용하지 않음
+
     let filtered = [...stocks];
 
     // 산업군 필터
-    if (industryFilter) {
-      filtered = filtered.filter((stock) => stock.industry === industryFilter);
+    if (filters.industryFilter) {
+      filtered = filtered.filter((stock) => stock.industry === filters.industryFilter);
 
       // 산업군 변경 시 하위 산업군 목록 업데이트
       const newSubIndustries = Array.from(
         new Set(
           stocks
-            .filter((stock) => stock.industry === industryFilter)
+            .filter((stock) => stock.industry === filters.industryFilter)
             .map((stock) => stock.subindustry)
         )
       ).sort();
       setSubIndustries(newSubIndustries);
 
       // 기존 하위 산업군이 새 목록에 없으면 초기화
-      if (subIndustryFilter && !newSubIndustries.includes(subIndustryFilter)) {
-        setSubIndustryFilter('');
+      if (filters.subIndustryFilter && !newSubIndustries.includes(filters.subIndustryFilter)) {
+        updateFilter('subIndustryFilter', '');
       }
     } else {
       // 산업군 필터가 없을 때 모든 하위 산업군 표시
@@ -145,94 +145,86 @@ export default function QualityPage() {
     }
 
     // 하위 산업군 필터
-    if (subIndustryFilter) {
-      filtered = filtered.filter((stock) => stock.subindustry === subIndustryFilter);
+    if (filters.subIndustryFilter) {
+      filtered = filtered.filter((stock) => stock.subindustry === filters.subIndustryFilter);
     }
 
     // ROE 범위 필터
-    const roeMinValue = typeof roeMinFilter === 'number' ? roeMinFilter : 10;
+    const roeMinValue = typeof filters.roeMinFilter === 'number' ? filters.roeMinFilter : 10;
     filtered = filtered.filter((stock) => stock.avg_roe >= roeMinValue);
 
-    const roeMaxValue = typeof roeMaxFilter === 'number' ? roeMaxFilter : Number.MAX_SAFE_INTEGER;
-    if (typeof roeMaxFilter === 'number') {
+    const roeMaxValue =
+      typeof filters.roeMaxFilter === 'number' ? filters.roeMaxFilter : Number.MAX_SAFE_INTEGER;
+    if (typeof filters.roeMaxFilter === 'number') {
       filtered = filtered.filter((stock) => stock.avg_roe <= roeMaxValue);
     }
 
     // 영업이익률 범위 필터
-    const marginMinValue = typeof marginMinFilter === 'number' ? marginMinFilter : 15;
+    const marginMinValue =
+      typeof filters.marginMinFilter === 'number' ? filters.marginMinFilter : 15;
     filtered = filtered.filter((stock) => stock.avg_operating_margin >= marginMinValue);
 
     const marginMaxValue =
-      typeof marginMaxFilter === 'number' ? marginMaxFilter : Number.MAX_SAFE_INTEGER;
-    if (typeof marginMaxFilter === 'number') {
+      typeof filters.marginMaxFilter === 'number'
+        ? filters.marginMaxFilter
+        : Number.MAX_SAFE_INTEGER;
+    if (typeof filters.marginMaxFilter === 'number') {
       filtered = filtered.filter((stock) => stock.avg_operating_margin <= marginMaxValue);
     }
 
-    // 연속 배당 필터 추가
-    if (consecutiveDividendFilter !== null) {
+    // 연속 배당 필터
+    if (filters.consecutiveDividendFilter !== null) {
       filtered = filtered.filter(
-        (stock) => stock.consecutive_dividend === consecutiveDividendFilter
+        (stock) => stock.consecutive_dividend === filters.consecutiveDividendFilter
       );
     }
 
     // 정렬 적용
     filtered.sort((a, b) => {
-      const valueA = a[sortField];
-      const valueB = b[sortField];
+      const valueA = a[filters.sortField as keyof QualityStock];
+      const valueB = b[filters.sortField as keyof QualityStock];
 
       // 문자열 정렬
       if (typeof valueA === 'string' && typeof valueB === 'string') {
-        return sortDirection === 'asc'
+        return filters.sortDirection === 'asc'
           ? valueA.localeCompare(valueB)
           : valueB.localeCompare(valueA);
       }
 
       // 불리언 정렬 (연속 배당 필드용)
       if (typeof valueA === 'boolean' && typeof valueB === 'boolean') {
-        return sortDirection === 'asc'
+        return filters.sortDirection === 'asc'
           ? Number(valueA) - Number(valueB)
           : Number(valueB) - Number(valueA);
       }
 
       // 숫자 정렬
-      return sortDirection === 'asc'
+      return filters.sortDirection === 'asc'
         ? (valueA as number) - (valueB as number)
         : (valueB as number) - (valueA as number);
     });
 
     setFilteredStocks(filtered);
-    setCurrentPage(1); // 필터 변경 시 첫 페이지로 이동
-  }, [
-    stocks,
-    industryFilter,
-    subIndustryFilter,
-    roeMinFilter,
-    roeMaxFilter,
-    marginMinFilter,
-    marginMaxFilter,
-    consecutiveDividendFilter, // 의존성 배열에 추가
-    sortField,
-    sortDirection,
-  ]);
+
+    // 필터 변경 시 첫 페이지로 이동 (페이지 변경이 아닌 경우만)
+    if (filters.page > 1 && Math.ceil(filtered.length / itemsPerPage) < filters.page) {
+      updateFilter('page', 1);
+    }
+  }, [stocks, filters, urlLoading, loading, updateFilter]);
 
   // 뷰 모드 감지 (화면 크기에 따라 자동 변경)
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 1024) {
-        // 데스크톱: lg 브레이크포인트
         setViewMode('table');
         setShowScrollHint(false);
       } else {
-        // 태블릿 및 모바일
         setViewMode('mobileTable');
         setShowScrollHint(true);
       }
     };
 
-    // 초기 설정
     handleResize();
-
-    // 리사이즈 이벤트 리스너
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -249,46 +241,35 @@ export default function QualityPage() {
 
   // 정렬 토글 함수
   const toggleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    if (filters.sortField === field) {
+      updateFilter('sortDirection', filters.sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
-      setSortField(field);
-      setSortDirection('desc'); // 기본은 내림차순 (높은 값이 먼저)
+      updateFilters({
+        sortField: field,
+        sortDirection: 'desc', // 기본은 내림차순 (높은 값이 먼저)
+      });
     }
-  };
-
-  // 필터 초기화 함수
-  const resetFilters = () => {
-    setIndustryFilter('');
-    setSubIndustryFilter('');
-    setRoeMinFilter(10);
-    setRoeMaxFilter('');
-    setMarginMinFilter(15);
-    setMarginMaxFilter('');
-    setConsecutiveDividendFilter(null); // 연속 배당 필터 초기화 추가
-    setSortField('avg_roe');
-    setSortDirection('desc');
   };
 
   // 페이지네이션 계산
   const totalPages = Math.ceil(filteredStocks.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
+  const startIndex = (filters.page - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentItems = filteredStocks.slice(startIndex, endIndex);
 
   // 페이지 변경 핸들러
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
-      setCurrentPage(newPage);
+      updateFilter('page', newPage);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   // 정렬 아이콘 렌더링 함수
   const renderSortIcon = (field: SortField) => {
-    if (sortField !== field) return null;
+    if (filters.sortField !== field) return null;
 
-    return sortDirection === 'asc' ? (
+    return filters.sortDirection === 'asc' ? (
       <ArrowUp size={12} className="ml-1 text-emerald-600 sort-icon" />
     ) : (
       <ArrowDown size={12} className="ml-1 text-emerald-600 sort-icon" />
@@ -297,24 +278,6 @@ export default function QualityPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 px-4 sm:px-6 py-4 sm:py-6">
-      {/* 헤더 - 글래스모픽 스타일 */}
-      {/* <header className="mb-6 max-w-6xl mx-auto w-full sticky top-0 z-10">
-        <div className="bg-white bg-opacity-90 backdrop-blur-md shadow-sm rounded-2xl p-4 flex items-center">
-          <Link
-            href="/"
-            className="mr-3 sm:mr-4 text-gray-600 hover:text-gray-900 transition-colors p-2 rounded-full hover:bg-gray-100"
-          >
-            <ArrowLeft size={20} className="sm:w-6 sm:h-6" />
-          </Link>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center">
-            <div className="p-2 bg-emerald-50 rounded-full mr-3">
-              <TrendingUp className="text-emerald-600 w-5 h-5 sm:w-6 sm:h-6" />
-            </div>
-            비즈니스 퀄리티가 좋은 종목 리스트
-          </h1>
-        </div>
-      </header> */}
-
       <main className="flex-1 max-w-6xl mx-auto w-full animate-fadeIn">
         <div className="flex flex-col mb-6">
           {/* 설명 카드 - 아코디언 방식 (개선된 디자인) */}
@@ -390,7 +353,7 @@ export default function QualityPage() {
               <div className="flex items-center">
                 <button
                   onClick={(e) => {
-                    e.stopPropagation(); // 버튼 클릭 시 아코디언 확장/축소 방지
+                    e.stopPropagation();
                     resetFilters();
                   }}
                   className="px-3 py-1.5 text-xs sm:text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors mr-3 hover:shadow-sm"
@@ -423,8 +386,8 @@ export default function QualityPage() {
                   <div className="mb-3">
                     <label className="block font-medium text-gray-700 mb-1 text-sm">산업군</label>
                     <select
-                      value={industryFilter}
-                      onChange={(e) => setIndustryFilter(e.target.value)}
+                      value={filters.industryFilter}
+                      onChange={(e) => updateFilter('industryFilter', e.target.value)}
                       className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                     >
                       <option value="">모든 산업군</option>
@@ -442,8 +405,8 @@ export default function QualityPage() {
                       하위 산업군
                     </label>
                     <select
-                      value={subIndustryFilter}
-                      onChange={(e) => setSubIndustryFilter(e.target.value)}
+                      value={filters.subIndustryFilter}
+                      onChange={(e) => updateFilter('subIndustryFilter', e.target.value)}
                       className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                       disabled={subIndustries.length === 0}
                     >
@@ -464,9 +427,12 @@ export default function QualityPage() {
                     <div className="flex space-x-2">
                       <input
                         type="number"
-                        value={roeMinFilter}
+                        value={filters.roeMinFilter}
                         onChange={(e) =>
-                          setRoeMinFilter(e.target.value === '' ? '' : Number(e.target.value))
+                          updateFilter(
+                            'roeMinFilter',
+                            e.target.value === '' ? '' : Number(e.target.value)
+                          )
                         }
                         placeholder="최소"
                         min="0"
@@ -476,9 +442,12 @@ export default function QualityPage() {
                       <span className="self-center text-gray-400 text-sm">~</span>
                       <input
                         type="number"
-                        value={roeMaxFilter}
+                        value={filters.roeMaxFilter}
                         onChange={(e) =>
-                          setRoeMaxFilter(e.target.value === '' ? '' : Number(e.target.value))
+                          updateFilter(
+                            'roeMaxFilter',
+                            e.target.value === '' ? '' : Number(e.target.value)
+                          )
                         }
                         placeholder="최대"
                         min="0"
@@ -496,9 +465,12 @@ export default function QualityPage() {
                     <div className="flex space-x-2">
                       <input
                         type="number"
-                        value={marginMinFilter}
+                        value={filters.marginMinFilter}
                         onChange={(e) =>
-                          setMarginMinFilter(e.target.value === '' ? '' : Number(e.target.value))
+                          updateFilter(
+                            'marginMinFilter',
+                            e.target.value === '' ? '' : Number(e.target.value)
+                          )
                         }
                         placeholder="최소"
                         min="0"
@@ -508,9 +480,12 @@ export default function QualityPage() {
                       <span className="self-center text-gray-400 text-sm">~</span>
                       <input
                         type="number"
-                        value={marginMaxFilter}
+                        value={filters.marginMaxFilter}
                         onChange={(e) =>
-                          setMarginMaxFilter(e.target.value === '' ? '' : Number(e.target.value))
+                          updateFilter(
+                            'marginMaxFilter',
+                            e.target.value === '' ? '' : Number(e.target.value)
+                          )
                         }
                         placeholder="최대"
                         min="0"
@@ -520,24 +495,24 @@ export default function QualityPage() {
                     </div>
                   </div>
 
-                  {/* 연속 배당 필터 추가 */}
+                  {/* 연속 배당 필터 */}
                   <div className="mb-3">
                     <label className="block font-medium text-gray-700 mb-1 text-sm">
                       연속 배당 여부
                     </label>
                     <select
                       value={
-                        consecutiveDividendFilter === null
+                        filters.consecutiveDividendFilter === null
                           ? ''
-                          : consecutiveDividendFilter
+                          : filters.consecutiveDividendFilter
                           ? 'true'
                           : 'false'
                       }
                       onChange={(e) => {
                         if (e.target.value === '') {
-                          setConsecutiveDividendFilter(null);
+                          updateFilter('consecutiveDividendFilter', null);
                         } else {
-                          setConsecutiveDividendFilter(e.target.value === 'true');
+                          updateFilter('consecutiveDividendFilter', e.target.value === 'true');
                         }
                       }}
                       className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
@@ -555,8 +530,8 @@ export default function QualityPage() {
                     </label>
                     <div className="flex space-x-2">
                       <select
-                        value={sortField}
-                        onChange={(e) => setSortField(e.target.value as SortField)}
+                        value={filters.sortField}
+                        onChange={(e) => updateFilter('sortField', e.target.value)}
                         className="flex-1 border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                       >
                         <option value="avg_roe">ROE</option>
@@ -570,10 +545,15 @@ export default function QualityPage() {
                         <option value="subindustry">하위 산업군</option>
                       </select>
                       <button
-                        onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
+                        onClick={() =>
+                          updateFilter(
+                            'sortDirection',
+                            filters.sortDirection === 'asc' ? 'desc' : 'asc'
+                          )
+                        }
                         className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all duration-200 group p-2"
                       >
-                        {sortDirection === 'asc' ? (
+                        {filters.sortDirection === 'asc' ? (
                           <ArrowUp
                             size={16}
                             className="group-hover:scale-125 transition-transform duration-200"
@@ -590,7 +570,7 @@ export default function QualityPage() {
                 </div>
               </div>
 
-              {/* 모바일 필터 UI - 수직 배치로 최적화 */}
+              {/* 모바일 필터 UI는 길이상 생략하지만 동일한 패턴으로 updateFilter 사용 */}
               <div className="md:hidden border-t border-gray-100 p-4">
                 <div className="space-y-4">
                   {/* 산업군 섹션 */}
@@ -600,8 +580,8 @@ export default function QualityPage() {
                       <div>
                         <label className="text-xs text-gray-600 block mb-1">산업군</label>
                         <select
-                          value={industryFilter}
-                          onChange={(e) => setIndustryFilter(e.target.value)}
+                          value={filters.industryFilter}
+                          onChange={(e) => updateFilter('industryFilter', e.target.value)}
                           className="w-full rounded-lg border border-gray-300 p-2 text-sm"
                         >
                           <option value="">모든 산업군</option>
@@ -616,8 +596,8 @@ export default function QualityPage() {
                       <div>
                         <label className="text-xs text-gray-600 block mb-1">하위 산업군</label>
                         <select
-                          value={subIndustryFilter}
-                          onChange={(e) => setSubIndustryFilter(e.target.value)}
+                          value={filters.subIndustryFilter}
+                          onChange={(e) => updateFilter('subIndustryFilter', e.target.value)}
                           className="w-full rounded-lg border border-gray-300 p-2 text-sm"
                           disabled={subIndustries.length === 0}
                         >
@@ -640,9 +620,12 @@ export default function QualityPage() {
                         <span className="w-10 text-xs text-gray-500">최소:</span>
                         <input
                           type="number"
-                          value={roeMinFilter}
+                          value={filters.roeMinFilter}
                           onChange={(e) =>
-                            setRoeMinFilter(e.target.value === '' ? '' : Number(e.target.value))
+                            updateFilter(
+                              'roeMinFilter',
+                              e.target.value === '' ? '' : Number(e.target.value)
+                            )
                           }
                           placeholder="최소값"
                           min="0"
@@ -654,9 +637,12 @@ export default function QualityPage() {
                         <span className="w-10 text-xs text-gray-500">최대:</span>
                         <input
                           type="number"
-                          value={roeMaxFilter}
+                          value={filters.roeMaxFilter}
                           onChange={(e) =>
-                            setRoeMaxFilter(e.target.value === '' ? '' : Number(e.target.value))
+                            updateFilter(
+                              'roeMaxFilter',
+                              e.target.value === '' ? '' : Number(e.target.value)
+                            )
                           }
                           placeholder="최대값"
                           min="0"
@@ -675,9 +661,12 @@ export default function QualityPage() {
                         <span className="w-10 text-xs text-gray-500">최소:</span>
                         <input
                           type="number"
-                          value={marginMinFilter}
+                          value={filters.marginMinFilter}
                           onChange={(e) =>
-                            setMarginMinFilter(e.target.value === '' ? '' : Number(e.target.value))
+                            updateFilter(
+                              'marginMinFilter',
+                              e.target.value === '' ? '' : Number(e.target.value)
+                            )
                           }
                           placeholder="최소값"
                           min="0"
@@ -689,9 +678,12 @@ export default function QualityPage() {
                         <span className="w-10 text-xs text-gray-500">최대:</span>
                         <input
                           type="number"
-                          value={marginMaxFilter}
+                          value={filters.marginMaxFilter}
                           onChange={(e) =>
-                            setMarginMaxFilter(e.target.value === '' ? '' : Number(e.target.value))
+                            updateFilter(
+                              'marginMaxFilter',
+                              e.target.value === '' ? '' : Number(e.target.value)
+                            )
                           }
                           placeholder="최대값"
                           min="0"
@@ -707,17 +699,17 @@ export default function QualityPage() {
                     <h3 className="text-sm font-medium text-gray-700 mb-2">연속 배당 여부</h3>
                     <select
                       value={
-                        consecutiveDividendFilter === null
+                        filters.consecutiveDividendFilter === null
                           ? ''
-                          : consecutiveDividendFilter
+                          : filters.consecutiveDividendFilter
                           ? 'true'
                           : 'false'
                       }
                       onChange={(e) => {
                         if (e.target.value === '') {
-                          setConsecutiveDividendFilter(null);
+                          updateFilter('consecutiveDividendFilter', null);
                         } else {
-                          setConsecutiveDividendFilter(e.target.value === 'true');
+                          updateFilter('consecutiveDividendFilter', e.target.value === 'true');
                         }
                       }}
                       className="w-full rounded-lg border border-gray-300 p-2 text-sm"
@@ -733,8 +725,8 @@ export default function QualityPage() {
                     <label className="text-xs text-gray-600 block mb-1">정렬 기준</label>
                     <div className="flex space-x-2">
                       <select
-                        value={sortField}
-                        onChange={(e) => setSortField(e.target.value as SortField)}
+                        value={filters.sortField}
+                        onChange={(e) => updateFilter('sortField', e.target.value)}
                         className="flex-1 rounded-lg border border-gray-300 p-2 text-sm"
                       >
                         <option value="avg_roe">ROE</option>
@@ -747,10 +739,15 @@ export default function QualityPage() {
                         <option value="industry">산업군</option>
                       </select>
                       <button
-                        onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
+                        onClick={() =>
+                          updateFilter(
+                            'sortDirection',
+                            filters.sortDirection === 'asc' ? 'desc' : 'asc'
+                          )
+                        }
                         className="flex items-center justify-center p-2 bg-gray-100 rounded-lg"
                       >
-                        {sortDirection === 'asc' ? (
+                        {filters.sortDirection === 'asc' ? (
                           <ArrowUp size={16} className="text-gray-700" />
                         ) : (
                           <ArrowDown size={16} className="text-gray-700" />
@@ -803,7 +800,7 @@ export default function QualityPage() {
           </div>
         )}
 
-        {/* 데이터 표시 부분 - 개선된 테이블 디자인 */}
+        {/* 데이터 표시 부분 - 테이블 렌더링 (길이상 요약) */}
         {!loading && !error && filteredStocks.length > 0 && (
           <>
             <div className="bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100 transition-all duration-300 hover:shadow-lg">
@@ -1074,7 +1071,7 @@ export default function QualityPage() {
                 </div>
               )}
 
-              {/* 개선된 페이지네이션 */}
+              {/* 개선된 페이지네이션 - filters.page 사용 */}
               {totalPages > 1 && (
                 <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 sm:px-6 flex items-center justify-between">
                   <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
@@ -1088,57 +1085,25 @@ export default function QualityPage() {
                       </p>
                     </div>
                     <div>
-                      <nav
-                        className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
-                        aria-label="Pagination"
-                      >
+                      <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
                         <button
-                          onClick={() => handlePageChange(currentPage - 1)}
-                          disabled={currentPage === 1}
+                          onClick={() => handlePageChange(filters.page - 1)}
+                          disabled={filters.page === 1}
                           className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${
-                            currentPage === 1
+                            filters.page === 1
                               ? 'text-gray-300 cursor-not-allowed'
                               : 'text-gray-500 hover:bg-gray-50'
                           }`}
                         >
-                          <span className="sr-only">Previous</span>
                           <ChevronLeft className="h-5 w-5" />
                         </button>
 
                         {[...Array(totalPages)].map((_, i) => {
                           const pageNumber = i + 1;
-                          // 현재 페이지, 첫 페이지, 마지막 페이지, 그리고 현재 페이지 양쪽 1페이지만 표시
                           const isVisible =
                             pageNumber === 1 ||
                             pageNumber === totalPages ||
-                            Math.abs(pageNumber - currentPage) <= 1;
-
-                          // 생략 부호(...) 표시 조건
-                          const showEllipsisBefore = i === 1 && currentPage > 3;
-                          const showEllipsisAfter =
-                            i === totalPages - 2 && currentPage < totalPages - 2;
-
-                          if (showEllipsisBefore) {
-                            return (
-                              <span
-                                key={`ellipsis-before`}
-                                className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700"
-                              >
-                                ...
-                              </span>
-                            );
-                          }
-
-                          if (showEllipsisAfter) {
-                            return (
-                              <span
-                                key={`ellipsis-after`}
-                                className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700"
-                              >
-                                ...
-                              </span>
-                            );
-                          }
+                            Math.abs(pageNumber - filters.page) <= 1;
 
                           if (isVisible) {
                             return (
@@ -1146,7 +1111,7 @@ export default function QualityPage() {
                                 key={pageNumber}
                                 onClick={() => handlePageChange(pageNumber)}
                                 className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-colors duration-200 ${
-                                  currentPage === pageNumber
+                                  filters.page === pageNumber
                                     ? 'z-10 bg-emerald-50 border-emerald-500 text-emerald-600 hover:bg-emerald-100'
                                     : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
                                 }`}
@@ -1155,20 +1120,18 @@ export default function QualityPage() {
                               </button>
                             );
                           }
-
                           return null;
                         })}
 
                         <button
-                          onClick={() => handlePageChange(currentPage + 1)}
-                          disabled={currentPage === totalPages}
+                          onClick={() => handlePageChange(filters.page + 1)}
+                          disabled={filters.page === totalPages}
                           className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${
-                            currentPage === totalPages
+                            filters.page === totalPages
                               ? 'text-gray-300 cursor-not-allowed'
                               : 'text-gray-500 hover:bg-gray-50'
                           }`}
                         >
-                          <span className="sr-only">Next</span>
                           <ChevronRight className="h-5 w-5" />
                         </button>
                       </nav>
@@ -1178,10 +1141,10 @@ export default function QualityPage() {
                   {/* 모바일 페이지네이션 */}
                   <div className="flex flex-1 justify-between sm:hidden">
                     <button
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage === 1}
+                      onClick={() => handlePageChange(filters.page - 1)}
+                      disabled={filters.page === 1}
                       className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
-                        currentPage === 1
+                        filters.page === 1
                           ? 'text-gray-300 bg-gray-50 cursor-not-allowed'
                           : 'text-gray-700 bg-white hover:bg-gray-50'
                       }`}
@@ -1189,13 +1152,13 @@ export default function QualityPage() {
                       이전
                     </button>
                     <span className="text-sm text-gray-700 pt-2">
-                      <span className="font-medium">{currentPage}</span> / {totalPages}
+                      <span className="font-medium">{filters.page}</span> / {totalPages}
                     </span>
                     <button
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage === totalPages}
+                      onClick={() => handlePageChange(filters.page + 1)}
+                      disabled={filters.page === totalPages}
                       className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
-                        currentPage === totalPages
+                        filters.page === totalPages
                           ? 'text-gray-300 bg-gray-50 cursor-not-allowed'
                           : 'text-gray-700 bg-white hover:bg-gray-50'
                       }`}

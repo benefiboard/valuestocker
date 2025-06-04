@@ -29,6 +29,7 @@ import { StockLinkButtons } from '../../components/StockLinkButtons';
 import { GrahamStock } from '@/utils/stockDataTypes';
 import { fetchGrahamStocks } from './grahamStock';
 import { formatNumber } from '@/utils/stockUtils';
+import { useUrlFilters, grahamPageSchema, GrahamPageFilters } from '@/hooks/useUrlFilters';
 
 // 정렬 타입 정의
 type SortField =
@@ -55,22 +56,22 @@ type SortDirection = 'asc' | 'desc';
 type ViewMode = 'card' | 'table' | 'mobileTable';
 
 export default function GrahamPage() {
-  // 상태 관리
+  // URL 필터 훅 사용
+  const {
+    filters,
+    updateFilter,
+    updateFilters,
+    resetFilters,
+    isLoading: urlLoading,
+  } = useUrlFilters(grahamPageSchema);
+
+  // 기존 상태들 (URL로 관리되지 않는 것들만)
   const [stocks, setStocks] = useState<GrahamStock[]>([]);
   const [filteredStocks, setFilteredStocks] = useState<GrahamStock[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
-  const [sortField, setSortField] = useState<SortField>('discount_rate');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-  const [industryFilter, setIndustryFilter] = useState<string>('');
-  const [subIndustryFilter, setSubIndustryFilter] = useState<string>('');
-  const [dividendMinFilter, setDividendMinFilter] = useState<number | ''>('');
-  const [dividendMaxFilter, setDividendMaxFilter] = useState<number | ''>('');
-  const [consecutiveDividendFilter, setConsecutiveDividendFilter] = useState<boolean | null>(null);
-  const [minCriteriaFilter, setMinCriteriaFilter] = useState<number>(6);
   const [industries, setIndustries] = useState<string[]>([]);
   const [subIndustries, setSubIndustries] = useState<string[]>([]);
-  const [currentPage, setCurrentPage] = useState<number>(1);
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [isFilterExpanded, setIsFilterExpanded] = useState<boolean>(false);
   const [isConditionExpanded, setIsConditionExpanded] = useState<boolean>(false);
@@ -101,7 +102,6 @@ export default function GrahamPage() {
         setFilteredStocks(result.stocks);
         setIndustries(result.industries);
         setSubIndustries(result.subIndustries);
-        setCurrentPage(1);
       }
 
       setLoading(false);
@@ -110,27 +110,29 @@ export default function GrahamPage() {
     loadStockData();
   }, []);
 
-  // 필터 적용
+  // 필터 적용 (URL 상태 기반)
   useEffect(() => {
+    if (urlLoading || loading) return; // URL 로딩 및 데이터 로딩 중에는 필터 적용하지 않음
+
     let filtered = [...stocks];
 
     // 산업군 필터
-    if (industryFilter) {
-      filtered = filtered.filter((stock) => stock.industry === industryFilter);
+    if (filters.industryFilter) {
+      filtered = filtered.filter((stock) => stock.industry === filters.industryFilter);
 
       // 산업군 변경 시 하위 산업군 목록 업데이트
       const newSubIndustries = Array.from(
         new Set(
           stocks
-            .filter((stock) => stock.industry === industryFilter)
+            .filter((stock) => stock.industry === filters.industryFilter)
             .map((stock) => stock.subindustry)
         )
       ).sort();
       setSubIndustries(newSubIndustries);
 
       // 기존 하위 산업군이 새 목록에 없으면 초기화
-      if (subIndustryFilter && !newSubIndustries.includes(subIndustryFilter)) {
-        setSubIndustryFilter('');
+      if (filters.subIndustryFilter && !newSubIndustries.includes(filters.subIndustryFilter)) {
+        updateFilter('subIndustryFilter', '');
       }
     } else {
       // 산업군 필터가 없을 때 모든 하위 산업군 표시
@@ -139,45 +141,45 @@ export default function GrahamPage() {
     }
 
     // 하위 산업군 필터
-    if (subIndustryFilter) {
-      filtered = filtered.filter((stock) => stock.subindustry === subIndustryFilter);
+    if (filters.subIndustryFilter) {
+      filtered = filtered.filter((stock) => stock.subindustry === filters.subIndustryFilter);
     }
 
     // 배당률 범위 필터 추가
-    if (typeof dividendMinFilter === 'number' && dividendMinFilter > 0) {
-      filtered = filtered.filter((stock) => stock.dividend_yield >= dividendMinFilter);
+    if (typeof filters.dividendMinFilter === 'number' && filters.dividendMinFilter > 0) {
+      filtered = filtered.filter((stock) => stock.dividend_yield >= filters.dividendMinFilter);
     }
 
-    if (typeof dividendMaxFilter === 'number' && dividendMaxFilter > 0) {
-      filtered = filtered.filter((stock) => stock.dividend_yield <= dividendMaxFilter);
+    if (typeof filters.dividendMaxFilter === 'number' && filters.dividendMaxFilter > 0) {
+      filtered = filtered.filter((stock) => stock.dividend_yield <= filters.dividendMaxFilter);
     }
 
     // 연속 배당 필터 추가
-    if (consecutiveDividendFilter !== null) {
+    if (filters.consecutiveDividendFilter !== null) {
       filtered = filtered.filter(
-        (stock) => stock.consecutive_dividend === consecutiveDividendFilter
+        (stock) => stock.consecutive_dividend === filters.consecutiveDividendFilter
       );
     }
 
     // 최소 충족 기준 개수 필터
-    filtered = filtered.filter((stock) => stock.criteria_met_count >= minCriteriaFilter);
+    filtered = filtered.filter((stock) => stock.criteria_met_count >= filters.minCriteriaFilter);
 
     // 정렬 적용
     filtered.sort((a, b) => {
       // 저평가율 정렬 특별 처리
-      if (sortField === 'discount_rate') {
+      if (filters.sortField === 'discount_rate') {
         const discountRateA =
           ((a.modified_graham_price - a.current_price) / a.modified_graham_price) * 100;
         const discountRateB =
           ((b.modified_graham_price - b.current_price) / b.modified_graham_price) * 100;
-        return sortDirection === 'asc'
+        return filters.sortDirection === 'asc'
           ? discountRateA - discountRateB
           : discountRateB - discountRateA;
       }
 
       // 특별한 경우 처리: consecutive_dividend는 boolean이라 별도 처리
-      if (sortField === 'consecutive_dividend') {
-        return sortDirection === 'asc'
+      if (filters.sortField === 'consecutive_dividend') {
+        return filters.sortDirection === 'asc'
           ? a.consecutive_dividend === b.consecutive_dividend
             ? 0
             : a.consecutive_dividend
@@ -190,35 +192,29 @@ export default function GrahamPage() {
           : 1;
       }
 
-      const valueA = a[sortField];
-      const valueB = b[sortField];
+      const valueA = a[filters.sortField as keyof GrahamStock];
+      const valueB = b[filters.sortField as keyof GrahamStock];
 
       // 문자열 정렬
       if (typeof valueA === 'string' && typeof valueB === 'string') {
-        return sortDirection === 'asc'
+        return filters.sortDirection === 'asc'
           ? valueA.localeCompare(valueB)
           : valueB.localeCompare(valueA);
       }
 
       // 숫자 정렬
-      return sortDirection === 'asc'
+      return filters.sortDirection === 'asc'
         ? (valueA as number) - (valueB as number)
         : (valueB as number) - (valueA as number);
     });
 
     setFilteredStocks(filtered);
-    setCurrentPage(1); // 필터 변경 시 첫 페이지로 이동
-  }, [
-    stocks,
-    industryFilter,
-    subIndustryFilter,
-    dividendMinFilter,
-    dividendMaxFilter,
-    consecutiveDividendFilter,
-    minCriteriaFilter,
-    sortField,
-    sortDirection,
-  ]);
+
+    // 필터 변경 시 첫 페이지로 이동 (페이지 변경이 아닌 경우만)
+    if (filters.page > 1 && Math.ceil(filtered.length / itemsPerPage) < filters.page) {
+      updateFilter('page', 1);
+    }
+  }, [stocks, filters, urlLoading, loading, updateFilter]);
 
   // 뷰 모드 감지 (화면 크기에 따라 자동 변경)
   useEffect(() => {
@@ -254,45 +250,35 @@ export default function GrahamPage() {
 
   // 정렬 토글 함수
   const toggleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    if (filters.sortField === field) {
+      updateFilter('sortDirection', filters.sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
-      setSortField(field);
-      setSortDirection('asc');
+      updateFilters({
+        sortField: field,
+        sortDirection: 'asc',
+      });
     }
-  };
-
-  // 필터 초기화 함수
-  const resetFilters = () => {
-    setIndustryFilter('');
-    setSubIndustryFilter('');
-    setDividendMinFilter('');
-    setDividendMaxFilter('');
-    setConsecutiveDividendFilter(null);
-    setMinCriteriaFilter(5);
-    setSortField('discount_rate');
-    setSortDirection('desc');
   };
 
   // 페이지네이션 계산
   const totalPages = Math.ceil(filteredStocks.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
+  const startIndex = (filters.page - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentItems = filteredStocks.slice(startIndex, endIndex);
 
   // 페이지 변경 핸들러
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
-      setCurrentPage(newPage);
+      updateFilter('page', newPage);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   // 정렬 아이콘 렌더링 함수
   const renderSortIcon = (field: SortField) => {
-    if (sortField !== field) return null;
+    if (filters.sortField !== field) return null;
 
-    return sortDirection === 'asc' ? (
+    return filters.sortDirection === 'asc' ? (
       <ArrowUp size={12} className="ml-1 text-emerald-600 sort-icon" />
     ) : (
       <ArrowDown size={12} className="ml-1 text-emerald-600 sort-icon" />
@@ -310,24 +296,6 @@ export default function GrahamPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 px-4 sm:px-6 py-4 sm:py-6">
-      {/* 헤더 - 글래스모픽 스타일 */}
-      {/* <header className="mb-6 max-w-6xl mx-auto w-full sticky top-0 z-10">
-        <div className="bg-white bg-opacity-90 backdrop-blur-md shadow-sm rounded-2xl p-4 flex items-center">
-          <Link
-            href="/"
-            className="mr-3 sm:mr-4 text-gray-600 hover:text-gray-900 transition-colors p-2 rounded-full hover:bg-gray-100"
-          >
-            <ArrowLeft size={20} className="sm:w-6 sm:h-6" />
-          </Link>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center">
-            <div className="p-2 bg-emerald-50 rounded-full mr-3">
-              <BarChart4 className="text-emerald-600 w-5 h-5 sm:w-6 sm:h-6" />
-            </div>
-            그레이엄 가치투자 종목
-          </h1>
-        </div>
-      </header> */}
-
       <main className="flex-1 max-w-6xl mx-auto w-full animate-fadeIn">
         <div className="flex flex-col mb-6">
           {/* 설명 카드 - 아코디언 방식 (개선된 디자인) */}
@@ -452,8 +420,8 @@ export default function GrahamPage() {
                       최소 충족 기준 개수
                     </label>
                     <select
-                      value={minCriteriaFilter}
-                      onChange={(e) => setMinCriteriaFilter(Number(e.target.value))}
+                      value={filters.minCriteriaFilter}
+                      onChange={(e) => updateFilter('minCriteriaFilter', Number(e.target.value))}
                       className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                     >
                       <option value={6}>6개 이상</option>
@@ -465,8 +433,8 @@ export default function GrahamPage() {
                   <div className="mb-3">
                     <label className="block font-medium text-gray-700 mb-1 text-sm">산업군</label>
                     <select
-                      value={industryFilter}
-                      onChange={(e) => setIndustryFilter(e.target.value)}
+                      value={filters.industryFilter}
+                      onChange={(e) => updateFilter('industryFilter', e.target.value)}
                       className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                     >
                       <option value="">모든 산업군</option>
@@ -484,8 +452,8 @@ export default function GrahamPage() {
                       하위 산업군
                     </label>
                     <select
-                      value={subIndustryFilter}
-                      onChange={(e) => setSubIndustryFilter(e.target.value)}
+                      value={filters.subIndustryFilter}
+                      onChange={(e) => updateFilter('subIndustryFilter', e.target.value)}
                       className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                       disabled={subIndustries.length === 0}
                     >
@@ -506,9 +474,12 @@ export default function GrahamPage() {
                     <div className="flex space-x-2">
                       <input
                         type="number"
-                        value={dividendMinFilter}
+                        value={filters.dividendMinFilter}
                         onChange={(e) =>
-                          setDividendMinFilter(e.target.value === '' ? '' : Number(e.target.value))
+                          updateFilter(
+                            'dividendMinFilter',
+                            e.target.value === '' ? 0 : Number(e.target.value)
+                          )
                         }
                         placeholder="최소"
                         min="0"
@@ -518,9 +489,12 @@ export default function GrahamPage() {
                       <span className="self-center text-gray-400 text-sm">~</span>
                       <input
                         type="number"
-                        value={dividendMaxFilter}
+                        value={filters.dividendMaxFilter}
                         onChange={(e) =>
-                          setDividendMaxFilter(e.target.value === '' ? '' : Number(e.target.value))
+                          updateFilter(
+                            'dividendMaxFilter',
+                            e.target.value === '' ? 0 : Number(e.target.value)
+                          )
                         }
                         placeholder="최대"
                         min="0"
@@ -537,17 +511,17 @@ export default function GrahamPage() {
                     </label>
                     <select
                       value={
-                        consecutiveDividendFilter === null
+                        filters.consecutiveDividendFilter === null
                           ? ''
-                          : consecutiveDividendFilter
+                          : filters.consecutiveDividendFilter
                           ? 'true'
                           : 'false'
                       }
                       onChange={(e) => {
                         if (e.target.value === '') {
-                          setConsecutiveDividendFilter(null);
+                          updateFilter('consecutiveDividendFilter', null);
                         } else {
-                          setConsecutiveDividendFilter(e.target.value === 'true');
+                          updateFilter('consecutiveDividendFilter', e.target.value === 'true');
                         }
                       }}
                       className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
@@ -565,8 +539,8 @@ export default function GrahamPage() {
                     </label>
                     <div className="flex space-x-2">
                       <select
-                        value={sortField}
-                        onChange={(e) => setSortField(e.target.value as SortField)}
+                        value={filters.sortField}
+                        onChange={(e) => updateFilter('sortField', e.target.value)}
                         className="flex-1 border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                       >
                         <option value="criteria_met_count">충족 기준 개수</option>
@@ -587,10 +561,15 @@ export default function GrahamPage() {
                         <option value="consecutive_dividend">연속 배당</option>
                       </select>
                       <button
-                        onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
+                        onClick={() =>
+                          updateFilter(
+                            'sortDirection',
+                            filters.sortDirection === 'asc' ? 'desc' : 'asc'
+                          )
+                        }
                         className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all duration-200 group p-2"
                       >
-                        {sortDirection === 'asc' ? (
+                        {filters.sortDirection === 'asc' ? (
                           <ArrowUp
                             size={16}
                             className="group-hover:scale-125 transition-transform duration-200"
@@ -614,8 +593,8 @@ export default function GrahamPage() {
                   <div className="pb-3 border-b border-gray-100">
                     <label className="text-xs text-gray-600 block mb-1">최소 충족 기준 개수</label>
                     <select
-                      value={minCriteriaFilter}
-                      onChange={(e) => setMinCriteriaFilter(Number(e.target.value))}
+                      value={filters.minCriteriaFilter}
+                      onChange={(e) => updateFilter('minCriteriaFilter', Number(e.target.value))}
                       className="w-full rounded-lg border border-gray-300 p-2 text-sm"
                     >
                       <option value={6}>6개 이상</option>
@@ -630,8 +609,8 @@ export default function GrahamPage() {
                       <div>
                         <label className="text-xs text-gray-600 block mb-1">산업군</label>
                         <select
-                          value={industryFilter}
-                          onChange={(e) => setIndustryFilter(e.target.value)}
+                          value={filters.industryFilter}
+                          onChange={(e) => updateFilter('industryFilter', e.target.value)}
                           className="w-full rounded-lg border border-gray-300 p-2 text-sm"
                         >
                           <option value="">모든 산업군</option>
@@ -646,8 +625,8 @@ export default function GrahamPage() {
                       <div>
                         <label className="text-xs text-gray-600 block mb-1">하위 산업군</label>
                         <select
-                          value={subIndustryFilter}
-                          onChange={(e) => setSubIndustryFilter(e.target.value)}
+                          value={filters.subIndustryFilter}
+                          onChange={(e) => updateFilter('subIndustryFilter', e.target.value)}
                           className="w-full rounded-lg border border-gray-300 p-2 text-sm"
                           disabled={subIndustries.length === 0}
                         >
@@ -674,10 +653,11 @@ export default function GrahamPage() {
                           <span className="w-10 text-xs text-gray-500">최소:</span>
                           <input
                             type="number"
-                            value={dividendMinFilter}
+                            value={filters.dividendMinFilter}
                             onChange={(e) =>
-                              setDividendMinFilter(
-                                e.target.value === '' ? '' : Number(e.target.value)
+                              updateFilter(
+                                'dividendMinFilter',
+                                e.target.value === '' ? 0 : Number(e.target.value)
                               )
                             }
                             placeholder="최소값"
@@ -690,10 +670,11 @@ export default function GrahamPage() {
                           <span className="w-10 text-xs text-gray-500">최대:</span>
                           <input
                             type="number"
-                            value={dividendMaxFilter}
+                            value={filters.dividendMaxFilter}
                             onChange={(e) =>
-                              setDividendMaxFilter(
-                                e.target.value === '' ? '' : Number(e.target.value)
+                              updateFilter(
+                                'dividendMaxFilter',
+                                e.target.value === '' ? 0 : Number(e.target.value)
                               )
                             }
                             placeholder="최대값"
@@ -710,17 +691,17 @@ export default function GrahamPage() {
                       <label className="text-xs text-gray-600 block mb-1">연속 배당 여부</label>
                       <select
                         value={
-                          consecutiveDividendFilter === null
+                          filters.consecutiveDividendFilter === null
                             ? ''
-                            : consecutiveDividendFilter
+                            : filters.consecutiveDividendFilter
                             ? 'true'
                             : 'false'
                         }
                         onChange={(e) => {
                           if (e.target.value === '') {
-                            setConsecutiveDividendFilter(null);
+                            updateFilter('consecutiveDividendFilter', null);
                           } else {
-                            setConsecutiveDividendFilter(e.target.value === 'true');
+                            updateFilter('consecutiveDividendFilter', e.target.value === 'true');
                           }
                         }}
                         className="w-full rounded-lg border border-gray-300 p-2 text-sm"
@@ -737,8 +718,8 @@ export default function GrahamPage() {
                     <label className="text-xs text-gray-600 block mb-1">정렬 기준</label>
                     <div className="flex space-x-2">
                       <select
-                        value={sortField}
-                        onChange={(e) => setSortField(e.target.value as SortField)}
+                        value={filters.sortField}
+                        onChange={(e) => updateFilter('sortField', e.target.value)}
                         className="flex-1 rounded-lg border border-gray-300 p-2 text-sm"
                       >
                         <option value="discount_rate">저평가율</option>
@@ -757,10 +738,15 @@ export default function GrahamPage() {
                         <option value="consecutive_dividend">연속 배당</option>
                       </select>
                       <button
-                        onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
+                        onClick={() =>
+                          updateFilter(
+                            'sortDirection',
+                            filters.sortDirection === 'asc' ? 'desc' : 'asc'
+                          )
+                        }
                         className="flex items-center justify-center p-2 bg-gray-100 rounded-lg"
                       >
-                        {sortDirection === 'asc' ? (
+                        {filters.sortDirection === 'asc' ? (
                           <ArrowUp size={16} className="text-gray-700" />
                         ) : (
                           <ArrowDown size={16} className="text-gray-700" />
@@ -1128,7 +1114,7 @@ export default function GrahamPage() {
                 </div>
               )}
 
-              {/* 개선된 페이지네이션 */}
+              {/* 페이지네이션 - filters.page 사용 */}
               {totalPages > 1 && (
                 <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 sm:px-6 flex items-center justify-between">
                   <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
@@ -1147,10 +1133,10 @@ export default function GrahamPage() {
                         aria-label="Pagination"
                       >
                         <button
-                          onClick={() => handlePageChange(currentPage - 1)}
-                          disabled={currentPage === 1}
+                          onClick={() => handlePageChange(filters.page - 1)}
+                          disabled={filters.page === 1}
                           className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${
-                            currentPage === 1
+                            filters.page === 1
                               ? 'text-gray-300 cursor-not-allowed'
                               : 'text-gray-500 hover:bg-gray-50'
                           }`}
@@ -1164,11 +1150,11 @@ export default function GrahamPage() {
                           const isVisible =
                             pageNumber === 1 ||
                             pageNumber === totalPages ||
-                            Math.abs(pageNumber - currentPage) <= 1;
+                            Math.abs(pageNumber - filters.page) <= 1;
 
-                          const showEllipsisBefore = i === 1 && currentPage > 3;
+                          const showEllipsisBefore = i === 1 && filters.page > 3;
                           const showEllipsisAfter =
-                            i === totalPages - 2 && currentPage < totalPages - 2;
+                            i === totalPages - 2 && filters.page < totalPages - 2;
 
                           if (showEllipsisBefore) {
                             return (
@@ -1198,7 +1184,7 @@ export default function GrahamPage() {
                                 key={pageNumber}
                                 onClick={() => handlePageChange(pageNumber)}
                                 className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-colors duration-200 ${
-                                  currentPage === pageNumber
+                                  filters.page === pageNumber
                                     ? 'z-10 bg-emerald-50 border-emerald-500 text-emerald-600 hover:bg-emerald-100'
                                     : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
                                 }`}
@@ -1212,10 +1198,10 @@ export default function GrahamPage() {
                         })}
 
                         <button
-                          onClick={() => handlePageChange(currentPage + 1)}
-                          disabled={currentPage === totalPages}
+                          onClick={() => handlePageChange(filters.page + 1)}
+                          disabled={filters.page === totalPages}
                           className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${
-                            currentPage === totalPages
+                            filters.page === totalPages
                               ? 'text-gray-300 cursor-not-allowed'
                               : 'text-gray-500 hover:bg-gray-50'
                           }`}
@@ -1230,10 +1216,10 @@ export default function GrahamPage() {
                   {/* 모바일 페이지네이션 */}
                   <div className="flex flex-1 justify-between sm:hidden">
                     <button
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage === 1}
+                      onClick={() => handlePageChange(filters.page - 1)}
+                      disabled={filters.page === 1}
                       className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
-                        currentPage === 1
+                        filters.page === 1
                           ? 'text-gray-300 bg-gray-50 cursor-not-allowed'
                           : 'text-gray-700 bg-white hover:bg-gray-50'
                       }`}
@@ -1241,13 +1227,13 @@ export default function GrahamPage() {
                       이전
                     </button>
                     <span className="text-sm text-gray-700 pt-2">
-                      <span className="font-medium">{currentPage}</span> / {totalPages}
+                      <span className="font-medium">{filters.page}</span> / {totalPages}
                     </span>
                     <button
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage === totalPages}
+                      onClick={() => handlePageChange(filters.page + 1)}
+                      disabled={filters.page === totalPages}
                       className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
-                        currentPage === totalPages
+                        filters.page === totalPages
                           ? 'text-gray-300 bg-gray-50 cursor-not-allowed'
                           : 'text-gray-700 bg-white hover:bg-gray-50'
                       }`}
@@ -1259,7 +1245,7 @@ export default function GrahamPage() {
               )}
             </div>
 
-            {/* 개선된 데이터 없음 메시지 */}
+            {/* 데이터 없음 메시지 */}
             {filteredStocks.length === 0 && !loading && !error && (
               <div className="bg-white rounded-2xl p-8 shadow-md flex flex-col items-center justify-center animate-fadeIn">
                 <div className="p-4 bg-gray-100 rounded-full mb-4">

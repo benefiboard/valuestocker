@@ -4,8 +4,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-// import { fetchFlavorStocks } from '@/utils/stockDataService';
-// import { formatNumber, formatAsset } from '../../utils/stockUtils';
 import { AccordionSection, Pagination } from '../../components/StockPageComponents';
 import {
   ArrowDown,
@@ -32,6 +30,7 @@ import {
 import { StockLinkButtons } from '../../components/StockLinkButtons';
 import { fetchFlavorStocks } from './flavorStock';
 import { formatAsset, formatNumber } from '@/utils/stockUtils';
+import { useUrlFilters, flavorPageSchema, FlavorPageFilters } from '@/hooks/useUrlFilters';
 
 // 주식 데이터 타입 정의
 interface FlavorStock {
@@ -44,7 +43,7 @@ interface FlavorStock {
   current_price: number;
   dividend_yield: number;
   assets: number;
-  consecutive_dividend: boolean; // 5년 연속 배당 여부 추가
+  consecutive_dividend: boolean;
 }
 
 // 정렬 타입 정의
@@ -57,32 +56,31 @@ type SortField =
   | 'current_price'
   | 'dividend_yield'
   | 'assets'
-  | 'consecutive_dividend'; // 연속 배당 정렬 추가
+  | 'consecutive_dividend';
 type SortDirection = 'asc' | 'desc';
-type ViewMode = 'table' | 'mobileTable'; // card 제거, mobileTable 추가
+type ViewMode = 'table' | 'mobileTable';
 
 export default function FlavorPage() {
-  // 상태 관리
+  // URL 필터 훅 사용
+  const {
+    filters,
+    updateFilter,
+    updateFilters,
+    resetFilters,
+    isLoading: urlLoading,
+  } = useUrlFilters(flavorPageSchema);
+
+  // 기존 상태들 (URL로 관리되지 않는 것들만)
   const [stocks, setStocks] = useState<FlavorStock[]>([]);
   const [filteredStocks, setFilteredStocks] = useState<FlavorStock[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
-  const [sortField, setSortField] = useState<SortField>('dividend_yield');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-  const [industryFilter, setIndustryFilter] = useState<string>('');
-  const [subIndustryFilter, setSubIndustryFilter] = useState<string>('');
-  const [assetMinFilter, setAssetMinFilter] = useState<number | ''>(0);
-  const [assetMaxFilter, setAssetMaxFilter] = useState<number | ''>('');
-  const [dividendMinFilter, setDividendMinFilter] = useState<number | ''>(5);
-  const [dividendMaxFilter, setDividendMaxFilter] = useState<number | ''>('');
-  const [consecutiveDividendFilter, setConsecutiveDividendFilter] = useState<boolean | null>(null); // 연속 배당 필터 상태 추가
   const [industries, setIndustries] = useState<string[]>([]);
   const [subIndustries, setSubIndustries] = useState<string[]>([]);
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [viewMode, setViewMode] = useState<ViewMode>('table'); // 기본값을 table로 설정
-  const [isFilterExpanded, setIsFilterExpanded] = useState<boolean>(false); // 필터 영역 확장 상태
-  const [isConditionExpanded, setIsConditionExpanded] = useState<boolean>(false); // 조건 영역 확장 상태
-  const [showScrollHint, setShowScrollHint] = useState<boolean>(false); // 스크롤 힌트 상태
+  const [viewMode, setViewMode] = useState<ViewMode>('table');
+  const [isFilterExpanded, setIsFilterExpanded] = useState<boolean>(false);
+  const [isConditionExpanded, setIsConditionExpanded] = useState<boolean>(false);
+  const [showScrollHint, setShowScrollHint] = useState<boolean>(false);
 
   // 모바일 필터 아코디언 상태
   const [industryFilterOpen, setIndustryFilterOpen] = useState(true);
@@ -97,7 +95,6 @@ export default function FlavorPage() {
     const loadStockData = async () => {
       setLoading(true);
 
-      // stockDataService에서 함수 호출로 대체
       const result = await fetchFlavorStocks();
 
       if (result.error) {
@@ -109,7 +106,6 @@ export default function FlavorPage() {
         setFilteredStocks(result.stocks);
         setIndustries(result.industries);
         setSubIndustries(result.subIndustries);
-        setCurrentPage(1);
       }
 
       setLoading(false);
@@ -118,27 +114,29 @@ export default function FlavorPage() {
     loadStockData();
   }, []);
 
-  // 필터 적용
+  // 필터 적용 (URL 상태 기반)
   useEffect(() => {
+    if (urlLoading || loading) return; // URL 로딩 중에는 필터 적용하지 않음
+
     let filtered = [...stocks];
 
     // 산업군 필터
-    if (industryFilter) {
-      filtered = filtered.filter((stock) => stock.industry === industryFilter);
+    if (filters.industryFilter) {
+      filtered = filtered.filter((stock) => stock.industry === filters.industryFilter);
 
       // 산업군 변경 시 하위 산업군 목록 업데이트
       const newSubIndustries = Array.from(
         new Set(
           stocks
-            .filter((stock) => stock.industry === industryFilter)
+            .filter((stock) => stock.industry === filters.industryFilter)
             .map((stock) => stock.subindustry)
         )
       ).sort();
       setSubIndustries(newSubIndustries);
 
       // 기존 하위 산업군이 새 목록에 없으면 초기화
-      if (subIndustryFilter && !newSubIndustries.includes(subIndustryFilter)) {
-        setSubIndustryFilter('');
+      if (filters.subIndustryFilter && !newSubIndustries.includes(filters.subIndustryFilter)) {
+        updateFilter('subIndustryFilter', '');
       }
     } else {
       // 산업군 필터가 없을 때 모든 하위 산업군 표시
@@ -147,97 +145,91 @@ export default function FlavorPage() {
     }
 
     // 하위 산업군 필터
-    if (subIndustryFilter) {
-      filtered = filtered.filter((stock) => stock.subindustry === subIndustryFilter);
+    if (filters.subIndustryFilter) {
+      filtered = filtered.filter((stock) => stock.subindustry === filters.subIndustryFilter);
     }
 
     // 자산 금액 범위 필터 (억 단위)
-    const assetMinValue = typeof assetMinFilter === 'number' ? assetMinFilter * 100000000 : 0;
+    const assetMinValue =
+      typeof filters.assetMinFilter === 'number' ? filters.assetMinFilter * 100000000 : 0;
     if (assetMinValue > 0) {
       filtered = filtered.filter((stock) => stock.assets >= assetMinValue);
     }
 
     const assetMaxValue =
-      typeof assetMaxFilter === 'number' ? assetMaxFilter * 100000000 : Number.MAX_SAFE_INTEGER;
-    if (typeof assetMaxFilter === 'number') {
+      typeof filters.assetMaxFilter === 'number'
+        ? filters.assetMaxFilter * 100000000
+        : Number.MAX_SAFE_INTEGER;
+    if (typeof filters.assetMaxFilter === 'number') {
       filtered = filtered.filter((stock) => stock.assets <= assetMaxValue);
     }
 
-    // 배당률 범위 필터 추가
-    const dividendMinValue = typeof dividendMinFilter === 'number' ? dividendMinFilter : 5;
+    // 배당률 범위 필터
+    const dividendMinValue =
+      typeof filters.dividendMinFilter === 'number' ? filters.dividendMinFilter : 5;
     filtered = filtered.filter((stock) => stock.dividend_yield >= dividendMinValue);
 
     const dividendMaxValue =
-      typeof dividendMaxFilter === 'number' ? dividendMaxFilter : Number.MAX_SAFE_INTEGER;
-    if (typeof dividendMaxFilter === 'number') {
+      typeof filters.dividendMaxFilter === 'number'
+        ? filters.dividendMaxFilter
+        : Number.MAX_SAFE_INTEGER;
+    if (typeof filters.dividendMaxFilter === 'number') {
       filtered = filtered.filter((stock) => stock.dividend_yield <= dividendMaxValue);
     }
 
-    // 연속 배당 필터 추가
-    if (consecutiveDividendFilter !== null) {
+    // 연속 배당 필터
+    if (filters.consecutiveDividendFilter !== null) {
       filtered = filtered.filter(
-        (stock) => stock.consecutive_dividend === consecutiveDividendFilter
+        (stock) => stock.consecutive_dividend === filters.consecutiveDividendFilter
       );
     }
 
     // 정렬 적용
     filtered.sort((a, b) => {
-      const valueA = a[sortField];
-      const valueB = b[sortField];
+      const valueA = a[filters.sortField as keyof FlavorStock];
+      const valueB = b[filters.sortField as keyof FlavorStock];
 
       // 문자열 정렬
       if (typeof valueA === 'string' && typeof valueB === 'string') {
-        return sortDirection === 'asc'
+        return filters.sortDirection === 'asc'
           ? valueA.localeCompare(valueB)
           : valueB.localeCompare(valueA);
       }
 
       // 불리언 정렬 (연속 배당 필드용)
       if (typeof valueA === 'boolean' && typeof valueB === 'boolean') {
-        return sortDirection === 'asc'
+        return filters.sortDirection === 'asc'
           ? Number(valueA) - Number(valueB)
           : Number(valueB) - Number(valueA);
       }
 
       // 숫자 정렬
-      return sortDirection === 'asc'
+      return filters.sortDirection === 'asc'
         ? (valueA as number) - (valueB as number)
         : (valueB as number) - (valueA as number);
     });
 
     setFilteredStocks(filtered);
-    setCurrentPage(1); // 필터 변경 시 첫 페이지로 이동
-  }, [
-    stocks,
-    industryFilter,
-    subIndustryFilter,
-    assetMinFilter,
-    assetMaxFilter,
-    dividendMinFilter,
-    dividendMaxFilter,
-    consecutiveDividendFilter, // 의존성 배열에 추가
-    sortField,
-    sortDirection,
-  ]);
+
+    // 필터 변경 시 첫 페이지로 이동 (페이지 변경이 아닌 경우만)
+    if (filters.page > 1 && Math.ceil(filtered.length / itemsPerPage) < filters.page) {
+      updateFilter('page', 1);
+    }
+  }, [stocks, filters, urlLoading, updateFilter]);
 
   // 뷰 모드 감지 (화면 크기에 따라 자동 변경)
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 1024) {
-        // 데스크톱: lg 브레이크포인트
         setViewMode('table');
         setShowScrollHint(false);
       } else {
-        // 태블릿 및 모바일
         setViewMode('mobileTable');
         setShowScrollHint(true);
       }
     };
 
-    // 초기 설정
     handleResize();
-
-    // 리사이즈 이벤트 리스너
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -254,46 +246,35 @@ export default function FlavorPage() {
 
   // 정렬 토글 함수
   const toggleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    if (filters.sortField === field) {
+      updateFilter('sortDirection', filters.sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
-      setSortField(field);
-      setSortDirection('asc');
+      updateFilters({
+        sortField: field,
+        sortDirection: 'asc',
+      });
     }
-  };
-
-  // 필터 초기화 함수
-  const resetFilters = () => {
-    setIndustryFilter('');
-    setSubIndustryFilter('');
-    setAssetMinFilter(0);
-    setAssetMaxFilter('');
-    setDividendMinFilter(5);
-    setDividendMaxFilter('');
-    setConsecutiveDividendFilter(null); // 연속 배당 필터 초기화 추가
-    setSortField('dividend_yield');
-    setSortDirection('desc');
   };
 
   // 페이지네이션 계산
   const totalPages = Math.ceil(filteredStocks.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
+  const startIndex = (filters.page - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentItems = filteredStocks.slice(startIndex, endIndex);
 
   // 페이지 변경 핸들러
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
-      setCurrentPage(newPage);
+      updateFilter('page', newPage);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   // 정렬 아이콘 렌더링 함수
   const renderSortIcon = (field: SortField) => {
-    if (sortField !== field) return null;
+    if (filters.sortField !== field) return null;
 
-    return sortDirection === 'asc' ? (
+    return filters.sortDirection === 'asc' ? (
       <ArrowUp size={12} className="ml-1 text-emerald-600 sort-icon" />
     ) : (
       <ArrowDown size={12} className="ml-1 text-emerald-600 sort-icon" />
@@ -302,27 +283,9 @@ export default function FlavorPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 px-4 sm:px-6 py-4 sm:py-6">
-      {/* 헤더 - 글래스모픽 스타일 */}
-      {/* <header className="mb-6 max-w-6xl mx-auto w-full sticky top-0 z-10">
-        <div className="bg-white bg-opacity-90 backdrop-blur-md shadow-sm rounded-2xl p-4 flex items-center">
-          <Link
-            href="/"
-            className="mr-3 sm:mr-4 text-gray-600 hover:text-gray-900 transition-colors p-2 rounded-full hover:bg-gray-100"
-          >
-            <ArrowLeft size={20} className="sm:w-6 sm:h-6" />
-          </Link>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center">
-            <div className="p-2 bg-emerald-50 rounded-full mr-3">
-              <BarChart4 className="text-emerald-600 w-5 h-5 sm:w-6 sm:h-6" />
-            </div>
-            고배당 가치주 리스트
-          </h1>
-        </div>
-      </header> */}
-
       <main className="flex-1 max-w-6xl mx-auto w-full animate-fadeIn">
         <div className="flex flex-col mb-6">
-          {/* 설명 카드 - 아코디언 방식 (개선된 디자인) */}
+          {/* 설명 카드 - 아코디언 방식 */}
           <div className="mb-4 bg-white rounded-2xl shadow-sm border border-gray-100 transition-all duration-300 hover:shadow-md overflow-hidden">
             <div
               className="flex items-center justify-between p-4 sm:p-5 cursor-pointer"
@@ -380,7 +343,7 @@ export default function FlavorPage() {
             </div>
           </div>
 
-          {/* 필터 및 정렬 컨트롤 - 아코디언 방식 (개선된 디자인) */}
+          {/* 필터 및 정렬 컨트롤 - 아코디언 방식 */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 transition-all duration-300 hover:shadow-md overflow-hidden">
             <div
               className="flex items-center justify-between p-3 sm:p-4 cursor-pointer"
@@ -395,7 +358,7 @@ export default function FlavorPage() {
               <div className="flex items-center">
                 <button
                   onClick={(e) => {
-                    e.stopPropagation(); // 버튼 클릭 시 아코디언 확장/축소 방지
+                    e.stopPropagation();
                     resetFilters();
                   }}
                   className="px-3 py-1.5 text-xs sm:text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors mr-3 hover:shadow-sm"
@@ -428,8 +391,8 @@ export default function FlavorPage() {
                   <div className="mb-3">
                     <label className="block font-medium text-gray-700 mb-1 text-sm">산업군</label>
                     <select
-                      value={industryFilter}
-                      onChange={(e) => setIndustryFilter(e.target.value)}
+                      value={filters.industryFilter}
+                      onChange={(e) => updateFilter('industryFilter', e.target.value)}
                       className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                     >
                       <option value="">모든 산업군</option>
@@ -447,8 +410,8 @@ export default function FlavorPage() {
                       하위 산업군
                     </label>
                     <select
-                      value={subIndustryFilter}
-                      onChange={(e) => setSubIndustryFilter(e.target.value)}
+                      value={filters.subIndustryFilter}
+                      onChange={(e) => updateFilter('subIndustryFilter', e.target.value)}
                       className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                       disabled={subIndustries.length === 0}
                     >
@@ -461,7 +424,7 @@ export default function FlavorPage() {
                     </select>
                   </div>
 
-                  {/* 배당률 범위 필터 추가 */}
+                  {/* 배당률 범위 필터 */}
                   <div className="mb-3">
                     <label className="block font-medium text-gray-700 mb-1 text-sm">
                       배당률 범위 (%)
@@ -469,9 +432,12 @@ export default function FlavorPage() {
                     <div className="flex space-x-2">
                       <input
                         type="number"
-                        value={dividendMinFilter}
+                        value={filters.dividendMinFilter}
                         onChange={(e) =>
-                          setDividendMinFilter(e.target.value === '' ? '' : Number(e.target.value))
+                          updateFilter(
+                            'dividendMinFilter',
+                            e.target.value === '' ? '' : Number(e.target.value)
+                          )
                         }
                         placeholder="최소"
                         min="0"
@@ -481,9 +447,12 @@ export default function FlavorPage() {
                       <span className="self-center text-gray-400 text-sm">~</span>
                       <input
                         type="number"
-                        value={dividendMaxFilter}
+                        value={filters.dividendMaxFilter}
                         onChange={(e) =>
-                          setDividendMaxFilter(e.target.value === '' ? '' : Number(e.target.value))
+                          updateFilter(
+                            'dividendMaxFilter',
+                            e.target.value === '' ? '' : Number(e.target.value)
+                          )
                         }
                         placeholder="최대"
                         min="0"
@@ -493,24 +462,24 @@ export default function FlavorPage() {
                     </div>
                   </div>
 
-                  {/* 연속 배당 필터 추가 */}
+                  {/* 연속 배당 필터 */}
                   <div className="mb-3">
                     <label className="block font-medium text-gray-700 mb-1 text-sm">
                       연속 배당 여부
                     </label>
                     <select
                       value={
-                        consecutiveDividendFilter === null
+                        filters.consecutiveDividendFilter === null
                           ? ''
-                          : consecutiveDividendFilter
+                          : filters.consecutiveDividendFilter
                           ? 'true'
                           : 'false'
                       }
                       onChange={(e) => {
                         if (e.target.value === '') {
-                          setConsecutiveDividendFilter(null);
+                          updateFilter('consecutiveDividendFilter', null);
                         } else {
-                          setConsecutiveDividendFilter(e.target.value === 'true');
+                          updateFilter('consecutiveDividendFilter', e.target.value === 'true');
                         }
                       }}
                       className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
@@ -529,9 +498,12 @@ export default function FlavorPage() {
                     <div className="flex space-x-2">
                       <input
                         type="number"
-                        value={assetMinFilter}
+                        value={filters.assetMinFilter}
                         onChange={(e) =>
-                          setAssetMinFilter(e.target.value === '' ? '' : Number(e.target.value))
+                          updateFilter(
+                            'assetMinFilter',
+                            e.target.value === '' ? '' : Number(e.target.value)
+                          )
                         }
                         placeholder="최소"
                         className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
@@ -539,9 +511,12 @@ export default function FlavorPage() {
                       <span className="self-center text-gray-400 text-sm">~</span>
                       <input
                         type="number"
-                        value={assetMaxFilter}
+                        value={filters.assetMaxFilter}
                         onChange={(e) =>
-                          setAssetMaxFilter(e.target.value === '' ? '' : Number(e.target.value))
+                          updateFilter(
+                            'assetMaxFilter',
+                            e.target.value === '' ? '' : Number(e.target.value)
+                          )
                         }
                         placeholder="최대"
                         className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
@@ -556,8 +531,8 @@ export default function FlavorPage() {
                     </label>
                     <div className="flex space-x-2">
                       <select
-                        value={sortField}
-                        onChange={(e) => setSortField(e.target.value as SortField)}
+                        value={filters.sortField}
+                        onChange={(e) => updateFilter('sortField', e.target.value)}
                         className="flex-1 border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                       >
                         <option value="dividend_yield">배당률</option>
@@ -571,10 +546,15 @@ export default function FlavorPage() {
                         <option value="subindustry">하위 산업군</option>
                       </select>
                       <button
-                        onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
+                        onClick={() =>
+                          updateFilter(
+                            'sortDirection',
+                            filters.sortDirection === 'asc' ? 'desc' : 'asc'
+                          )
+                        }
                         className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all duration-200 group p-2"
                       >
-                        {sortDirection === 'asc' ? (
+                        {filters.sortDirection === 'asc' ? (
                           <ArrowUp
                             size={16}
                             className="group-hover:scale-125 transition-transform duration-200"
@@ -601,8 +581,8 @@ export default function FlavorPage() {
                       <div>
                         <label className="text-xs text-gray-600 block mb-1">산업군</label>
                         <select
-                          value={industryFilter}
-                          onChange={(e) => setIndustryFilter(e.target.value)}
+                          value={filters.industryFilter}
+                          onChange={(e) => updateFilter('industryFilter', e.target.value)}
                           className="w-full rounded-lg border border-gray-300 p-2 text-sm"
                         >
                           <option value="">모든 산업군</option>
@@ -617,8 +597,8 @@ export default function FlavorPage() {
                       <div>
                         <label className="text-xs text-gray-600 block mb-1">하위 산업군</label>
                         <select
-                          value={subIndustryFilter}
-                          onChange={(e) => setSubIndustryFilter(e.target.value)}
+                          value={filters.subIndustryFilter}
+                          onChange={(e) => updateFilter('subIndustryFilter', e.target.value)}
                           className="w-full rounded-lg border border-gray-300 p-2 text-sm"
                           disabled={subIndustries.length === 0}
                         >
@@ -645,9 +625,10 @@ export default function FlavorPage() {
                           <span className="w-10 text-xs text-gray-500">최소:</span>
                           <input
                             type="number"
-                            value={dividendMinFilter}
+                            value={filters.dividendMinFilter}
                             onChange={(e) =>
-                              setDividendMinFilter(
+                              updateFilter(
+                                'dividendMinFilter',
                                 e.target.value === '' ? '' : Number(e.target.value)
                               )
                             }
@@ -661,9 +642,10 @@ export default function FlavorPage() {
                           <span className="w-10 text-xs text-gray-500">최대:</span>
                           <input
                             type="number"
-                            value={dividendMaxFilter}
+                            value={filters.dividendMaxFilter}
                             onChange={(e) =>
-                              setDividendMaxFilter(
+                              updateFilter(
+                                'dividendMaxFilter',
                                 e.target.value === '' ? '' : Number(e.target.value)
                               )
                             }
@@ -681,17 +663,17 @@ export default function FlavorPage() {
                       <label className="text-xs text-gray-600 block mb-1">연속 배당 여부</label>
                       <select
                         value={
-                          consecutiveDividendFilter === null
+                          filters.consecutiveDividendFilter === null
                             ? ''
-                            : consecutiveDividendFilter
+                            : filters.consecutiveDividendFilter
                             ? 'true'
                             : 'false'
                         }
                         onChange={(e) => {
                           if (e.target.value === '') {
-                            setConsecutiveDividendFilter(null);
+                            updateFilter('consecutiveDividendFilter', null);
                           } else {
-                            setConsecutiveDividendFilter(e.target.value === 'true');
+                            updateFilter('consecutiveDividendFilter', e.target.value === 'true');
                           }
                         }}
                         className="w-full rounded-lg border border-gray-300 p-2 text-sm"
@@ -711,9 +693,12 @@ export default function FlavorPage() {
                         <span className="w-10 text-xs text-gray-500">최소:</span>
                         <input
                           type="number"
-                          value={assetMinFilter}
+                          value={filters.assetMinFilter}
                           onChange={(e) =>
-                            setAssetMinFilter(e.target.value === '' ? '' : Number(e.target.value))
+                            updateFilter(
+                              'assetMinFilter',
+                              e.target.value === '' ? '' : Number(e.target.value)
+                            )
                           }
                           placeholder="최소값 (억원)"
                           className="w-full rounded-lg border border-gray-300 p-1.5 text-sm"
@@ -723,9 +708,12 @@ export default function FlavorPage() {
                         <span className="w-10 text-xs text-gray-500">최대:</span>
                         <input
                           type="number"
-                          value={assetMaxFilter}
+                          value={filters.assetMaxFilter}
                           onChange={(e) =>
-                            setAssetMaxFilter(e.target.value === '' ? '' : Number(e.target.value))
+                            updateFilter(
+                              'assetMaxFilter',
+                              e.target.value === '' ? '' : Number(e.target.value)
+                            )
                           }
                           placeholder="최대값 (억원)"
                           className="w-full rounded-lg border border-gray-300 p-1.5 text-sm"
@@ -739,8 +727,8 @@ export default function FlavorPage() {
                     <label className="text-xs text-gray-600 block mb-1">정렬 기준</label>
                     <div className="flex space-x-2">
                       <select
-                        value={sortField}
-                        onChange={(e) => setSortField(e.target.value as SortField)}
+                        value={filters.sortField}
+                        onChange={(e) => updateFilter('sortField', e.target.value)}
                         className="flex-1 rounded-lg border border-gray-300 p-2 text-sm"
                       >
                         <option value="dividend_yield">배당률</option>
@@ -753,10 +741,15 @@ export default function FlavorPage() {
                         <option value="industry">산업군</option>
                       </select>
                       <button
-                        onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
+                        onClick={() =>
+                          updateFilter(
+                            'sortDirection',
+                            filters.sortDirection === 'asc' ? 'desc' : 'asc'
+                          )
+                        }
                         className="flex items-center justify-center p-2 bg-gray-100 rounded-lg"
                       >
-                        {sortDirection === 'asc' ? (
+                        {filters.sortDirection === 'asc' ? (
                           <ArrowUp size={16} className="text-gray-700" />
                         ) : (
                           <ArrowDown size={16} className="text-gray-700" />
@@ -1097,10 +1090,10 @@ export default function FlavorPage() {
                         aria-label="Pagination"
                       >
                         <button
-                          onClick={() => handlePageChange(currentPage - 1)}
-                          disabled={currentPage === 1}
+                          onClick={() => handlePageChange(filters.page - 1)}
+                          disabled={filters.page === 1}
                           className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${
-                            currentPage === 1
+                            filters.page === 1
                               ? 'text-gray-300 cursor-not-allowed'
                               : 'text-gray-500 hover:bg-gray-50'
                           }`}
@@ -1115,12 +1108,12 @@ export default function FlavorPage() {
                           const isVisible =
                             pageNumber === 1 ||
                             pageNumber === totalPages ||
-                            Math.abs(pageNumber - currentPage) <= 1;
+                            Math.abs(pageNumber - filters.page) <= 1;
 
                           // 생략 부호(...) 표시 조건
-                          const showEllipsisBefore = i === 1 && currentPage > 3;
+                          const showEllipsisBefore = i === 1 && filters.page > 3;
                           const showEllipsisAfter =
-                            i === totalPages - 2 && currentPage < totalPages - 2;
+                            i === totalPages - 2 && filters.page < totalPages - 2;
 
                           if (showEllipsisBefore) {
                             return (
@@ -1150,7 +1143,7 @@ export default function FlavorPage() {
                                 key={pageNumber}
                                 onClick={() => handlePageChange(pageNumber)}
                                 className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-colors duration-200 ${
-                                  currentPage === pageNumber
+                                  filters.page === pageNumber
                                     ? 'z-10 bg-emerald-50 border-emerald-500 text-emerald-600 hover:bg-emerald-100'
                                     : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
                                 }`}
@@ -1164,10 +1157,10 @@ export default function FlavorPage() {
                         })}
 
                         <button
-                          onClick={() => handlePageChange(currentPage + 1)}
-                          disabled={currentPage === totalPages}
+                          onClick={() => handlePageChange(filters.page + 1)}
+                          disabled={filters.page === totalPages}
                           className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${
-                            currentPage === totalPages
+                            filters.page === totalPages
                               ? 'text-gray-300 cursor-not-allowed'
                               : 'text-gray-500 hover:bg-gray-50'
                           }`}
@@ -1182,10 +1175,10 @@ export default function FlavorPage() {
                   {/* 모바일 페이지네이션 */}
                   <div className="flex flex-1 justify-between sm:hidden">
                     <button
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage === 1}
+                      onClick={() => handlePageChange(filters.page - 1)}
+                      disabled={filters.page === 1}
                       className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
-                        currentPage === 1
+                        filters.page === 1
                           ? 'text-gray-300 bg-gray-50 cursor-not-allowed'
                           : 'text-gray-700 bg-white hover:bg-gray-50'
                       }`}
@@ -1193,13 +1186,13 @@ export default function FlavorPage() {
                       이전
                     </button>
                     <span className="text-sm text-gray-700 pt-2">
-                      <span className="font-medium">{currentPage}</span> / {totalPages}
+                      <span className="font-medium">{filters.page}</span> / {totalPages}
                     </span>
                     <button
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage === totalPages}
+                      onClick={() => handlePageChange(filters.page + 1)}
+                      disabled={filters.page === totalPages}
                       className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
-                        currentPage === totalPages
+                        filters.page === totalPages
                           ? 'text-gray-300 bg-gray-50 cursor-not-allowed'
                           : 'text-gray-700 bg-white hover:bg-gray-50'
                       }`}

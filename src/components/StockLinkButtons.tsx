@@ -29,8 +29,6 @@ export function StockLinkButtons({ stockCode, style = 'card' }: StockLinkButtons
       <div className="flex flex-col items-end gap-[6px]">
         <Link
           href={`/fairprice?stockCode=${stockCode}`}
-          target="_blank"
-          rel="noopener noreferrer"
           className="text-emerald-600 font-bold hover:text-emerald-900 cursor-pointer flex items-center text-xs "
         >
           <TrendingUp size={12} className="mr-1" />
@@ -38,8 +36,6 @@ export function StockLinkButtons({ stockCode, style = 'card' }: StockLinkButtons
         </Link>
         <Link
           href={`/checklist?stockCode=${stockCode}`}
-          target="_blank"
-          rel="noopener noreferrer"
           className="text-emerald-600 font-bold hover:text-emerald-900 cursor-pointer flex items-center text-xs "
         >
           <CheckSquare size={12} className="mr-1" />
@@ -48,8 +44,6 @@ export function StockLinkButtons({ stockCode, style = 'card' }: StockLinkButtons
 
         <a
           href={naverFinanceUrl}
-          target="_blank"
-          rel="noopener noreferrer"
           className="text-gray-600 font-bold hover:text-gray-900 cursor-pointer flex items-center text-xs"
         >
           <BarChart3 size={12} className="mr-1" />
@@ -65,8 +59,6 @@ export function StockLinkButtons({ stockCode, style = 'card' }: StockLinkButtons
       <div className="flex flex-col gap-2 mt-auto w-full">
         <Link
           href={`/fairprice?stockCode=${stockCode}`}
-          target="_blank"
-          rel="noopener noreferrer"
           className="text-center py-2 px-3 bg-gray-600 hover:bg-gray-800 text-gray-100 rounded-lg transition-colors text-sm font-medium flex items-center justify-center"
         >
           <TrendingUp size={16} className="mr-1.5" />
@@ -76,8 +68,6 @@ export function StockLinkButtons({ stockCode, style = 'card' }: StockLinkButtons
 
         <a
           href={naverFinanceUrl}
-          target="_blank"
-          rel="noopener noreferrer"
           className="text-center py-2 px-3 bg-gray-200 hover:bg-gray-400 text-gray-600 rounded-lg transition-colors text-sm font-medium flex items-center justify-center"
         >
           <BarChart3 size={16} className="mr-1.5" />
@@ -93,8 +83,6 @@ export function StockLinkButtons({ stockCode, style = 'card' }: StockLinkButtons
     <div className="flex flex-col items-end  gap-2">
       <Link
         href={`/fairprice?stockCode=${stockCode}`}
-        target="_blank"
-        rel="noopener noreferrer"
         className="text-emerald-600 font-bold hover:text-emerald-900 cursor-pointer flex items-center text-sm "
       >
         <TrendingUp size={14} className="mr-1" />
@@ -103,8 +91,6 @@ export function StockLinkButtons({ stockCode, style = 'card' }: StockLinkButtons
 
       <Link
         href={`/checklist?stockCode=${stockCode}`}
-        target="_blank"
-        rel="noopener noreferrer"
         className="text-emerald-600 font-bold hover:text-emerald-900 cursor-pointer flex items-center text-sm "
       >
         <CheckSquare size={14} className="mr-1" />
@@ -113,8 +99,6 @@ export function StockLinkButtons({ stockCode, style = 'card' }: StockLinkButtons
 
       <a
         href={naverFinanceUrl}
-        target="_blank"
-        rel="noopener noreferrer"
         className="text-gray-600 font-bold hover:text-gray-900 cursor-pointer flex items-center text-sm"
       >
         <BarChart3 size={14} className="mr-1" />

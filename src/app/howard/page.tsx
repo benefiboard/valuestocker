@@ -27,6 +27,7 @@ import {
 import { StockLinkButtons } from '../../components/StockLinkButtons';
 import { HowardStock } from '@/utils/stockDataTypes';
 import { fetchHowardStocks } from './howardStock';
+import { useUrlFilters, howardPageSchema, HowardPageFilters } from '@/hooks/useUrlFilters';
 
 // 정렬 타입 정의
 type SortField =
@@ -47,23 +48,22 @@ type SortDirection = 'asc' | 'desc';
 type ViewMode = 'card' | 'table' | 'mobileTable';
 
 export default function HowardPage() {
-  // 상태 관리
+  // URL 필터 훅 사용
+  const {
+    filters,
+    updateFilter,
+    updateFilters,
+    resetFilters,
+    isLoading: urlLoading,
+  } = useUrlFilters(howardPageSchema);
+
+  // 기존 상태들 (URL로 관리되지 않는 것들만)
   const [stocks, setStocks] = useState<HowardStock[]>([]);
   const [filteredStocks, setFilteredStocks] = useState<HowardStock[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
-  const [sortField, setSortField] = useState<SortField>('margin_of_safety');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-  const [industryFilter, setIndustryFilter] = useState<string>('');
-  const [subIndustryFilter, setSubIndustryFilter] = useState<string>('');
-  const [safetyMinFilter, setSafetyMinFilter] = useState<number | ''>('');
-  const [safetyMaxFilter, setSafetyMaxFilter] = useState<number | ''>('');
-  const [dividendMinFilter, setDividendMinFilter] = useState<number | ''>('');
-  const [dividendMaxFilter, setDividendMaxFilter] = useState<number | ''>('');
-  const [consecutiveDividendFilter, setConsecutiveDividendFilter] = useState<boolean | null>(null);
   const [industries, setIndustries] = useState<string[]>([]);
   const [subIndustries, setSubIndustries] = useState<string[]>([]);
-  const [currentPage, setCurrentPage] = useState<number>(1);
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [isFilterExpanded, setIsFilterExpanded] = useState<boolean>(false);
   const [isConditionExpanded, setIsConditionExpanded] = useState<boolean>(false);
@@ -96,7 +96,6 @@ export default function HowardPage() {
         setFilteredStocks(result.stocks);
         setIndustries(result.industries);
         setSubIndustries(result.subIndustries);
-        setCurrentPage(1);
       }
 
       setLoading(false);
@@ -105,27 +104,29 @@ export default function HowardPage() {
     loadStockData();
   }, []);
 
-  // 필터 적용
+  // 필터 적용 (URL 상태 기반)
   useEffect(() => {
+    if (urlLoading || loading) return; // URL 로딩 및 데이터 로딩 중에는 필터 적용하지 않음
+
     let filtered = [...stocks];
 
     // 산업군 필터
-    if (industryFilter) {
-      filtered = filtered.filter((stock) => stock.industry === industryFilter);
+    if (filters.industryFilter) {
+      filtered = filtered.filter((stock) => stock.industry === filters.industryFilter);
 
       // 산업군 변경 시 하위 산업군 목록 업데이트
       const newSubIndustries = Array.from(
         new Set(
           stocks
-            .filter((stock) => stock.industry === industryFilter)
+            .filter((stock) => stock.industry === filters.industryFilter)
             .map((stock) => stock.subindustry)
         )
       ).sort();
       setSubIndustries(newSubIndustries);
 
       // 기존 하위 산업군이 새 목록에 없으면 초기화
-      if (subIndustryFilter && !newSubIndustries.includes(subIndustryFilter)) {
-        setSubIndustryFilter('');
+      if (filters.subIndustryFilter && !newSubIndustries.includes(filters.subIndustryFilter)) {
+        updateFilter('subIndustryFilter', '');
       }
     } else {
       // 산업군 필터가 없을 때 모든 하위 산업군 표시
@@ -134,93 +135,81 @@ export default function HowardPage() {
     }
 
     // 하위 산업군 필터
-    if (subIndustryFilter) {
-      filtered = filtered.filter((stock) => stock.subindustry === subIndustryFilter);
+    if (filters.subIndustryFilter) {
+      filtered = filtered.filter((stock) => stock.subindustry === filters.subIndustryFilter);
     }
 
     // 안전마진 범위 필터
-    if (typeof safetyMinFilter === 'number' && safetyMinFilter > 0) {
-      filtered = filtered.filter((stock) => stock.margin_of_safety >= safetyMinFilter);
+    if (typeof filters.safetyMinFilter === 'number' && filters.safetyMinFilter > 0) {
+      filtered = filtered.filter((stock) => stock.margin_of_safety >= filters.safetyMinFilter);
     }
 
-    if (typeof safetyMaxFilter === 'number' && safetyMaxFilter > 0) {
-      filtered = filtered.filter((stock) => stock.margin_of_safety <= safetyMaxFilter);
+    if (typeof filters.safetyMaxFilter === 'number' && filters.safetyMaxFilter > 0) {
+      filtered = filtered.filter((stock) => stock.margin_of_safety <= filters.safetyMaxFilter);
     }
 
     // 배당률 범위 필터
-    if (typeof dividendMinFilter === 'number' && dividendMinFilter > 0) {
-      filtered = filtered.filter((stock) => stock.dividend_yield >= dividendMinFilter);
+    if (typeof filters.dividendMinFilter === 'number' && filters.dividendMinFilter > 0) {
+      filtered = filtered.filter((stock) => stock.dividend_yield >= filters.dividendMinFilter);
     }
 
-    if (typeof dividendMaxFilter === 'number' && dividendMaxFilter > 0) {
-      filtered = filtered.filter((stock) => stock.dividend_yield <= dividendMaxFilter);
+    if (typeof filters.dividendMaxFilter === 'number' && filters.dividendMaxFilter > 0) {
+      filtered = filtered.filter((stock) => stock.dividend_yield <= filters.dividendMaxFilter);
     }
 
     // 연속 배당 필터
-    if (consecutiveDividendFilter !== null) {
+    if (filters.consecutiveDividendFilter !== null) {
       filtered = filtered.filter(
-        (stock) => stock.consecutive_dividend === consecutiveDividendFilter
+        (stock) => stock.consecutive_dividend === filters.consecutiveDividendFilter
       );
     }
 
     // 정렬 적용
     filtered.sort((a, b) => {
-      const valueA = a[sortField];
-      const valueB = b[sortField];
+      const valueA = a[filters.sortField as keyof HowardStock];
+      const valueB = b[filters.sortField as keyof HowardStock];
 
       // 문자열 정렬
       if (typeof valueA === 'string' && typeof valueB === 'string') {
-        return sortDirection === 'asc'
+        return filters.sortDirection === 'asc'
           ? valueA.localeCompare(valueB)
           : valueB.localeCompare(valueA);
       }
 
       // 불리언 정렬
       if (typeof valueA === 'boolean' && typeof valueB === 'boolean') {
-        return sortDirection === 'asc'
+        return filters.sortDirection === 'asc'
           ? Number(valueA) - Number(valueB)
           : Number(valueB) - Number(valueA);
       }
 
       // 숫자 정렬
-      return sortDirection === 'asc'
+      return filters.sortDirection === 'asc'
         ? (valueA as number) - (valueB as number)
         : (valueB as number) - (valueA as number);
     });
 
     setFilteredStocks(filtered);
-    setCurrentPage(1); // 필터 변경 시 첫 페이지로 이동
-  }, [
-    stocks,
-    industryFilter,
-    subIndustryFilter,
-    safetyMinFilter,
-    safetyMaxFilter,
-    dividendMinFilter,
-    dividendMaxFilter,
-    consecutiveDividendFilter,
-    sortField,
-    sortDirection,
-  ]);
+
+    // 필터 변경 시 첫 페이지로 이동 (페이지 변경이 아닌 경우만)
+    if (filters.page > 1 && Math.ceil(filtered.length / itemsPerPage) < filters.page) {
+      updateFilter('page', 1);
+    }
+  }, [stocks, filters, urlLoading, loading, updateFilter]);
 
   // 뷰 모드 감지 (화면 크기에 따라 자동 변경)
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 1024) {
-        // 데스크톱: lg 브레이크포인트
         setViewMode('table');
         setShowScrollHint(false);
       } else {
-        // 태블릿 및 모바일
         setViewMode('mobileTable');
         setShowScrollHint(true);
       }
     };
 
-    // 초기 설정
     handleResize();
-
-    // 리사이즈 이벤트 리스너
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -237,46 +226,35 @@ export default function HowardPage() {
 
   // 정렬 토글 함수
   const toggleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    if (filters.sortField === field) {
+      updateFilter('sortDirection', filters.sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
-      setSortField(field);
-      setSortDirection('desc'); // 기본 정렬을 내림차순으로 설정
+      updateFilters({
+        sortField: field,
+        sortDirection: 'desc', // 기본 정렬을 내림차순으로 설정
+      });
     }
-  };
-
-  // 필터 초기화 함수
-  const resetFilters = () => {
-    setIndustryFilter('');
-    setSubIndustryFilter('');
-    setSafetyMinFilter('');
-    setSafetyMaxFilter('');
-    setDividendMinFilter('');
-    setDividendMaxFilter('');
-    setConsecutiveDividendFilter(null);
-    setSortField('margin_of_safety');
-    setSortDirection('desc');
   };
 
   // 페이지네이션 계산
   const totalPages = Math.ceil(filteredStocks.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
+  const startIndex = (filters.page - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentItems = filteredStocks.slice(startIndex, endIndex);
 
   // 페이지 변경 핸들러
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
-      setCurrentPage(newPage);
+      updateFilter('page', newPage);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   // 정렬 아이콘 렌더링 함수
   const renderSortIcon = (field: SortField) => {
-    if (sortField !== field) return null;
+    if (filters.sortField !== field) return null;
 
-    return sortDirection === 'asc' ? (
+    return filters.sortDirection === 'asc' ? (
       <ArrowUp size={12} className="ml-1 text-emerald-600 sort-icon" />
     ) : (
       <ArrowDown size={12} className="ml-1 text-emerald-600 sort-icon" />
@@ -287,7 +265,7 @@ export default function HowardPage() {
     <div className="flex flex-col min-h-screen bg-gray-50 px-4 sm:px-6 py-4 sm:py-6">
       <main className="flex-1 max-w-6xl mx-auto w-full animate-fadeIn">
         <div className="flex flex-col mb-6">
-          {/* 설명 카드 - 아코디언 방식 */}
+          {/* 설명 카드 - 아코디언 방식 (개선된 디자인) */}
           <div className="mb-4 bg-white rounded-2xl shadow-sm border border-gray-100 transition-all duration-300 hover:shadow-md overflow-hidden">
             <div
               className="flex items-center justify-between p-4 sm:p-5 cursor-pointer"
@@ -357,7 +335,7 @@ export default function HowardPage() {
             </div>
           </div>
 
-          {/* 필터 및 정렬 컨트롤 - 아코디언 방식 */}
+          {/* 필터 및 정렬 컨트롤 - 아코디언 방식 (개선된 디자인) */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 transition-all duration-300 hover:shadow-md overflow-hidden">
             <div
               className="flex items-center justify-between p-3 sm:p-4 cursor-pointer"
@@ -372,7 +350,7 @@ export default function HowardPage() {
               <div className="flex items-center">
                 <button
                   onClick={(e) => {
-                    e.stopPropagation(); // 버튼 클릭 시 아코디언 확장/축소 방지
+                    e.stopPropagation();
                     resetFilters();
                   }}
                   className="px-3 py-1.5 text-xs sm:text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors mr-3 hover:shadow-sm"
@@ -405,8 +383,8 @@ export default function HowardPage() {
                   <div className="mb-3">
                     <label className="block font-medium text-gray-700 mb-1 text-sm">산업군</label>
                     <select
-                      value={industryFilter}
-                      onChange={(e) => setIndustryFilter(e.target.value)}
+                      value={filters.industryFilter}
+                      onChange={(e) => updateFilter('industryFilter', e.target.value)}
                       className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                     >
                       <option value="">모든 산업군</option>
@@ -424,8 +402,8 @@ export default function HowardPage() {
                       하위 산업군
                     </label>
                     <select
-                      value={subIndustryFilter}
-                      onChange={(e) => setSubIndustryFilter(e.target.value)}
+                      value={filters.subIndustryFilter}
+                      onChange={(e) => updateFilter('subIndustryFilter', e.target.value)}
                       className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                       disabled={subIndustries.length === 0}
                     >
@@ -438,7 +416,7 @@ export default function HowardPage() {
                     </select>
                   </div>
 
-                  {/* 안전마진 범위 필터 추가 */}
+                  {/* 안전마진 범위 필터 */}
                   <div className="mb-3">
                     <label className="block font-medium text-gray-700 mb-1 text-sm">
                       안전마진 범위 (%)
@@ -446,9 +424,12 @@ export default function HowardPage() {
                     <div className="flex space-x-2">
                       <input
                         type="number"
-                        value={safetyMinFilter}
+                        value={filters.safetyMinFilter}
                         onChange={(e) =>
-                          setSafetyMinFilter(e.target.value === '' ? '' : Number(e.target.value))
+                          updateFilter(
+                            'safetyMinFilter',
+                            e.target.value === '' ? '' : Number(e.target.value)
+                          )
                         }
                         placeholder="최소"
                         min="0"
@@ -458,9 +439,12 @@ export default function HowardPage() {
                       <span className="self-center text-gray-400 text-sm">~</span>
                       <input
                         type="number"
-                        value={safetyMaxFilter}
+                        value={filters.safetyMaxFilter}
                         onChange={(e) =>
-                          setSafetyMaxFilter(e.target.value === '' ? '' : Number(e.target.value))
+                          updateFilter(
+                            'safetyMaxFilter',
+                            e.target.value === '' ? '' : Number(e.target.value)
+                          )
                         }
                         placeholder="최대"
                         min="0"
@@ -470,7 +454,7 @@ export default function HowardPage() {
                     </div>
                   </div>
 
-                  {/* 배당률 범위 필터 추가 */}
+                  {/* 배당률 범위 필터 */}
                   <div className="mb-3">
                     <label className="block font-medium text-gray-700 mb-1 text-sm">
                       배당률 범위 (%)
@@ -478,9 +462,12 @@ export default function HowardPage() {
                     <div className="flex space-x-2">
                       <input
                         type="number"
-                        value={dividendMinFilter}
+                        value={filters.dividendMinFilter}
                         onChange={(e) =>
-                          setDividendMinFilter(e.target.value === '' ? '' : Number(e.target.value))
+                          updateFilter(
+                            'dividendMinFilter',
+                            e.target.value === '' ? '' : Number(e.target.value)
+                          )
                         }
                         placeholder="최소"
                         min="0"
@@ -490,9 +477,12 @@ export default function HowardPage() {
                       <span className="self-center text-gray-400 text-sm">~</span>
                       <input
                         type="number"
-                        value={dividendMaxFilter}
+                        value={filters.dividendMaxFilter}
                         onChange={(e) =>
-                          setDividendMaxFilter(e.target.value === '' ? '' : Number(e.target.value))
+                          updateFilter(
+                            'dividendMaxFilter',
+                            e.target.value === '' ? '' : Number(e.target.value)
+                          )
                         }
                         placeholder="최대"
                         min="0"
@@ -502,24 +492,24 @@ export default function HowardPage() {
                     </div>
                   </div>
 
-                  {/* 연속 배당 필터 추가 */}
+                  {/* 연속 배당 필터 */}
                   <div className="mb-3">
                     <label className="block font-medium text-gray-700 mb-1 text-sm">
                       연속 배당 여부
                     </label>
                     <select
                       value={
-                        consecutiveDividendFilter === null
+                        filters.consecutiveDividendFilter === null
                           ? ''
-                          : consecutiveDividendFilter
+                          : filters.consecutiveDividendFilter
                           ? 'true'
                           : 'false'
                       }
                       onChange={(e) => {
                         if (e.target.value === '') {
-                          setConsecutiveDividendFilter(null);
+                          updateFilter('consecutiveDividendFilter', null);
                         } else {
-                          setConsecutiveDividendFilter(e.target.value === 'true');
+                          updateFilter('consecutiveDividendFilter', e.target.value === 'true');
                         }
                       }}
                       className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
@@ -537,8 +527,8 @@ export default function HowardPage() {
                     </label>
                     <div className="flex space-x-2">
                       <select
-                        value={sortField}
-                        onChange={(e) => setSortField(e.target.value as SortField)}
+                        value={filters.sortField}
+                        onChange={(e) => updateFilter('sortField', e.target.value)}
                         className="flex-1 border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
                       >
                         <option value="margin_of_safety">안전마진</option>
@@ -555,10 +545,15 @@ export default function HowardPage() {
                         <option value="consecutive_dividend">연속 배당</option>
                       </select>
                       <button
-                        onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
+                        onClick={() =>
+                          updateFilter(
+                            'sortDirection',
+                            filters.sortDirection === 'asc' ? 'desc' : 'asc'
+                          )
+                        }
                         className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all duration-200 group p-2"
                       >
-                        {sortDirection === 'asc' ? (
+                        {filters.sortDirection === 'asc' ? (
                           <ArrowUp
                             size={16}
                             className="group-hover:scale-125 transition-transform duration-200"
@@ -577,14 +572,213 @@ export default function HowardPage() {
 
               {/* 모바일 필터 UI - 수직 배치로 최적화 */}
               <div className="md:hidden border-t border-gray-100 p-4">
-                {/* 모바일 필터 UI 내용 */}
-                {/* (모바일 필터 UI 코드는 간략화를 위해 생략) */}
+                <div className="space-y-4">
+                  {/* 산업군 섹션 */}
+                  <div className="pb-3 border-b border-gray-100">
+                    <h3 className="text-sm font-medium text-gray-700 mb-2">산업군 필터</h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-xs text-gray-600 block mb-1">산업군</label>
+                        <select
+                          value={filters.industryFilter}
+                          onChange={(e) => updateFilter('industryFilter', e.target.value)}
+                          className="w-full rounded-lg border border-gray-300 p-2 text-sm"
+                        >
+                          <option value="">모든 산업군</option>
+                          {industries.map((industry) => (
+                            <option key={industry} value={industry}>
+                              {industry}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-xs text-gray-600 block mb-1">하위 산업군</label>
+                        <select
+                          value={filters.subIndustryFilter}
+                          onChange={(e) => updateFilter('subIndustryFilter', e.target.value)}
+                          className="w-full rounded-lg border border-gray-300 p-2 text-sm"
+                          disabled={subIndustries.length === 0}
+                        >
+                          <option value="">모든 하위 산업군</option>
+                          {subIndustries.map((subIndustry) => (
+                            <option key={subIndustry} value={subIndustry}>
+                              {subIndustry}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 각종 필터 - 모바일에 맞게 수직 배치 */}
+                  <div className="pb-3 border-b border-gray-100">
+                    <h3 className="text-sm font-medium text-gray-700 mb-2">범위 필터</h3>
+
+                    {/* 안전마진 범위 - 수직 배치 */}
+                    <div className="mb-3">
+                      <label className="text-xs text-gray-600 block mb-1">안전마진 범위 (%)</label>
+                      <div className="flex flex-col space-y-2">
+                        <div className="flex items-center">
+                          <span className="w-10 text-xs text-gray-500">최소:</span>
+                          <input
+                            type="number"
+                            value={filters.safetyMinFilter}
+                            onChange={(e) =>
+                              updateFilter(
+                                'safetyMinFilter',
+                                e.target.value === '' ? '' : Number(e.target.value)
+                              )
+                            }
+                            placeholder="최소값"
+                            min="0"
+                            className="w-full rounded-lg border border-gray-300 p-1.5 text-sm"
+                          />
+                        </div>
+                        <div className="flex items-center">
+                          <span className="w-10 text-xs text-gray-500">최대:</span>
+                          <input
+                            type="number"
+                            value={filters.safetyMaxFilter}
+                            onChange={(e) =>
+                              updateFilter(
+                                'safetyMaxFilter',
+                                e.target.value === '' ? '' : Number(e.target.value)
+                              )
+                            }
+                            placeholder="최대값"
+                            min="0"
+                            className="w-full rounded-lg border border-gray-300 p-1.5 text-sm"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 배당률 범위 - 수직 배치 */}
+                    <div className="mb-3">
+                      <label className="text-xs text-gray-600 block mb-1">배당률 범위 (%)</label>
+                      <div className="flex flex-col space-y-2">
+                        <div className="flex items-center">
+                          <span className="w-10 text-xs text-gray-500">최소:</span>
+                          <input
+                            type="number"
+                            value={filters.dividendMinFilter}
+                            onChange={(e) =>
+                              updateFilter(
+                                'dividendMinFilter',
+                                e.target.value === '' ? '' : Number(e.target.value)
+                              )
+                            }
+                            placeholder="최소값"
+                            min="0"
+                            step="0.1"
+                            className="w-full rounded-lg border border-gray-300 p-1.5 text-sm"
+                          />
+                        </div>
+                        <div className="flex items-center">
+                          <span className="w-10 text-xs text-gray-500">최대:</span>
+                          <input
+                            type="number"
+                            value={filters.dividendMaxFilter}
+                            onChange={(e) =>
+                              updateFilter(
+                                'dividendMaxFilter',
+                                e.target.value === '' ? '' : Number(e.target.value)
+                              )
+                            }
+                            placeholder="최대값"
+                            min="0"
+                            step="0.1"
+                            className="w-full rounded-lg border border-gray-300 p-1.5 text-sm"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 연속 배당 여부 */}
+                    <div>
+                      <label className="text-xs text-gray-600 block mb-1">연속 배당 여부</label>
+                      <select
+                        value={
+                          filters.consecutiveDividendFilter === null
+                            ? ''
+                            : filters.consecutiveDividendFilter
+                            ? 'true'
+                            : 'false'
+                        }
+                        onChange={(e) => {
+                          if (e.target.value === '') {
+                            updateFilter('consecutiveDividendFilter', null);
+                          } else {
+                            updateFilter('consecutiveDividendFilter', e.target.value === 'true');
+                          }
+                        }}
+                        className="w-full rounded-lg border border-gray-300 p-2 text-sm"
+                      >
+                        <option value="">전체</option>
+                        <option value="true">O (5년 연속 배당)</option>
+                        <option value="false">X (연속 배당 아님)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* 정렬 설정 */}
+                  <div className="pb-3">
+                    <label className="text-xs text-gray-600 block mb-1">정렬 기준</label>
+                    <div className="flex space-x-2">
+                      <select
+                        value={filters.sortField}
+                        onChange={(e) => updateFilter('sortField', e.target.value)}
+                        className="flex-1 rounded-lg border border-gray-300 p-2 text-sm"
+                      >
+                        <option value="margin_of_safety">안전마진</option>
+                        <option value="current_price">현재가</option>
+                        <option value="base_intrinsic_value">주당 순자산가치</option>
+                        <option value="market_cap_to_intrinsic_ratio">
+                          시가총액/내재가치 비율
+                        </option>
+                        <option value="net_current_asset_value">순자산가치</option>
+                        <option value="market_cap">시가총액</option>
+                        <option value="dividend_yield">배당률</option>
+                        <option value="company_name">회사명</option>
+                        <option value="industry">산업군</option>
+                        <option value="consecutive_dividend">연속 배당</option>
+                      </select>
+                      <button
+                        onClick={() =>
+                          updateFilter(
+                            'sortDirection',
+                            filters.sortDirection === 'asc' ? 'desc' : 'asc'
+                          )
+                        }
+                        className="flex items-center justify-center p-2 bg-gray-100 rounded-lg"
+                      >
+                        {filters.sortDirection === 'asc' ? (
+                          <ArrowUp size={16} className="text-gray-700" />
+                        ) : (
+                          <ArrowDown size={16} className="text-gray-700" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 필터 액션 버튼 */}
+                  <div>
+                    <button
+                      onClick={resetFilters}
+                      className="w-full py-2 text-white bg-emerald-600 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors"
+                    >
+                      필터 초기화
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* 로딩 상태 */}
+        {/* 로딩 상태 - 세련된 로딩 애니메이션 */}
         {loading && (
           <div className="bg-white rounded-2xl p-8 shadow-md flex flex-col items-center justify-center mb-6 transition-all duration-300 border border-gray-100">
             <div className="relative w-16 h-16 mb-4">
@@ -598,7 +792,7 @@ export default function HowardPage() {
           </div>
         )}
 
-        {/* 오류 메시지 */}
+        {/* 오류 메시지 - 세련된 알림 디자인 */}
         {error && !loading && (
           <div className="bg-white p-5 sm:p-6 rounded-2xl shadow-md mb-6 border-l-4 border-gray-400 transition-all duration-300 hover:shadow-lg animate-fadeIn">
             <div className="flex items-start">
@@ -628,7 +822,7 @@ export default function HowardPage() {
                 </div>
               </div>
 
-              {/* 모바일 테이블 뷰 */}
+              {/* 모바일 테이블 뷰 (개선된 디자인) */}
               {viewMode === 'mobileTable' && (
                 <div className="relative overflow-x-auto">
                   {showScrollHint && <div className="scrollable-hint"></div>}
@@ -666,7 +860,6 @@ export default function HowardPage() {
                             {renderSortIcon('base_intrinsic_value')}
                           </div>
                         </th>
-
                         <th
                           scope="col"
                           className="bg-gray-50 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200 table-head-cell"
@@ -718,7 +911,6 @@ export default function HowardPage() {
                               {formatNumber(stock.base_intrinsic_value)}원
                             </div>
                           </td>
-
                           <td className="bg-gray-50 px-3 py-3 whitespace-nowrap">
                             <div className="text-xs text-gray-900">
                               {stock.margin_of_safety.toFixed(1)}%
@@ -741,7 +933,7 @@ export default function HowardPage() {
                 </div>
               )}
 
-              {/* 테이블 뷰 (데스크톱 또는 선택 시) */}
+              {/* 테이블 뷰 (데스크톱 또는 선택 시) (개선된 디자인) */}
               {viewMode === 'table' && (
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
@@ -883,11 +1075,133 @@ export default function HowardPage() {
                 </div>
               )}
 
-              {/* 페이지네이션 */}
+              {/* 페이지네이션 - filters.page 사용 */}
               {totalPages > 1 && (
                 <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 sm:px-6 flex items-center justify-between">
-                  {/* 페이지네이션 코드 */}
-                  {/* (페이지네이션 코드는 간략화를 위해 생략) */}
+                  <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm text-gray-700">
+                        <span className="font-medium">{startIndex + 1}</span> ~{' '}
+                        <span className="font-medium">
+                          {Math.min(endIndex, filteredStocks.length)}
+                        </span>{' '}
+                        / <span className="font-medium">{filteredStocks.length}</span> 개 결과
+                      </p>
+                    </div>
+                    <div>
+                      <nav
+                        className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                        aria-label="Pagination"
+                      >
+                        <button
+                          onClick={() => handlePageChange(filters.page - 1)}
+                          disabled={filters.page === 1}
+                          className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${
+                            filters.page === 1
+                              ? 'text-gray-300 cursor-not-allowed'
+                              : 'text-gray-500 hover:bg-gray-50'
+                          }`}
+                        >
+                          <span className="sr-only">Previous</span>
+                          <ChevronLeft className="h-5 w-5" />
+                        </button>
+
+                        {[...Array(totalPages)].map((_, i) => {
+                          const pageNumber = i + 1;
+                          const isVisible =
+                            pageNumber === 1 ||
+                            pageNumber === totalPages ||
+                            Math.abs(pageNumber - filters.page) <= 1;
+
+                          const showEllipsisBefore = i === 1 && filters.page > 3;
+                          const showEllipsisAfter =
+                            i === totalPages - 2 && filters.page < totalPages - 2;
+
+                          if (showEllipsisBefore) {
+                            return (
+                              <span
+                                key={`ellipsis-before`}
+                                className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700"
+                              >
+                                ...
+                              </span>
+                            );
+                          }
+
+                          if (showEllipsisAfter) {
+                            return (
+                              <span
+                                key={`ellipsis-after`}
+                                className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700"
+                              >
+                                ...
+                              </span>
+                            );
+                          }
+
+                          if (isVisible) {
+                            return (
+                              <button
+                                key={pageNumber}
+                                onClick={() => handlePageChange(pageNumber)}
+                                className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-colors duration-200 ${
+                                  filters.page === pageNumber
+                                    ? 'z-10 bg-emerald-50 border-emerald-500 text-emerald-600 hover:bg-emerald-100'
+                                    : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                                }`}
+                              >
+                                {pageNumber}
+                              </button>
+                            );
+                          }
+
+                          return null;
+                        })}
+
+                        <button
+                          onClick={() => handlePageChange(filters.page + 1)}
+                          disabled={filters.page === totalPages}
+                          className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${
+                            filters.page === totalPages
+                              ? 'text-gray-300 cursor-not-allowed'
+                              : 'text-gray-500 hover:bg-gray-50'
+                          }`}
+                        >
+                          <span className="sr-only">Next</span>
+                          <ChevronRight className="h-5 w-5" />
+                        </button>
+                      </nav>
+                    </div>
+                  </div>
+
+                  {/* 모바일 페이지네이션 */}
+                  <div className="flex flex-1 justify-between sm:hidden">
+                    <button
+                      onClick={() => handlePageChange(filters.page - 1)}
+                      disabled={filters.page === 1}
+                      className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
+                        filters.page === 1
+                          ? 'text-gray-300 bg-gray-50 cursor-not-allowed'
+                          : 'text-gray-700 bg-white hover:bg-gray-50'
+                      }`}
+                    >
+                      이전
+                    </button>
+                    <span className="text-sm text-gray-700 pt-2">
+                      <span className="font-medium">{filters.page}</span> / {totalPages}
+                    </span>
+                    <button
+                      onClick={() => handlePageChange(filters.page + 1)}
+                      disabled={filters.page === totalPages}
+                      className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
+                        filters.page === totalPages
+                          ? 'text-gray-300 bg-gray-50 cursor-not-allowed'
+                          : 'text-gray-700 bg-white hover:bg-gray-50'
+                      }`}
+                    >
+                      다음
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
