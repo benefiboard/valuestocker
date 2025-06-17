@@ -115,6 +115,125 @@ export interface HowardPageFilters {
   consecutiveDividendFilter: boolean | null;
 }
 
+// useUrlFilters.ts에 추가할 MinimumPageFilters 타입과 스키마
+
+// Minimum 페이지 전용 필터 타입 (확장됨)
+export interface MinimumPageFilters {
+  page: number;
+  sortField: string;
+  sortDirection: 'asc' | 'desc';
+  industryFilter: string;
+  subIndustryFilter: string;
+  dividendMinFilter: number | string;
+  dividendMaxFilter: number | string;
+  ncavMinFilter: number | string; // 주당 NCAV 최소값
+  ncavMaxFilter: number | string; // 주당 NCAV 최대값
+  liquidationMinFilter: number | string; // 주당 청산가치 최소값
+  liquidationMaxFilter: number | string; // 주당 청산가치 최대값
+  consecutiveDividendFilter: boolean | null;
+
+  // 새로 추가된 필터들
+  valueCaseFilter: string; // 'all' | 'both' | 'ncav_only' | 'liquidation_only'
+  minDiscountRateFilter: number; // 최소 할인율 (%)
+  discountRateTypeFilter: string; // 'best' | 'ncav' | 'liquidation' - 어떤 할인율을 기준으로 할지
+}
+
+// Minimum 페이지 필터 스키마 (확장됨)
+export const minimumPageSchema: FilterSchema<MinimumPageFilters> = {
+  page: {
+    type: 'number',
+    defaultValue: 1,
+    urlKey: 'page',
+    shouldShow: (value) => value > 1,
+  },
+  sortField: {
+    type: 'string',
+    defaultValue: 'best_discount_rate', // 기본 정렬을 최고 할인율로 변경
+    urlKey: 'sort',
+    shouldShow: (value, defaultValue) => value !== defaultValue,
+  },
+  sortDirection: {
+    type: 'string',
+    defaultValue: 'desc' as const,
+    urlKey: 'sortDir',
+    shouldShow: (value, defaultValue) => value !== defaultValue,
+  },
+  industryFilter: {
+    type: 'string',
+    defaultValue: '',
+    urlKey: 'industry',
+    shouldShow: (value) => value !== '',
+  },
+  subIndustryFilter: {
+    type: 'string',
+    defaultValue: '',
+    urlKey: 'subIndustry',
+    shouldShow: (value) => value !== '',
+  },
+  dividendMinFilter: {
+    type: 'number',
+    defaultValue: 0,
+    urlKey: 'dividendMin',
+    shouldShow: (value, defaultValue) => value !== defaultValue && value !== '',
+  },
+  dividendMaxFilter: {
+    type: 'string',
+    defaultValue: '',
+    urlKey: 'dividendMax',
+    shouldShow: (value) => value !== '' && value !== null,
+  },
+  ncavMinFilter: {
+    type: 'number',
+    defaultValue: 0,
+    urlKey: 'ncavMin',
+    shouldShow: (value, defaultValue) => value !== defaultValue && value !== '',
+  },
+  ncavMaxFilter: {
+    type: 'string',
+    defaultValue: '',
+    urlKey: 'ncavMax',
+    shouldShow: (value) => value !== '' && value !== null,
+  },
+  liquidationMinFilter: {
+    type: 'number',
+    defaultValue: 0,
+    urlKey: 'liquidationMin',
+    shouldShow: (value, defaultValue) => value !== defaultValue && value !== '',
+  },
+  liquidationMaxFilter: {
+    type: 'string',
+    defaultValue: '',
+    urlKey: 'liquidationMax',
+    shouldShow: (value) => value !== '' && value !== null,
+  },
+  consecutiveDividendFilter: {
+    type: 'boolean',
+    defaultValue: null,
+    urlKey: 'consecutiveDividend',
+    shouldShow: (value) => value !== null,
+  },
+
+  // 새로 추가된 필터들
+  valueCaseFilter: {
+    type: 'string',
+    defaultValue: 'all',
+    urlKey: 'valueCase',
+    shouldShow: (value, defaultValue) => value !== defaultValue,
+  },
+  minDiscountRateFilter: {
+    type: 'number',
+    defaultValue: 0,
+    urlKey: 'minDiscount',
+    shouldShow: (value, defaultValue) => value !== defaultValue,
+  },
+  discountRateTypeFilter: {
+    type: 'string',
+    defaultValue: 'best',
+    urlKey: 'discountType',
+    shouldShow: (value, defaultValue) => value !== defaultValue,
+  },
+};
+
 // Howard 페이지 필터 스키마
 export const howardPageSchema: FilterSchema<HowardPageFilters> = {
   page: {

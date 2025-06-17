@@ -153,3 +153,16 @@ export interface IndustryData {
   maxPerpetualGrowthRate: number;
   subIndustries: string[];
 }
+
+export interface MinimumStock {
+  stock_code: string;
+  company_name: string;
+  industry: string;
+  subindustry: string;
+  ncav_per_share: number; // 주당 NCAV
+  liquidation_per_share: number; // 주당 청산가치
+  current_per: number;
+  current_price: number;
+  dividend_yield: number;
+  consecutive_dividend: boolean;
+}
