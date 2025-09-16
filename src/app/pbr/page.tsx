@@ -32,6 +32,7 @@ export default function PBRCalculatorPage() {
   const [error, setError] = useState<string>('');
   const [expandedExplanation, setExpandedExplanation] = useState<boolean>(false);
   const [showResult, setShowResult] = useState<boolean>(false);
+  const [isInitialPBR, setIsInitialPBR] = useState<boolean>(true); // PBR 초기 상태 추적
 
   // 애니메이션 키프레임
   const styles = `
@@ -89,9 +90,12 @@ export default function PBRCalculatorPage() {
 
   // 현재 PBR용 특별 처리 함수
   const handleCurrentPBRChange = (inputValue: string) => {
-    // 빈 문자열이면 1로 처리 (디폴트값)
+    // 사용자가 입력을 시작했음을 표시
+    setIsInitialPBR(false);
+
+    // 빈 문자열이면 0으로 처리하되, 실제로는 보여주지 않음
     if (inputValue === '') {
-      handleParamChange('currentPBR', 1);
+      handleParamChange('currentPBR', 0);
       return;
     }
 
@@ -298,7 +302,7 @@ export default function PBRCalculatorPage() {
                 min="0.01"
                 max="999"
                 step="0.01"
-                value={params.currentPBR === 1 ? '' : params.currentPBR.toString()}
+                value={isInitialPBR && params.currentPBR === 1 ? '' : params.currentPBR.toString()}
                 onChange={(e) => handleCurrentPBRChange(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center"
                 placeholder="현재 PBR (배)"
