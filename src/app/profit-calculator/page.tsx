@@ -20,6 +20,9 @@ import {
   Search as SearchIcon,
   DollarSign,
   X,
+  TrendingUp,
+  Clock,
+  Target,
 } from 'lucide-react';
 import { formatAsset } from '@/utils/stockUtils';
 import RiskWarning from '@/components/RiskWarning';
@@ -54,11 +57,6 @@ export default function ProfitCalculatorPage() {
     discountRate: 10,
     sustainableYears: 10,
   });
-
-  // 드롭다운 옵션
-  const discountRateOptions = [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
-  const sustainableYearsOptions = Array.from({ length: 16 }, (_, i) => i + 5); // 5-20년
-  const settingROEOptions = Array.from({ length: 30 }, (_, i) => i + 1); // 1-30%
 
   // 애니메이션 키프레임
   const styles = `
@@ -129,8 +127,9 @@ export default function ProfitCalculatorPage() {
         setRoeHistory(roeData);
         setAverageHistoricalROE(avgROE);
 
+        // 소수점 2자리로 반올림하여 적용
         if (avgROE > 0) {
-          handleParamChange('settingROE', Math.round(avgROE));
+          handleParamChange('settingROE', parseFloat(avgROE.toFixed(2)));
         }
       }
     } catch (error) {
@@ -139,7 +138,7 @@ export default function ProfitCalculatorPage() {
       setLoadingROE(false);
     }
 
-    // ⭐ 엔터키로 선택했으면 바로 분석 시작
+    // 엔터키로 선택했으면 바로 분석 시작
     if (autoSearch) {
       console.log('🚀 profit-calculator 자동 분석 시작!');
       setAutoSearchTriggered(true);
@@ -226,6 +225,25 @@ export default function ProfitCalculatorPage() {
     await performSearch(selectedCompany.stockCode);
   };
 
+  // 파라미터 변경 핸들러
+  const handleParamChange = (param: keyof ProfitCalculationParams, value: number) => {
+    const cleanValue = isNaN(value) || value < 0 ? 0 : value;
+    setProfitParams((prev) => ({
+      ...prev,
+      [param]: cleanValue,
+    }));
+  };
+
+  // input 값 정리 함수
+  const handleInputChange = (param: keyof ProfitCalculationParams, inputValue: string) => {
+    if (inputValue === '') {
+      handleParamChange(param, 0);
+      return;
+    }
+    const numValue = parseFloat(inputValue);
+    handleParamChange(param, numValue);
+  };
+
   // 계산 버튼 클릭 핸들러
   const handleCalculateClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -233,22 +251,36 @@ export default function ProfitCalculatorPage() {
       setError('회사를 검색하고 선택해주세요');
       return;
     }
+
+    // 유효성 검사
+    if (profitParams.settingROE < 0.1 || profitParams.settingROE > 100) {
+      setError('ROE는 0.1%에서 100% 사이여야 합니다');
+      return;
+    }
+    if (profitParams.discountRate < 1 || profitParams.discountRate > 30) {
+      setError('목표 수익률은 1%에서 30% 사이여야 합니다');
+      return;
+    }
+    if (profitParams.sustainableYears < 1 || profitParams.sustainableYears > 30) {
+      setError('지속 기간은 1년에서 30년 사이여야 합니다');
+      return;
+    }
+
     setAutoSearchTriggered(true);
     performSearch(selectedCompany.stockCode);
-  };
-
-  // 파라미터 변경 핸들러
-  const handleParamChange = (param: keyof ProfitCalculationParams, value: number) => {
-    setProfitParams((prev) => ({
-      ...prev,
-      [param]: value,
-    }));
   };
 
   // 재계산 함수
   const handleRecalculate = async () => {
     if (selectedCompany) {
       await performSearch(selectedCompany.stockCode);
+    }
+  };
+
+  // 평균 ROE 적용 함수
+  const applyAverageROE = () => {
+    if (averageHistoricalROE > 0) {
+      handleParamChange('settingROE', averageHistoricalROE);
     }
   };
 
@@ -275,7 +307,7 @@ export default function ProfitCalculatorPage() {
             <form onSubmit={handleSearch}>
               <div className="mb-8">
                 <label className="block text-sm font-medium text-gray-700 mb-3">
-                  📍 분석할 기업 선택
+                  🔍 분석할 기업 선택
                 </label>
                 <CompanySearchInput
                   onCompanySelect={handleCompanySelect}
@@ -285,160 +317,131 @@ export default function ProfitCalculatorPage() {
                 />
               </div>
 
-              {/* 3단계 가이드 */}
+              {/* 4단계 입력 폼 */}
               {selectedCompany && (
                 <div className="animate-fadeIn">
                   <h3 className="text-lg font-bold text-gray-800 mb-6 text-center">
-                    🎯 3단계로 나만의 투자 시나리오 만들기
+                    🎯 투자 시나리오 설정하기
                   </h3>
 
-                  <div className="space-y-6 mb-8">
+                  {/* 간결한 4단계 그리드 */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                     {/* 1단계 - ROE */}
-                    <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                      <div className="flex items-start">
-                        <span className="bg-emerald-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-4 flex-shrink-0">
+                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                      <div className="flex items-center mb-3">
+                        <span className="bg-emerald-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-2">
                           1
                         </span>
-                        <div className="flex-1">
-                          <h4 className="font-bold text-gray-800 mb-2">
-                            회사가 자기자본 100원으로 1년에 몇 원을 벌까요?
-                          </h4>
-                          <p className="text-sm text-gray-600 mb-4">
-                            자본 활용 효율성을 나타내는 ROE(자기자본이익률)입니다
-                          </p>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                              <select
-                                value={profitParams.settingROE}
-                                onChange={(e) =>
-                                  handleParamChange('settingROE', Number(e.target.value))
-                                }
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                              >
-                                {settingROEOptions.map((roe) => (
-                                  <option key={roe} value={roe}>
-                                    {roe}%{' '}
-                                    {roe >= 20
-                                      ? '(최우수)'
-                                      : roe >= 15
-                                      ? '(우수)'
-                                      : roe >= 10
-                                      ? '(양호)'
-                                      : roe >= 5
-                                      ? '(보통)'
-                                      : '(저조)'}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                            {averageHistoricalROE > 0 && (
-                              <div className="bg-white rounded-lg p-3 border border-gray-200">
-                                <p className="text-xs text-gray-600 mb-1">
-                                  💡 {selectedCompany.companyName} 3년 평균
-                                </p>
-                                <div className="flex justify-between items-center">
-                                  <span className="font-bold text-emerald-600">
-                                    {averageHistoricalROE.toFixed(1)}%
-                                  </span>
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      handleParamChange(
-                                        'settingROE',
-                                        Math.round(averageHistoricalROE)
-                                      )
-                                    }
-                                    className="text-xs bg-emerald-500 text-white px-2 py-1 rounded hover:bg-emerald-600 transition-colors"
-                                  >
-                                    적용
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
+                        <TrendingUp className="h-4 w-4 text-emerald-600 mr-2" />
+                        <h3 className="font-bold text-gray-800 text-sm">예상 ROE</h3>
                       </div>
+                      <input
+                        type="number"
+                        min="0.1"
+                        max="100"
+                        step="0.1"
+                        value={profitParams.settingROE === 0 ? '' : profitParams.settingROE}
+                        onChange={(e) => handleInputChange('settingROE', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-center"
+                        placeholder="ROE (%)"
+                      />
+                      <p className="text-xs text-gray-500 mt-1 text-center">0.1-100% 입력</p>
                     </div>
 
                     {/* 2단계 - 지속기간 */}
-                    <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                      <div className="flex items-start">
-                        <span className="bg-emerald-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-4 flex-shrink-0">
+                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                      <div className="flex items-center mb-3">
+                        <span className="bg-emerald-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-2">
                           2
                         </span>
-                        <div className="flex-1">
-                          <h4 className="font-bold text-gray-800 mb-2">
-                            이런 효율성이 몇 년간 유지될까요?
-                          </h4>
-                          <p className="text-sm text-gray-600 mb-4">
-                            기업의 경쟁우위가 지속될 것으로 예상되는 기간입니다
-                          </p>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                              <select
-                                value={profitParams.sustainableYears}
-                                onChange={(e) =>
-                                  handleParamChange('sustainableYears', Number(e.target.value))
-                                }
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                              >
-                                {sustainableYearsOptions.map((year) => (
-                                  <option key={year} value={year}>
-                                    {year}년{' '}
-                                    {year <= 7 ? '(단기)' : year <= 12 ? '(중기)' : '(장기)'}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                            <div className="bg-white rounded-lg p-3 border border-gray-200">
-                              <p className="text-xs text-gray-600">
-                                💡 일반적으로 7-12년이 적정 수준으로 여겨집니다
-                              </p>
-                            </div>
-                          </div>
-                        </div>
+                        <Clock className="h-4 w-4 text-emerald-600 mr-2" />
+                        <h3 className="font-bold text-gray-800 text-sm">지속기간</h3>
                       </div>
+                      <input
+                        type="number"
+                        min="1"
+                        max="30"
+                        value={
+                          profitParams.sustainableYears === 0 ? '' : profitParams.sustainableYears
+                        }
+                        onChange={(e) => handleInputChange('sustainableYears', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-center"
+                        placeholder="년"
+                      />
+                      <p className="text-xs text-gray-500 mt-1 text-center">1-30년 입력</p>
                     </div>
 
                     {/* 3단계 - 목표수익률 */}
-                    <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                      <div className="flex items-start">
-                        <span className="bg-emerald-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-4 flex-shrink-0">
+                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                      <div className="flex items-center mb-3">
+                        <span className="bg-emerald-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-2">
                           3
                         </span>
-                        <div className="flex-1">
-                          <h4 className="font-bold text-gray-800 mb-2">
-                            이 투자로 최소 연 몇 %의 수익을 원하시나요?
-                          </h4>
-                          <p className="text-sm text-gray-600 mb-4">
-                            투자자가 요구하는 최소 수익률(할인율)입니다
-                          </p>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                              <select
-                                value={profitParams.discountRate}
-                                onChange={(e) =>
-                                  handleParamChange('discountRate', Number(e.target.value))
-                                }
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                              >
-                                {discountRateOptions.map((rate) => (
-                                  <option key={rate} value={rate}>
-                                    연 {rate}%{' '}
-                                    {rate <= 7 ? '(안정형)' : rate <= 10 ? '(균형형)' : '(공격형)'}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                            <div className="bg-white rounded-lg p-3 border border-gray-200">
-                              <div className="text-xs text-gray-600 space-y-1">
-                                <p>💡 정기예금: 약 3.5%</p>
-                                <p>💡 코스피 평균: 약 8%</p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                        <Target className="h-4 w-4 text-emerald-600 mr-2" />
+                        <h3 className="font-bold text-gray-800 text-sm">목표수익률</h3>
                       </div>
+                      <input
+                        type="number"
+                        min="1"
+                        max="30"
+                        step="0.1"
+                        value={profitParams.discountRate === 0 ? '' : profitParams.discountRate}
+                        onChange={(e) => handleInputChange('discountRate', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-center"
+                        placeholder="연 %"
+                      />
+                      <p className="text-xs text-gray-500 mt-1 text-center">1-30% 입력</p>
+                    </div>
+
+                    {/* 4단계 - 추천값 */}
+                    <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-4 border border-emerald-200">
+                      <div className="flex items-center mb-3">
+                        <span className="bg-emerald-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-2">
+                          💡
+                        </span>
+                        <h3 className="font-bold text-emerald-800 text-sm">실제 데이터</h3>
+                      </div>
+                      {loadingROE ? (
+                        <div className="text-center py-2">
+                          <Loader2 className="h-5 w-5 animate-spin mx-auto text-emerald-600" />
+                        </div>
+                      ) : averageHistoricalROE > 0 ? (
+                        <>
+                          <div className="text-center mb-2">
+                            <p className="text-xs text-emerald-700 mb-1">3년 평균 ROE</p>
+                            <p className="text-2xl font-bold text-emerald-800">
+                              {averageHistoricalROE.toFixed(1)}%
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={applyAverageROE}
+                            className="w-full text-xs bg-emerald-600 text-white px-2 py-2 rounded-lg hover:bg-emerald-700 transition-colors"
+                          >
+                            이 값 적용
+                          </button>
+                        </>
+                      ) : (
+                        <p className="text-xs text-center text-emerald-700 py-4">
+                          데이터 로딩 중...
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 간단한 도움말 */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs text-gray-600 mb-6">
+                    <div className="text-center">
+                      <p className="font-medium">💡 ROE</p>
+                      <p>자기자본 대비 수익률</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="font-medium">💡 지속기간</p>
+                      <p>경쟁우위 유지기간</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="font-medium">💡 목표수익률</p>
+                      <p>투자자 요구 수익률</p>
                     </div>
                   </div>
 
@@ -561,9 +564,67 @@ export default function ProfitCalculatorPage() {
               </div>
 
               <div className="text-center text-sm text-gray-600 border-t pt-4">
-                ({profitParams.sustainableYears}년간 ROE {profitParams.settingROE}% 유지, 목표
-                수익률 {profitParams.discountRate}% 가정)
+                ({profitParams.sustainableYears}년간 ROE {profitParams.settingROE.toFixed(1)}% 유지,
+                목표 수익률 {profitParams.discountRate}% 가정)
               </div>
+            </div>
+
+            {/* 파라미터 조정 섹션 */}
+            <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-md border border-gray-100">
+              <h3 className="text-lg font-bold text-gray-800 mb-6">🔧 설정 값 조정하기</h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    💰 자본 효율성 (ROE %)
+                  </label>
+                  <input
+                    type="number"
+                    min="0.1"
+                    max="100"
+                    step="0.1"
+                    value={profitParams.settingROE === 0 ? '' : profitParams.settingROE}
+                    onChange={(e) => handleInputChange('settingROE', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    ⏰ 지속 기간
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="30"
+                    value={profitParams.sustainableYears === 0 ? '' : profitParams.sustainableYears}
+                    onChange={(e) => handleInputChange('sustainableYears', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    🎯 목표 수익률
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="30"
+                    step="0.1"
+                    value={profitParams.discountRate === 0 ? '' : profitParams.discountRate}
+                    onChange={(e) => handleInputChange('discountRate', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={handleRecalculate}
+                className="w-full mt-6 bg-gray-100 hover:bg-gray-200 text-gray-800 py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center font-medium"
+              >
+                다시 계산하기
+              </button>
             </div>
 
             {/* 투자 시나리오 */}
@@ -611,87 +672,14 @@ export default function ProfitCalculatorPage() {
               {profitParams.settingROE < profitParams.discountRate && (
                 <div className="mt-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
                   <p className="text-sm text-yellow-800">
-                    <strong>⚠️ 주의:</strong> 설정한 ROE({profitParams.settingROE}%)가 목표 수익률(
+                    <strong>⚠️ 주의:</strong> 설정한 ROE({profitParams.settingROE.toFixed(1)}%)가
+                    목표 수익률(
                     {profitParams.discountRate}%)보다 낮습니다. 이는 기업이 투자자가 요구하는
                     수익률보다 낮은 수익을 내고 있다는 의미로, 보유 기간이 길수록 투자 가치가
                     감소합니다.
                   </p>
                 </div>
               )}
-            </div>
-
-            {/* 파라미터 조정 섹션 */}
-            <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-md border border-gray-100">
-              <h3 className="text-lg font-bold text-gray-800 mb-6">🔧 설정 값 조정하기</h3>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    💰 자본 효율성 (ROE %)
-                  </label>
-                  <select
-                    value={profitParams.settingROE}
-                    onChange={(e) => handleParamChange('settingROE', Number(e.target.value))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  >
-                    {settingROEOptions.map((roe) => (
-                      <option key={roe} value={roe}>
-                        {roe}%{' '}
-                        {roe >= 20
-                          ? '(최우수)'
-                          : roe >= 15
-                          ? '(우수)'
-                          : roe >= 10
-                          ? '(양호)'
-                          : roe >= 5
-                          ? '(보통)'
-                          : '(저조)'}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    ⏰ 지속 기간
-                  </label>
-                  <select
-                    value={profitParams.sustainableYears}
-                    onChange={(e) => handleParamChange('sustainableYears', Number(e.target.value))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  >
-                    {sustainableYearsOptions.map((year) => (
-                      <option key={year} value={year}>
-                        {year}년 {year <= 7 ? '(단기)' : year <= 12 ? '(중기)' : '(장기)'}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    🎯 목표 수익률
-                  </label>
-                  <select
-                    value={profitParams.discountRate}
-                    onChange={(e) => handleParamChange('discountRate', Number(e.target.value))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  >
-                    {discountRateOptions.map((rate) => (
-                      <option key={rate} value={rate}>
-                        연 {rate}% {rate <= 7 ? '(안정형)' : rate <= 10 ? '(균형형)' : '(공격형)'}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <button
-                onClick={handleRecalculate}
-                className="w-full mt-6 bg-gray-100 hover:bg-gray-200 text-gray-800 py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center font-medium"
-              >
-                다시 계산하기
-              </button>
             </div>
 
             {/* ROE 데이터 테이블 */}
@@ -776,14 +764,15 @@ export default function ProfitCalculatorPage() {
                 <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                   <p className="font-medium text-gray-800 mb-2">실제 계산</p>
                   <p className="text-gray-700 mb-3">
-                    기업이 매년 자기자본 대비 {profitParams.settingROE}%의 수익을 내고, 투자자가
-                    원하는 수익률 {profitParams.discountRate}%를 고려하면,
+                    기업이 매년 자기자본 대비 {profitParams.settingROE.toFixed(1)}%의 수익을 내고,
+                    투자자가 원하는 수익률 {profitParams.discountRate}%를 고려하면,
                     {profitParams.sustainableYears}년 후의 적정 PBR은 현재의{' '}
                     {calculatedResult.expectedPBR.toFixed(2)}배가 됩니다.
                   </p>
                   <div className="p-3 bg-white rounded border">
                     <p className="font-mono text-xs text-gray-600">
-                      예상 적정 PBR = [(1+{profitParams.settingROE}%)÷(1+{profitParams.discountRate}
+                      예상 적정 PBR = [(1+{profitParams.settingROE.toFixed(1)}%)÷(1+
+                      {profitParams.discountRate}
                       %)]^{profitParams.sustainableYears}
                     </p>
                     <p className="font-mono text-xs text-gray-600 mt-1">
@@ -830,10 +819,7 @@ export default function ProfitCalculatorPage() {
                   className="w-full"
                 >
                   <button className="w-full inline-flex items-center justify-center bg-emerald-600 text-white px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-emerald-700 transition-all duration-300 shadow-sm hover:shadow group relative overflow-hidden">
-                    {/* 버튼 배경 효과 */}
                     <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-emerald-500 to-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-
-                    {/* 버튼 텍스트 */}
                     <span className="relative flex items-center">
                       체크리스트
                       <svg
@@ -854,16 +840,12 @@ export default function ProfitCalculatorPage() {
                   </button>
                 </Link>
 
-                {/* 수익가치 계산 버튼 추가 */}
                 <Link
                   href={`/profit-calculator?stockCode=${selectedCompany?.stockCode}`}
                   className="w-full"
                 >
                   <button className="w-full inline-flex items-center justify-center bg-emerald-600 text-white px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-emerald-700 transition-all duration-300 shadow-sm hover:shadow group relative overflow-hidden">
-                    {/* 버튼 배경 효과 */}
                     <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-emerald-500 to-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-
-                    {/* 버튼 텍스트 */}
                     <span className="relative flex items-center">
                       수익가치 계산
                       <svg
@@ -884,7 +866,6 @@ export default function ProfitCalculatorPage() {
                   </button>
                 </Link>
 
-                {/* 네이버 증권 버튼 */}
                 <a
                   href={`https://finance.naver.com/item/main.naver?code=${selectedCompany?.stockCode}`}
                   target="_blank"
@@ -892,10 +873,7 @@ export default function ProfitCalculatorPage() {
                   className="w-full"
                 >
                   <button className="w-full inline-flex items-center justify-center bg-emerald-600 text-white px-5 py-3 rounded-xl text-sm sm:text-base font-medium hover:bg-emerald-700 transition-all duration-300 shadow-sm hover:shadow group relative overflow-hidden">
-                    {/* 버튼 배경 효과 */}
                     <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-emerald-500 to-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-
-                    {/* 버튼 텍스트 */}
                     <span className="relative flex items-center">
                       네이버증권
                       <svg
