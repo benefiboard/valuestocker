@@ -50,6 +50,7 @@ export default function ProfitCalculatorPage() {
   const [roeHistory, setRoeHistory] = useState<ROEData[] | null>(null);
   const [averageHistoricalROE, setAverageHistoricalROE] = useState<number>(0);
   const [loadingROE, setLoadingROE] = useState<boolean>(false);
+  const [shouldAutoCalculate, setShouldAutoCalculate] = useState<boolean>(false);
 
   // 수익가치 계산 파라미터
   const [profitParams, setProfitParams] = useState<ProfitCalculationParams>({
@@ -146,6 +147,15 @@ export default function ProfitCalculatorPage() {
     }
   };
 
+  // ROE 로딩 완료 후 자동 계산
+  useEffect(() => {
+    if (shouldAutoCalculate && !loadingROE && selectedCompany && averageHistoricalROE > 0) {
+      console.log('✅ ROE 로딩 완료, 자동 계산 시작:', averageHistoricalROE);
+      setShouldAutoCalculate(false);
+      setTimeout(() => performSearch(selectedCompany.stockCode), 100);
+    }
+  }, [loadingROE, shouldAutoCalculate, averageHistoricalROE, selectedCompany]);
+
   // URL 쿼리 파라미터 처리
   useEffect(() => {
     const stockCode = searchParams.get('stockCode');
@@ -172,7 +182,7 @@ export default function ProfitCalculatorPage() {
       if (company) {
         handleCompanySelect(company);
         setAutoSearchTriggered(true);
-        setTimeout(() => performSearch(company.stockCode), 100);
+        setShouldAutoCalculate(true); // ROE 로딩 완료 후 자동 계산 플래그
       }
     }
   }, [searchParams]);
