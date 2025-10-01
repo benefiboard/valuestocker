@@ -36,27 +36,11 @@ export const getStockRawData = async (stockCode: string): Promise<StockRawData |
   return data;
 };
 
-// stock_current에서 PBR 데이터 가져오기
-export const getStockCurrentPBR = async (stockCode: string): Promise<number | null> => {
-  const { data, error } = await supabase
-    .from('stock_current')
-    .select('current_pbr')
-    .eq('stock_code', stockCode)
-    .single();
-
-  if (error || !data) {
-    console.error('Error fetching stock current data:', error);
-    return null;
-  }
-
-  return data.current_pbr;
-};
-
-// stock_price에서 현재가 데이터 가져오기
-export const getStockPrice = async (stockCode: string): Promise<number | null> => {
+// stock_price에서 현재가와 PBR 데이터 한 번에 가져오기
+export const getStockPriceData = async (stockCode: string) => {
   const { data, error } = await supabase
     .from('stock_price')
-    .select('current_price')
+    .select('current_price, today_pbr')
     .eq('stock_code', stockCode)
     .single();
 
@@ -65,7 +49,10 @@ export const getStockPrice = async (stockCode: string): Promise<number | null> =
     return null;
   }
 
-  return data.current_price;
+  return {
+    currentPrice: data.current_price,
+    currentPBR: data.today_pbr
+  };
 };
 
 // 예상 적정 PBR 계산 (n년 후 청산 가정)
@@ -91,15 +78,20 @@ export const calculateProfit = async (
   params: ProfitCalculationParams
 ): Promise<ProfitResult | null> => {
   try {
-    // 1. 데이터 가져오기 (병렬 처리)
-    const [rawData, currentPBR, currentPrice] = await Promise.all([
+    // 1. 데이터 가져오기 (병렬 처리) - 2개 API 호출로 단순화
+    const [rawData, priceData] = await Promise.all([
       getStockRawData(stockCode),
-      getStockCurrentPBR(stockCode),
-      getStockPrice(stockCode),
+      getStockPriceData(stockCode),
     ]);
 
-    if (!rawData || currentPBR === null || currentPrice === null) {
+    if (!rawData || !priceData) {
       throw new Error('주식 데이터를 찾을 수 없습니다.');
+    }
+
+    const { currentPrice, currentPBR } = priceData;
+
+    if (currentPBR === null || currentPrice === null) {
+      throw new Error('주가 또는 PBR 데이터를 찾을 수 없습니다.');
     }
 
     // 2. 연도별 ROE 계산
