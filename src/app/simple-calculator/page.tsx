@@ -321,17 +321,25 @@ export default function SimpleCalculatorPage() {
                 </div>
               </div>
 
-              <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
-                {calculatedResult.expectedReturn >= 0 ? '저평가 상태' : '고평가 상태'}
+              <h2 className="text-3xl font-bold text-gray-900 text-center mb-2">
+                {selectedCompany?.companyName}
               </h2>
-              <p className="text-sm text-gray-500 text-center">현재 주가 대비 계산 결과입니다</p>
+              <hr className="border-gray-200 border-t-2 w-4/5 mt-4 mx-auto" />
+              {/* <p
+                className="text-base font-semibold text-center mb-1"
+                style={{
+                  color: calculatedResult.expectedReturn >= 0 ? '#059669' : '#dc2626',
+                }}
+              >
+                {calculatedResult.expectedReturn >= 0 ? '저평가 상태' : '고평가 상태'}
+              </p> */}
             </div>
 
             {/* 본문 */}
             <div className="px-8 pb-8">
               {/* 예상 수익률 - 메인 */}
               <div className="mb-8 text-center">
-                <p className="text-sm text-gray-500 mb-2">예상 수익률</p>
+                <p className="text-sm text-gray-500 ">예상 수익률</p>
                 <div
                   className={`mb-1 ${
                     calculatedResult.expectedReturn >= 0 ? 'text-emerald-600' : 'text-red-600'
@@ -345,14 +353,22 @@ export default function SimpleCalculatorPage() {
                   </span>
                   <span className="text-2xl font-semibold"> %</span>
                 </div>
-                <p className="text-sm text-gray-600">
+                {/* <p className="text-sm text-gray-600">
                   {calculatedResult.expectedReturn >= 0 ? '저평가되었습니다' : '고평가되었습니다'}
+                </p> */}
+                <p
+                  className="text-base font-semibold text-center mb-1"
+                  style={{
+                    color: calculatedResult.expectedReturn >= 0 ? '#059669' : '#dc2626',
+                  }}
+                >
+                  {calculatedResult.expectedReturn >= 0 ? '저평가 상태' : '고평가 상태'}
                 </p>
               </div>
 
               {/* 가격 비교 */}
-              <div className="bg-gray-50 rounded-2xl p-5 mb-6">
-                <div className="flex items-center justify-between mb-4">
+              <div className="bg-gray-50 rounded-2xl p-4 mb-6">
+                <div className="flex items-center justify-between ">
                   <div>
                     <p className="text-xs text-gray-500 mb-1">현재 주가</p>
                     <p className="text-xl font-bold text-gray-900">
@@ -395,7 +411,7 @@ export default function SimpleCalculatorPage() {
               <div className="space-y-3">
                 <button
                   onClick={() => setShowModal(false)}
-                  className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white py-4 px-6 rounded-xl font-bold transition-all duration-300 shadow-lg hover:shadow-xl"
+                  className="w-full bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white py-4 px-6 rounded-xl font-bold transition-all duration-300 shadow-lg hover:shadow-xl"
                 >
                   설정값 변경
                 </button>
